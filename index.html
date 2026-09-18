@@ -45,22 +45,34 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 16px 24px;
+      gap: 12px;
+      padding: 10px 18px;
       background: rgba(255,255,255,.96);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(12px);
     }
-    .brand h1 { margin: 0; font-size: 20px; }
-    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
-    .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .brand { flex: 0 0 auto; min-width: 245px; }
+    .brand h1 { margin: 0; font-size: 18px; line-height: 1.15; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 10px; line-height: 1.2; }
+    .header-actions {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+    }
+    .header-actions .btn { white-space: nowrap; }
 
     .btn {
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 8px;
       background: #fff;
       color: var(--text);
-      padding: 10px 14px;
+      padding: 7px 9px;
+      font-size: 11px;
+      line-height: 1.1;
       font-weight: 700;
       transition: .15s ease;
     }
@@ -69,7 +81,7 @@
     .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
     .btn-soft { background: var(--primary-soft); color: #174ea6; border-color: #cfddff; }
 
-    main { padding: 22px; max-width: 1700px; margin: 0 auto; }
+    main { padding: 16px 18px; width: 100%; max-width: none; margin: 0 auto; }
     .notice {
       display: flex;
       align-items: center;
@@ -208,6 +220,7 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
+      max-width: 100%;
       margin-bottom: 22px;
     }
     .panel-head {
@@ -227,22 +240,83 @@
       background: #fff;
       min-width: 170px;
     }
-    .table-scroll { overflow: auto; max-height: 590px; }
-    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1120px; }
-    th, td { padding: 10px 11px; border-bottom: 1px solid #edf1f6; text-align: left; font-size: 12px; white-space: nowrap; }
-    th { position: sticky; top: 0; z-index: 3; background: #f8fafc; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+    .table-scroll { overflow-x: hidden; overflow-y: auto; max-height: 590px; width: 100%; }
+    table { width: 100%; max-width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 0; }
+    th, td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #edf1f6;
+      text-align: left;
+      font-size: 10px;
+      line-height: 1.18;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      vertical-align: middle;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 9px;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+    th.sortable { cursor: pointer; user-select: none; transition: background .12s ease, color .12s ease; }
+    th.sortable:hover { background: #eef4ff; color: #1d4ed8; }
+    th.sortable::after { content: '↕'; display: inline-block; margin-left: 4px; font-size: 8px; opacity: .34; vertical-align: 1px; }
+    th.sortable.sort-asc::after { content: '▲'; opacity: .9; color: #2563eb; }
+    th.sortable.sort-desc::after { content: '▼'; opacity: .9; color: #2563eb; }
+    td.money { white-space: nowrap; font-size: 10px; }
+
+    /* Larguras proporcionais para manter todas as colunas dentro da tela */
+    #panelOpen th:nth-child(1), #panelOpen td:nth-child(1) { width: 5%; }
+    #panelOpen th:nth-child(2), #panelOpen td:nth-child(2) { width: 6%; }
+    #panelOpen th:nth-child(3), #panelOpen td:nth-child(3) { width: 8%; }
+    #panelOpen th:nth-child(4), #panelOpen td:nth-child(4) { width: 13%; }
+    #panelOpen th:nth-child(5), #panelOpen td:nth-child(5) { width: 8%; }
+    #panelOpen th:nth-child(6), #panelOpen td:nth-child(6) { width: 16%; }
+    #panelOpen th:nth-child(7), #panelOpen td:nth-child(7) { width: 10%; }
+    #panelOpen th:nth-child(8), #panelOpen td:nth-child(8) { width: 4%; }
+    #panelOpen th:nth-child(9), #panelOpen td:nth-child(9) { width: 8%; }
+    #panelOpen th:nth-child(10), #panelOpen td:nth-child(10) { width: 7%; }
+    #panelOpen th:nth-child(11), #panelOpen td:nth-child(11) { width: 15%; }
+
+    #panelResolved th:nth-child(1), #panelResolved td:nth-child(1) { width: 5%; }
+    #panelResolved th:nth-child(2), #panelResolved td:nth-child(2) { width: 6%; }
+    #panelResolved th:nth-child(3), #panelResolved td:nth-child(3) { width: 8%; }
+    #panelResolved th:nth-child(4), #panelResolved td:nth-child(4) { width: 13%; }
+    #panelResolved th:nth-child(5), #panelResolved td:nth-child(5) { width: 16%; }
+    #panelResolved th:nth-child(6), #panelResolved td:nth-child(6) { width: 11%; }
+    #panelResolved th:nth-child(7), #panelResolved td:nth-child(7) { width: 8%; }
+    #panelResolved th:nth-child(8), #panelResolved td:nth-child(8) { width: 6%; }
+    #panelResolved th:nth-child(9), #panelResolved td:nth-child(9) { width: 16%; }
+    #panelResolved th:nth-child(10), #panelResolved td:nth-child(10) { width: 11%; }
+
+    #panelClaims th:nth-child(1), #panelClaims td:nth-child(1) { width: 8%; }
+    #panelClaims th:nth-child(2), #panelClaims td:nth-child(2) { width: 9%; }
+    #panelClaims th:nth-child(3), #panelClaims td:nth-child(3) { width: 13%; }
+    #panelClaims th:nth-child(4), #panelClaims td:nth-child(4) { width: 25%; }
+    #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 20%; }
+    #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 25%; }
+
+    #panelOpen td:nth-child(1), #panelOpen td:nth-child(2), #panelOpen td:nth-child(5), #panelOpen td:nth-child(8),
+    #panelResolved td:nth-child(1), #panelResolved td:nth-child(2), #panelResolved td:nth-child(7), #panelResolved td:nth-child(8),
+    #panelClaims td:nth-child(1), #panelClaims td:nth-child(2) { white-space: nowrap; }
     tbody tr { transition: background .12s ease; }
     tbody tr:hover { background: #f8fbff; }
     tbody tr.selected { background: #dbeafe !important; outline: 1px solid #93c5fd; outline-offset: -1px; }
     .money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
-    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .badge { display: inline-flex; align-items: center; padding: 3px 6px; border-radius: 999px; font-size: 9px; line-height: 1.1; font-weight: 800; max-width: 100%; white-space: normal; }
     .badge.ok { background: var(--success-soft); color: var(--success); }
     .badge.warn { background: var(--warning-soft); color: var(--warning); }
     .badge.neutral { background: #eef2f7; color: #475569; }
     .badge.info { background: var(--primary-soft); color: #1d4ed8; }
-    .row-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 9px; font-weight: 800; font-size: 11px; }
+    .row-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 6px; font-weight: 800; font-size: 9px; line-height: 1.05; white-space: nowrap; }
 
-    .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding: 10px 14px; color: var(--muted); font-size: 12px; }
+    .pager { display: flex; gap: 6px; align-items: center; justify-content: flex-end; padding: 8px 10px; color: var(--muted); font-size: 11px; }
 
     .modal-backdrop {
       position: fixed; inset: 0; z-index: 1000;
@@ -280,17 +354,54 @@
       .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); }
       .charts-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
+    @media (max-width: 1180px) {
+      header { gap: 8px; padding: 8px 10px; }
+      .brand { min-width: 185px; }
+      .brand h1 { font-size: 16px; }
+      .brand p { font-size: 9px; }
+      .header-actions { gap: 4px; }
+      .header-actions .btn { padding: 6px 7px; font-size: 9.5px; }
+      main { padding: 12px 10px; }
+      th, td { padding: 6px 4px; font-size: 9px; }
+      th { font-size: 8px; }
+      .badge, .row-btn { font-size: 8px; }
+    }
     @media (max-width: 760px) {
-      header { padding: 12px; align-items: flex-start; flex-direction: column; }
-      main { padding: 12px; }
+      header { padding: 8px; align-items: stretch; flex-direction: column; }
+      .brand { min-width: 0; }
+      .header-actions { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
+      .header-actions .btn { flex: 0 0 auto; }
+      main { padding: 8px; }
       .upload-card { align-items: stretch; flex-direction: column; }
       .kpis { grid-template-columns: 1fr; }
       .charts-grid { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: auto; }
-      .header-actions { width: 100%; }
-      .header-actions .btn { flex: 1; }
+      th, td { font-size: 8px; padding: 5px 3px; }
+      th { font-size: 7.5px; }
     }
+  
+
+    /* --- Sinalizações persistentes e Sinistros --- */
+    .kpis { grid-template-columns: repeat(6, minmax(160px,1fr)); }
+    .kpi.claim .value { color: #7c3aed; }
+    .btn-claim { background:#f3e8ff; color:#6d28d9; border-color:#ddd6fe; }
+    .btn-crc { background:#fff7d6; color:#92400e; border-color:#fcd34d; }
+    .btn-lost { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+    .btn-active { box-shadow: inset 0 0 0 2px rgba(15,23,42,.08); }
+    .row-actions { display:flex; gap:3px; align-items:center; justify-content:flex-start; flex-wrap:wrap; }
+    .signal-stack { display:flex; gap:4px; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
+    .signal-stack .badge { flex:0 0 auto; white-space:nowrap; overflow-wrap:normal; word-break:normal; }
+    tr.crc-priority { background:#fff9df; box-shadow: inset 4px 0 0 #f59e0b; }
+    tr.crc-priority:hover { background:#fff4c2; }
+    tr.crc-priority.selected { background:#dbeafe !important; box-shadow: inset 4px 0 0 #f59e0b; }
+    .badge.crc { background:#fff1b8; color:#92400e; border:1px solid #f6d365; }
+    .badge.lost { background:#eef2f7; color:#475569; border:1px solid #d8dee8; }
+    .badge.claim { background:#f3e8ff; color:#6d28d9; border:1px solid #ddd6fe; }
+    @media (max-width: 1450px) { .kpis { grid-template-columns: repeat(3, minmax(170px,1fr)); } }
+    @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); } }
+    @media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+
   </style>
 </head>
 <body>
@@ -304,6 +415,10 @@
       <button class="btn hidden" id="btnApiTest">Testar API</button>
       <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
       <button class="btn btn-soft" id="btnManual">Nova resolução manual</button>
+      <button class="btn btn-claim" id="btnManualClaim">Novo sinistro manual</button>
+      <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
+      <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
+      <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
       <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
     </div>
   </header>
@@ -329,7 +444,7 @@
       <article class="kpi">
         <div class="label">Valor total conciliado</div>
         <div class="value" id="kpiTotal">R$ 0,00</div>
-        <div class="sub" id="kpiTotalSub">União Excel + Google Planilhas</div>
+        <div class="sub" id="kpiTotalSub">União Excel + Resolvidos + Sinistros</div>
       </article>
       <article class="kpi open">
         <div class="label">Valor em aberto</div>
@@ -341,15 +456,20 @@
         <div class="value" id="kpiResolved">R$ 0,00</div>
         <div class="sub" id="kpiResolvedSub">0 registros</div>
       </article>
-      <article class="kpi alert">
-        <div class="label">Resolvido e ainda na pendência</div>
-        <div class="value" id="kpiStill">R$ 0,00</div>
-        <div class="sub" id="kpiStillSub">0 registros</div>
+      <article class="kpi claim">
+        <div class="label">Valor em sinistro</div>
+        <div class="value" id="kpiClaim">R$ 0,00</div>
+        <div class="sub" id="kpiClaimSub">0 registros</div>
       </article>
       <article class="kpi">
         <div class="label">% resolvido por valor</div>
-        <div class="value" id="kpiPercent">0,00%</div>
-        <div class="sub" id="kpiPercentSub">Base: união das duas bases sem duplicar Nota + Coleta</div>
+        <div class="value" id="kpiResolvedPct">0,00%</div>
+        <div class="sub" id="kpiResolvedPctSub">Resolvido ÷ total conciliado</div>
+      </article>
+      <article class="kpi claim">
+        <div class="label">% sinistro por valor</div>
+        <div class="value" id="kpiClaimPct">0,00%</div>
+        <div class="sub" id="kpiClaimPctSub">Sinistro ÷ total conciliado</div>
       </article>
     </section>
 
@@ -363,7 +483,7 @@
 
     <section class="charts-grid">
       <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido × sinistro</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
         <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
       </article>
       <article class="chart-card">
@@ -375,7 +495,7 @@
         <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
       </article>
       <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido × sinistro</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
         <div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
       </article>
       <article class="chart-card">
@@ -409,6 +529,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
       <button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
+      <button class="tab" data-tab="claims">Sinistros <span id="claimCount">0</span></button>
     </nav>
 
     <section class="panel" id="panelOpen">
@@ -422,9 +543,9 @@
         <small id="openSummary">0 registros</small>
       </div>
       <div class="table-scroll">
-        <table>
+        <table data-sort-table="open">
           <thead><tr>
-            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Data Ocorrência</th><th>Cliente</th><th>Destino</th><th>UF</th><th>Range</th><th>Prioridade</th><th>Repetições no Excel</th><th>Ação</th>
+            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataOcorrencia" title="Ordenar por Data Ocorrência">Data Ocorrência</th><th class="sortable" data-sort="cliente" title="Ordenar por Cliente">Cliente</th><th class="sortable" data-sort="destino" title="Ordenar por Destino">Destino</th><th class="sortable" data-sort="uf" title="Ordenar por UF">UF</th><th class="sortable" data-sort="range" title="Ordenar por Range">Range</th><th class="sortable" data-sort="prioridade" title="Ordenar por Prioridade">Prioridade</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th>
           </tr></thead>
           <tbody id="openBody"></tbody>
         </table>
@@ -444,15 +565,35 @@
         <small id="resolvedSummary">0 registros</small>
       </div>
       <div class="table-scroll">
-        <table>
+        <table data-sort-table="resolved">
           <thead><tr>
-            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Data Resolução</th><th>Quem resolveu</th><th>Status no relatório atual</th><th>Ação</th>
+            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="resolucao" title="Ordenar por Resolução">Resolução</th><th class="sortable" data-sort="responsavel" title="Ordenar por Responsável pela falha">Responsável pela falha</th><th class="sortable" data-sort="dataResolucao" title="Ordenar por Data Resolução">Data Resolução</th><th class="sortable" data-sort="quemResolveu" title="Ordenar por Quem resolveu">Quem resolveu</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
           </tr></thead>
           <tbody id="resolvedBody"></tbody>
         </table>
         <div class="empty" id="resolvedEmpty">Nenhum caso resolvido encontrado no Google Planilhas.</div>
       </div>
       <div class="pager"><button class="btn" id="resolvedPrev">Anterior</button><span id="resolvedPageLabel">Página 1</span><button class="btn" id="resolvedNext">Próxima</button></div>
+    </section>
+
+    <section class="panel hidden" id="panelClaims">
+      <div class="panel-head">
+        <div class="filters">
+          <input class="field" id="claimSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..." />
+          <select class="field" id="claimPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+        </div>
+        <small id="claimSummary">0 registros</small>
+      </div>
+      <div class="table-scroll">
+        <table data-sort-table="claim">
+          <thead><tr>
+            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+          </tr></thead>
+          <tbody id="claimBody"></tbody>
+        </table>
+        <div class="empty" id="claimEmpty">Nenhum caso encaminhado para sinistro.</div>
+      </div>
+      <div class="pager"><button class="btn" id="claimPrev">Anterior</button><span id="claimPageLabel">Página 1</span><button class="btn" id="claimNext">Próxima</button></div>
     </section>
   </main>
 </div>
@@ -487,8 +628,31 @@
   </div>
 </div>
 
+
+<div class="modal-backdrop hidden" id="claimModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="claimModalTitle">
+    <div class="modal-head">
+      <div><h2 id="claimModalTitle">Encaminhar para sinistro</h2><div class="hint">Nota + Coleta será gravada na aba Sinistros do Google Planilhas.</div></div>
+      <button class="close-x" id="claimModalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="claimForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="sNota">Nota</label><input id="sNota" required /></div>
+          <div class="form-group"><label for="sColeta">Coleta</label><input id="sColeta" required /></div>
+          <div class="form-group"><label for="sValor">Valor Nota</label><input id="sValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="sVocativo">Vocativo</label><input id="sVocativo" required /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="claimModalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-claim" id="btnSaveClaim">Salvar em Sinistros</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
-  // ALTERE SOMENTE ESTA URL DEPOIS QUE PUBLICAR O APPS SCRIPT COMO APLICATIVO DA WEB.
   const CONFIG = {
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwXa5kibQil8oI5VyzixRoAcSiBFKMZH3g93QQtVzddyOVjcL0xl9Xr2SvvY4H3yyLY/exec',
     PAGE_SIZE: 100
@@ -500,12 +664,22 @@
     reportRows: [],
     resolvedRows: [],
     resolvedMap: new Map(),
+    claimRows: [],
+    claimMap: new Map(),
+    crcMap: new Map(),
+    notLocatedMap: new Map(),
     resolutions: [],
     responsibleResolutions: [],
     solvers: [],
     selectedKey: null,
     openPage: 1,
     resolvedPage: 1,
+    claimPage: 1,
+    tableSort: {
+      open: { key: null, dir: 'asc' },
+      resolved: { key: null, dir: 'asc' },
+      claim: { key: null, dir: 'asc' }
+    },
     charts: {},
     occurrenceGranularity: 'week',
     resolutionGranularity: 'week',
@@ -532,9 +706,7 @@
 
   function parseDateValue(value) {
     if (!value) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime())) {
-      return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
     if (typeof value === 'number' && Number.isFinite(value)) {
       const excelEpoch = new Date(1899, 11, 30);
       const d = new Date(excelEpoch.getTime() + value * 86400000);
@@ -557,55 +729,35 @@
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
-
-  function addDays(date, days) {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    d.setDate(d.getDate() + days);
-    return d;
-  }
-
-  function startOfWeekMonday(date) {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const day = d.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offset);
-    return d;
-  }
+  function addDays(date, days) { const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); d.setDate(d.getDate() + days); return d; }
+  function startOfWeekMonday(date) { const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; }
 
   function bucketInfo(dateValue, granularity) {
     const date = parseDateValue(dateValue);
     if (!date) return { key: 'NONE', label: 'Sem data', sort: 9e15 };
-
     if (granularity === 'month') {
       const start = new Date(date.getFullYear(), date.getMonth(), 1);
       return { key: `M:${isoDateLocal(start)}`, label: monthFmt.format(start).replace('.', ''), sort: start.getTime() };
     }
-
     if (granularity === 'week') {
-      const start = startOfWeekMonday(date);
-      const end = addDays(start, 6);
-      const sy = String(start.getFullYear()).slice(-2);
-      const ey = String(end.getFullYear()).slice(-2);
+      const start = startOfWeekMonday(date), end = addDays(start, 6);
+      const sy = String(start.getFullYear()).slice(-2), ey = String(end.getFullYear()).slice(-2);
       const startLabel = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}/${sy}`;
       const endLabel = `${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
-      const label = `${startLabel} a ${endLabel}`;
-      return { key: `W:${isoDateLocal(start)}`, label, sort: start.getTime() };
+      return { key: `W:${isoDateLocal(start)}`, label: `${startLabel} a ${endLabel}`, sort: start.getTime() };
     }
-
     return { key: `D:${isoDateLocal(date)}`, label: dateFmt.format(date), sort: date.getTime() };
   }
 
   function bucketLabelFromKey(key) {
     if (key === 'NONE') return 'Sem data';
-    const parts = String(key).split(':');
-    const prefix = parts[0];
-    const date = parseDateValue(parts[1]);
+    const [prefix, raw] = String(key).split(':');
+    const date = parseDateValue(raw);
     if (!date) return key;
     if (prefix === 'M') return monthFmt.format(date).replace('.', '');
     if (prefix === 'W') {
       const end = addDays(date, 6);
-      const sy = String(date.getFullYear()).slice(-2);
-      const ey = String(end.getFullYear()).slice(-2);
+      const sy = String(date.getFullYear()).slice(-2), ey = String(end.getFullYear()).slice(-2);
       return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${sy} a ${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
     }
     return dateFmt.format(date);
@@ -627,7 +779,7 @@
     $('noticeTitle').textContent = title;
     $('noticeText').textContent = text;
     const badge = $('apiStatus');
-    badge.className = `badge ${type === 'ok' ? 'ok' : type === 'error' ? 'warn' : 'warn'}`;
+    badge.className = `badge ${type === 'ok' ? 'ok' : 'warn'}`;
     badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
     const canTest = type !== 'ok' && cleanText(CONFIG.APPS_SCRIPT_URL) && !CONFIG.APPS_SCRIPT_URL.includes('SEU_DEPLOYMENT_ID');
     $('btnApiTest').classList.toggle('hidden', !canTest);
@@ -635,21 +787,17 @@
 
   function getAppsScriptBase() {
     const base = cleanText(CONFIG.APPS_SCRIPT_URL);
-    if (!base || base.includes('SEU_DEPLOYMENT_ID') || !base.endsWith('/exec')) {
-      throw new Error('Configure APPS_SCRIPT_URL com a URL /exec do Apps Script no index.html.');
-    }
+    if (!base || base.includes('SEU_DEPLOYMENT_ID') || !base.endsWith('/exec')) throw new Error('Configure APPS_SCRIPT_URL com a URL /exec do Apps Script no index.html.');
     return base;
   }
 
   let jsonpSeq = 0;
-  function apiGet(action, timeoutMs = 15000) {
+  function apiGet(action, timeoutMs = 20000) {
     const base = getAppsScriptBase();
-
     return new Promise((resolve, reject) => {
       const callback = `__gasJsonp_${Date.now()}_${++jsonpSeq}`;
       const script = document.createElement('script');
       let finished = false;
-
       const cleanup = () => {
         if (finished) return;
         finished = true;
@@ -657,101 +805,96 @@
         try { delete window[callback]; } catch (_) { window[callback] = undefined; }
         script.remove();
       };
-
-      window[callback] = (payload) => {
+      window[callback] = payload => {
         cleanup();
-        if (!payload || payload.ok === false) {
-          reject(new Error(payload?.error || 'O Apps Script retornou uma resposta inválida.'));
-          return;
-        }
+        if (!payload || payload.ok === false) return reject(new Error(payload?.error || 'O Apps Script retornou uma resposta inválida.'));
         resolve(payload);
       };
-
-      script.onerror = () => {
-        cleanup();
-        reject(new Error('O Apps Script não respondeu ao GitHub Pages. Clique em “Testar API”. Se o teste abrir uma tela de login, acesso negado ou erro, publique novamente como Aplicativo da Web, executando como você e com acesso “Qualquer pessoa”. Depois execute configurar() e atualize a versão implantada.'));
-      };
-
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error('Tempo esgotado ao consultar o Google Apps Script.'));
-      }, timeoutMs);
-
+      script.onerror = () => { cleanup(); reject(new Error('O Apps Script não respondeu. Confirme a implantação como Aplicativo da Web e a permissão de acesso.')); };
+      const timer = setTimeout(() => { cleanup(); reject(new Error('Tempo esgotado ao consultar o Google Apps Script.')); }, timeoutMs);
       script.src = `${base}?action=${encodeURIComponent(action)}&callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
       document.head.appendChild(script);
     });
   }
 
-  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  async function postAndConfirm(payload) {
-    const base = getAppsScriptBase();
-
-    // mode:no-cors evita o bloqueio de CORS do navegador. A resposta fica opaca,
-    // por isso a confirmação é feita em seguida por uma nova leitura JSONP.
-    await fetch(base, {
-      method: 'POST',
-      mode: 'no-cors',
-      cache: 'no-store',
-      body: JSON.stringify({ action: 'salvar', ...payload })
-    });
-
-    const wantedKey = keyOf(payload.nota, payload.coleta);
-    let lastError = null;
-
-    for (let attempt = 0; attempt < 8; attempt++) {
-      await wait(attempt === 0 ? 450 : 700);
-      try {
-        const result = await apiGet('resolvidos');
-        const found = (result.rows || []).find(r => keyOf(r.nota, r.coleta) === wantedKey);
-        if (found && cleanText(found.resolucao) === cleanText(payload.resolucao)) {
-          return { ok: true, row: found };
-        }
-      } catch (err) {
-        lastError = err;
-      }
+  function normalizeResolvedRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = {
+        nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
+        resolucao: cleanText(r.resolucao), responsavel: cleanText(r.responsavel), dataResolucao: cleanText(r.dataResolucao),
+        quemResolveu: cleanText(r.quemResolveu), key: keyOf(r.nota, r.coleta)
+      };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
     }
+    return [...byKey.values()];
+  }
 
-    throw new Error(lastError?.message || 'O envio foi feito, mas não foi possível confirmar a gravação no Google Planilhas.');
+  function normalizeClaimRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = { nota:cleanText(r.nota), coleta:cleanText(r.coleta), valorNota:parseMoney(r.valorNota), vocativo:cleanText(r.vocativo), key:keyOf(r.nota,r.coleta) };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
+    }
+    return [...byKey.values()];
+  }
+
+  function normalizeKeyMap(rows) {
+    const map = new Map();
+    for (const r of rows || []) {
+      const nota = cleanText(r.nota), coleta = cleanText(r.coleta);
+      if (nota && coleta) map.set(keyOf(nota,coleta), { nota, coleta });
+    }
+    return map;
+  }
+
+  function applyBootstrap(payload, render = true) {
+    state.resolutions = payload.resolutions || [];
+    state.responsibleResolutions = payload.responsibleResolutions || [];
+    state.solvers = payload.solvers || [];
+    state.resolvedRows = normalizeResolvedRows(payload.resolvidos || []);
+    state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
+    state.claimRows = normalizeClaimRows(payload.sinistros || []);
+    state.claimMap = new Map(state.claimRows.map(r => [r.key, r]));
+    state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
+    state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
+    fillResolutionSelectors();
+    if (render) rebuildView();
+  }
+
+  async function refreshGoogleData(render = true) {
+    const payload = await apiGet('bootstrap');
+    applyBootstrap(payload, render);
+    return payload;
   }
 
   async function connectApi() {
     try {
-      const config = await apiGet('config');
-      state.resolutions = config.resolutions || [];
-      state.responsibleResolutions = config.responsibleResolutions || [];
-      state.solvers = config.solvers || [];
+      await refreshGoogleData(false);
       state.apiReady = true;
-      fillResolutionSelectors();
-      await refreshResolved();
-      setNotice('ok', 'Google Planilhas conectado', 'Leitura e gravação estão disponíveis. O registro só será marcado como resolvido após confirmação do Google Apps Script.');
+      rebuildView();
+      setNotice('ok', 'Google Planilhas conectado', 'Resolvidos, Sinistros, Prioridade CRC e Não localizado no cliente foram carregados.');
     } catch (err) {
       state.apiReady = false;
+      rebuildView();
       setNotice('error', 'Não foi possível conectar ao Google Apps Script', err.message);
     }
   }
 
-  async function refreshResolved() {
-    const payload = await apiGet('resolvidos');
-    const byKey = new Map();
-    for (const r of (payload.rows || [])) {
-      const normalized = {
-        nota: cleanText(r.nota),
-        coleta: cleanText(r.coleta),
-        valorNota: parseMoney(r.valorNota),
-        vocativo: cleanText(r.vocativo),
-        resolucao: cleanText(r.resolucao),
-        responsavel: cleanText(r.responsavel),
-        dataResolucao: cleanText(r.dataResolucao),
-        quemResolveu: cleanText(r.quemResolveu),
-        key: keyOf(r.nota, r.coleta)
-      };
-      if (normalized.nota && normalized.coleta) byKey.set(normalized.key, normalized);
+  async function postAndConfirm(payload, predicate, failureMessage) {
+    const base = getAppsScriptBase();
+    await fetch(base, { method:'POST', mode:'no-cors', cache:'no-store', body:JSON.stringify(payload) });
+    let lastError = null;
+    for (let attempt=0; attempt<8; attempt++) {
+      await wait(attempt === 0 ? 450 : 700);
+      try {
+        await refreshGoogleData(false);
+        if (predicate()) { rebuildView(); return true; }
+      } catch (err) { lastError = err; }
     }
-    state.resolvedRows = [...byKey.values()];
-    state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
-    state.resolvedPage = 1;
-    rebuildView();
+    throw new Error(lastError?.message || failureMessage || 'O envio foi feito, mas não foi possível confirmar a gravação no Google Planilhas.');
   }
 
   function fillResolutionSelectors() {
@@ -761,155 +904,130 @@
     $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   }
 
-  $('fileInput').addEventListener('change', async (event) => {
+  $('fileInput').addEventListener('change', async event => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
       const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+      const workbook = XLSX.read(buffer, { type:'array', cellDates:true });
       const sheetName = workbook.SheetNames.includes('Export') ? 'Export' : workbook.SheetNames[0];
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '', raw: true });
-      const required = ['Nota', 'Coleta', 'Valor Nota', 'Vocativo'];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval:'', raw:true });
+      const required = ['Nota','Coleta','Valor Nota','Vocativo'];
       const headers = rows.length ? Object.keys(rows[0]) : [];
       const missing = required.filter(h => !headers.includes(h));
       if (missing.length) throw new Error(`Colunas obrigatórias não encontradas: ${missing.join(', ')}`);
-
       const byKey = new Map();
-      let duplicateLines = 0;
-      let valueConflicts = 0;
+      let duplicateLines = 0, valueConflicts = 0;
       for (const row of rows) {
-        const nota = cleanText(row['Nota']);
-        const coleta = cleanText(row['Coleta']);
+        const nota = cleanText(row['Nota']), coleta = cleanText(row['Coleta']);
         if (!nota || !coleta) continue;
-        const key = keyOf(nota, coleta);
-        const value = parseMoney(row['Valor Nota']);
+        const key = keyOf(nota, coleta), value = parseMoney(row['Valor Nota']);
         if (!byKey.has(key)) {
-          byKey.set(key, {
-            ...row,
-            __key: key,
-            __nota: nota,
-            __coleta: coleta,
-            __valor: value,
-            __vocativo: cleanText(row['Vocativo']),
-            __dataOcorrencia: parseDateValue(row['Data Ocorrencia']),
-            __duplicateCount: 1,
-            __valueConflict: false
-          });
+          byKey.set(key, { ...row, __key:key, __nota:nota, __coleta:coleta, __valor:value, __vocativo:cleanText(row['Vocativo']), __dataOcorrencia:parseDateValue(row['Data Ocorrencia']), __duplicateCount:1, __valueConflict:false });
         } else {
           duplicateLines++;
           const current = byKey.get(key);
           current.__duplicateCount++;
-          if (Math.abs(current.__valor - value) > 0.005) {
-            current.__valueConflict = true;
-            valueConflicts++;
-            current.__valor = Math.max(current.__valor, value);
-          }
-          for (const [field, val] of Object.entries(row)) {
-            if (!cleanText(current[field]) && cleanText(val)) current[field] = val;
-          }
+          if (Math.abs(current.__valor - value) > .005) { current.__valueConflict = true; valueConflicts++; current.__valor = Math.max(current.__valor, value); }
+          for (const [field,val] of Object.entries(row)) if (!cleanText(current[field]) && cleanText(val)) current[field] = val;
           if (!current.__dataOcorrencia) current.__dataOcorrencia = parseDateValue(row['Data Ocorrencia']);
         }
       }
-
-      state.reportRows = Array.from(byKey.values());
+      state.reportRows = [...byKey.values()];
       state.reportLoaded = true;
       state.selectedKey = null;
       state.openPage = 1;
       rebuildFilters();
       rebuildView();
-      const detail = `${rows.length.toLocaleString('pt-BR')} linhas lidas; ${state.reportRows.length.toLocaleString('pt-BR')} chaves únicas Nota + Coleta; ${duplicateLines.toLocaleString('pt-BR')} linhas repetidas consolidadas` + (valueConflicts ? `; ${valueConflicts} divergências de valor sinalizadas` : '.');
+      const detail = `${rows.length.toLocaleString('pt-BR')} linhas lidas; ${state.reportRows.length.toLocaleString('pt-BR')} registros únicos Nota + Coleta. Duplicidades são desconsideradas nas quantidades e valores` + (valueConflicts ? `; ${valueConflicts} divergências de valor consolidadas em um único registro.` : '.');
       setNotice(state.apiReady ? 'ok' : 'warn', 'Relatório carregado', detail);
-    } catch (err) {
-      setNotice('error', 'Erro ao carregar o Excel', err.message);
-    }
+    } catch (err) { setNotice('error','Erro ao carregar o Excel',err.message); }
   });
 
   function rebuildFilters() {
     const clients = [...new Set(state.reportRows.map(r => cleanText(r['Cliente'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
     const ranges = [...new Set(state.reportRows.map(r => cleanText(r['Range de Dias'])).filter(Boolean))];
     const priorities = [...new Set(state.reportRows.map(r => cleanText(r['Prioridade'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v => `<option>${esc(v)}</option>`).join('');
-    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v => `<option>${esc(v)}</option>`).join('');
-    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v => `<option>${esc(v)}</option>`).join('');
+    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v=>`<option>${esc(v)}</option>`).join('');
+    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v=>`<option>${esc(v)}</option>`).join('');
+    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v=>`<option>${esc(v)}</option>`).join('');
   }
 
+  const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'claim' ? 'Sinistro' : 'Em aberto';
   const chartFilterDefs = {
-    status: { label: 'Status', getter: r => r.status === 'resolved' ? 'Resolvido' : 'Em aberto' },
-    resolution: { label: 'Resolução', getter: r => cleanText(r.resolucao) || 'Sem resolução' },
-    responsible: { label: 'Responsável pela falha', getter: r => cleanText(r.responsavel) || 'Não informado' },
-    vocativo: { label: 'Vocativo', getter: r => cleanText(r.__vocativo) || 'Sem informação' },
-    occurrencePeriod: { label: 'Data ocorrência', getter: r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
-    resolutionPeriod: { label: 'Data resolução', getter: r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
+    status: { label:'Status', getter:r => statusLabel(r.status) },
+    resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
+    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.responsavel) || 'Não informado' },
+    vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
+    occurrencePeriod: { label:'Data ocorrência', getter:r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
+    resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
   };
 
   function getMasterRows() {
-    const reportMap = new Map(state.reportRows.map(r => [r.__key, r]));
-    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys()]);
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys(), ...state.claimMap.keys()]);
     const rows = [];
     for (const key of keys) {
-      const report = reportMap.get(key);
-      const resolved = state.resolvedMap.get(key);
-      const isResolved = !!resolved;
+      const report = reportMap.get(key), resolved = state.resolvedMap.get(key), claim = state.claimMap.get(key);
+      const status = resolved ? 'resolved' : claim ? 'claim' : 'open';
+      const source = report || resolved || claim || {};
+      const value = report ? Number(report.__valor||0) : resolved ? Number(resolved.valorNota||0) : Number(claim?.valorNota||0);
+      const vocativo = report ? report.__vocativo : resolved ? cleanText(resolved.vocativo) : cleanText(claim?.vocativo);
       rows.push({
-        ...(report || {}),
-        __key: key,
-        __nota: report ? report.__nota : cleanText(resolved?.nota),
-        __coleta: report ? report.__coleta : cleanText(resolved?.coleta),
-        __valor: report ? Number(report.__valor || 0) : Number(resolved?.valorNota || 0),
-        __vocativo: report ? report.__vocativo : cleanText(resolved?.vocativo),
-        status: isResolved ? 'resolved' : 'open',
-        resolucao: cleanText(resolved?.resolucao),
-        responsavel: cleanText(resolved?.responsavel),
-        dataResolucao: cleanText(resolved?.dataResolucao),
-        quemResolveu: cleanText(resolved?.quemResolveu),
+        ...(report || {}), __key:key, key,
+        __nota: report ? report.__nota : cleanText(source.nota),
+        __coleta: report ? report.__coleta : cleanText(source.coleta),
+        __valor:value, valorNota:value,
+        __vocativo:vocativo, vocativo,
+        status,
+        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
-        stillPending: !!report && isResolved,
-        valorNota: report ? Number(report.__valor || 0) : Number(resolved?.valorNota || 0),
-        nota: report ? report.__nota : cleanText(resolved?.nota),
-        coleta: report ? report.__coleta : cleanText(resolved?.coleta),
-        vocativo: report ? report.__vocativo : cleanText(resolved?.vocativo),
-        key
+        stillPending: !!report,
+        inResolved: !!resolved,
+        inClaim: !!claim,
+        crcPriority: state.crcMap.has(key),
+        notLocated: state.notLocatedMap.has(key),
+        nota: report ? report.__nota : cleanText(source.nota),
+        coleta: report ? report.__coleta : cleanText(source.coleta)
       });
     }
     return rows;
   }
 
-  function applyChartFilters(rows, excludeDimension = null) {
+  // Garante que qualquer medição conte apenas uma vez cada combinação Nota + Coleta.
+  function uniqueRowsByKey(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const key = cleanText(r.__key || r.key || keyOf(r.__nota || r.nota, r.__coleta || r.coleta));
+      if (key && !byKey.has(key)) byKey.set(key, r);
+    }
+    return [...byKey.values()];
+  }
+
+  function applyChartFilters(rows, excludeDimension=null) {
     return rows.filter(r => {
       for (const [dimension, selected] of Object.entries(state.chartFilters)) {
         if (dimension === excludeDimension || !selected.size) continue;
-        const value = chartFilterDefs[dimension].getter(r);
-        if (!selected.has(value)) return false;
+        if (!selected.has(chartFilterDefs[dimension].getter(r))) return false;
       }
       return true;
     });
   }
 
-  function toggleChartFilter(dimension, value, alsoStatus = null) {
+  function toggleChartFilter(dimension, value, alsoStatus=null) {
     const selected = state.chartFilters[dimension];
     if (selected.has(value)) selected.delete(value); else selected.add(value);
-    if (alsoStatus) {
-      const statusSet = state.chartFilters.status;
-      if (!statusSet.has(alsoStatus)) statusSet.add(alsoStatus);
-    }
-    state.openPage = 1;
-    state.resolvedPage = 1;
+    if (alsoStatus) { const s = state.chartFilters.status; if (!s.has(alsoStatus)) s.add(alsoStatus); }
+    state.openPage = state.resolvedPage = state.claimPage = 1;
     rebuildView();
   }
-
-  function clearChartFilters() {
-    Object.values(state.chartFilters).forEach(set => set.clear());
-    state.openPage = 1;
-    state.resolvedPage = 1;
-    rebuildView();
-  }
+  function clearChartFilters() { Object.values(state.chartFilters).forEach(set=>set.clear()); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView(); }
 
   function renderChartFilterChips() {
-    const holder = $('chartFilterChips');
-    const chips = [];
+    const holder = $('chartFilterChips'), chips=[];
     for (const [dimension, selected] of Object.entries(state.chartFilters)) {
       for (const value of selected) {
-        const displayValue = (dimension === 'occurrencePeriod' || dimension === 'resolutionPeriod') ? bucketLabelFromKey(value) : value;
+        const displayValue = ['occurrencePeriod','resolutionPeriod'].includes(dimension) ? bucketLabelFromKey(value) : value;
         chips.push(`<button type="button" class="filter-chip" data-dim="${esc(dimension)}" data-value="${esc(value)}" title="Remover filtro">${esc(chartFilterDefs[dimension].label)}: ${esc(displayValue)} ×</button>`);
       }
     }
@@ -918,14 +1036,10 @@
     $('btnClearChartFilters').disabled = !chips.length;
   }
 
-  function getOpenRows(applyFilters = true) {
-    let rows = getMasterRows().filter(r => r.status === 'open');
-    rows = applyChartFilters(rows);
+  function getOpenRows(applyFilters=true) {
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open'));
     if (!applyFilters) return rows;
-    const q = cleanText($('openSearch').value).toLowerCase();
-    const client = $('openClient').value;
-    const range = $('openRange').value;
-    const priority = $('openPriority').value;
+    const q = cleanText($('openSearch').value).toLowerCase(), client=$('openClient').value, range=$('openRange').value, priority=$('openPriority').value;
     return rows.filter(r => {
       if (client && cleanText(r['Cliente']) !== client) return false;
       if (range && cleanText(r['Range de Dias']) !== range) return false;
@@ -938,23 +1052,43 @@
     });
   }
 
-  function getResolvedRows(applyFilters = true) {
-    let rows = getMasterRows().filter(r => r.status === 'resolved');
-    rows = applyChartFilters(rows);
+  function getResolvedRows(applyFilters=true) {
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='resolved'));
     if (!applyFilters) return rows;
-    const q = cleanText($('resolvedSearch').value).toLowerCase();
-    const resolution = $('resolvedFilter').value;
-    const presence = $('resolvedPresence').value;
-    const solver = $('resolvedSolver').value;
+    const q=cleanText($('resolvedSearch').value).toLowerCase(), resolution=$('resolvedFilter').value, presence=$('resolvedPresence').value, solver=$('resolvedSolver').value;
     return rows.filter(r => {
       if (resolution && r.resolucao !== resolution) return false;
       if (presence === 'sim' && !r.stillPending) return false;
       if (presence === 'nao' && r.stillPending) return false;
       if (solver && cleanText(r.quemResolveu) !== solver) return false;
-      if (q) {
-        const hay = [r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel,r.quemResolveu].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
+      if (q && ![r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel,r.quemResolveu].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function getClaimRows(applyFilters=true) {
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    let rows = state.claimRows.map(c => {
+      const report=reportMap.get(c.key), resolved=state.resolvedMap.get(c.key);
+      const value=report?Number(report.__valor||0):Number(c.valorNota||0);
+      return {
+        ...(report||{}), __key:c.key, key:c.key,
+        __nota:report?report.__nota:c.nota, __coleta:report?report.__coleta:c.coleta,
+        nota:report?report.__nota:c.nota, coleta:report?report.__coleta:c.coleta,
+        __valor:value, valorNota:value, __vocativo:report?report.__vocativo:c.vocativo, vocativo:report?report.__vocativo:c.vocativo,
+        __dataOcorrencia:report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
+        status: resolved ? 'resolved' : 'claim', inResolved:!!resolved, inClaim:true, stillPending:!!report,
+        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
+        crcPriority:state.crcMap.has(c.key), notLocated:state.notLocatedMap.has(c.key)
+      };
+    });
+    rows = applyChartFilters(rows);
+    if (!applyFilters) return rows;
+    const q=cleanText($('claimSearch').value).toLowerCase(), presence=$('claimPresence').value;
+    return rows.filter(r => {
+      if (presence === 'sim' && !r.stillPending) return false;
+      if (presence === 'nao' && r.stillPending) return false;
+      if (q && ![r.nota,r.coleta,r.vocativo].join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -965,526 +1099,296 @@
     renderCharts();
     renderOpenTable();
     renderResolvedTable();
-    $('btnResolveSelected').disabled = !state.selectedKey || !state.apiReady;
+    renderClaimTable();
+    updateSelectedActions();
   }
 
   function renderKpis() {
-    const master = applyChartFilters(getMasterRows());
-    const open = master.filter(r => r.status === 'open');
-    const resolved = master.filter(r => r.status === 'resolved');
-    const still = resolved.filter(r => r.stillPending);
-    const total = master.reduce((s,r)=>s+r.__valor,0);
-    const openValue = open.reduce((s,r)=>s+r.__valor,0);
-    const resolvedValue = resolved.reduce((s,r)=>s+r.__valor,0);
-    const stillValue = still.reduce((s,r)=>s+r.__valor,0);
-    const pct = total ? (resolvedValue/total)*100 : 0;
-    $('kpiTotal').textContent = moneyFmt.format(total);
-    $('kpiTotalSub').textContent = `${master.length.toLocaleString('pt-BR')} chaves únicas na união Excel + Google`;
-    $('kpiOpen').textContent = moneyFmt.format(openValue);
-    $('kpiOpenSub').textContent = `${open.length.toLocaleString('pt-BR')} registros`;
-    $('kpiResolved').textContent = moneyFmt.format(resolvedValue);
-    $('kpiResolvedSub').textContent = `${resolved.length.toLocaleString('pt-BR')} registros resolvidos`;
-    $('kpiStill').textContent = moneyFmt.format(stillValue);
-    $('kpiStillSub').textContent = `${still.length.toLocaleString('pt-BR')} resolvidos que ainda constam no Excel`;
-    $('kpiPercent').textContent = `${pctFmt.format(pct)}%`;
-    $('kpiPercentSub').textContent = `Resolvido ÷ total conciliado (${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)})`;
-    $('openCount').textContent = open.length.toLocaleString('pt-BR');
-    $('resolvedCount').textContent = resolved.length.toLocaleString('pt-BR');
+    const master=applyChartFilters(uniqueRowsByKey(getMasterRows()));
+    const open=master.filter(r=>r.status==='open'), resolved=master.filter(r=>r.status==='resolved'), claims=master.filter(r=>r.status==='claim');
+    const total=master.reduce((s,r)=>s+r.__valor,0), openValue=open.reduce((s,r)=>s+r.__valor,0), resolvedValue=resolved.reduce((s,r)=>s+r.__valor,0), claimValue=claims.reduce((s,r)=>s+r.__valor,0);
+    const resolvedStill=resolved.filter(r=>r.stillPending).length, claimStill=claims.filter(r=>r.stillPending).length;
+    $('kpiTotal').textContent=moneyFmt.format(total);
+    $('kpiTotalSub').textContent=`${master.length.toLocaleString('pt-BR')} chaves únicas na união das bases`;
+    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros`;
+    $('kpiResolved').textContent=moneyFmt.format(resolvedValue); $('kpiResolvedSub').textContent=`${resolved.length.toLocaleString('pt-BR')} registros • ${resolvedStill.toLocaleString('pt-BR')} ainda no Excel`;
+    $('kpiClaim').textContent=moneyFmt.format(claimValue); $('kpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros • ${claimStill.toLocaleString('pt-BR')} ainda no Excel`;
+    $('kpiResolvedPct').textContent=`${pctFmt.format(total ? resolvedValue/total*100 : 0)}%`; $('kpiResolvedPctSub').textContent=`${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)}`;
+    $('kpiClaimPct').textContent=`${pctFmt.format(total ? claimValue/total*100 : 0)}%`; $('kpiClaimPctSub').textContent=`${moneyFmt.format(claimValue)} ÷ ${moneyFmt.format(total)}`;
+    $('openCount').textContent=open.length.toLocaleString('pt-BR');
+    $('resolvedCount').textContent=resolved.length.toLocaleString('pt-BR');
+    $('claimCount').textContent=state.claimRows.length.toLocaleString('pt-BR');
   }
 
-  function sumBy(rows, labelGetter, valueGetter = r => r.__valor) {
-    const map = new Map();
-    for (const r of rows) {
-      const label = cleanText(labelGetter(r)) || 'Sem informação';
-      map.set(label, (map.get(label) || 0) + Number(valueGetter(r) || 0));
-    }
-    return [...map.entries()].sort((a,b)=>b[1]-a[1]);
+  function makeChart(id, config) { if (state.charts[id]) state.charts[id].destroy(); config.options=config.options||{}; config.options.animation={duration:180}; state.charts[id]=new Chart($(id),config); }
+
+  const chartMoneyTooltip = { callbacks:{ label:ctx => {
+    const raw=Number(ctx.raw||0), count=Number(ctx.dataset?._counts?.[ctx.dataIndex]||0);
+    const isDoughnut=['doughnut','pie'].includes(ctx.chart.config.type), multi=(ctx.chart.data.datasets||[]).length>1;
+    const total=isDoughnut ? (ctx.dataset.data||[]).reduce((s,v)=>s+Number(v||0),0) : multi ? ctx.chart.data.datasets.reduce((s,ds)=>s+Number(ds.data?.[ctx.dataIndex]||0),0) : 0;
+    const pct=total?raw/total*100:0, pctText=total?` (${pctFmt.format(pct)}%)`:'';
+    return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
+  }}};
+  const barDataLabels={anchor:'center',align:'center',clamp:true,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},textAlign:'center'};
+  function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
+  function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?64:granularity==='week'?86:76; inner.style.width=`${Math.max(520,Math.max(1,bucketCount)*per)}px`;}
+
+  function stackedPairs(rows,getter,limit=null){
+    const map=new Map();
+    for(const r of rows){const label=cleanText(getter(r))||'Sem informação'; if(!map.has(label))map.set(label,{open:0,resolved:0,claim:0,openCount:0,resolvedCount:0,claimCount:0}); const g=map.get(label); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`] += 1;}
+    let pairs=[...map.entries()].sort((a,b)=>(b[1].open+b[1].resolved+b[1].claim)-(a[1].open+a[1].resolved+a[1].claim)); if(limit)pairs=pairs.slice(0,limit); return pairs;
+  }
+  function temporalPairs(rows,dateGetter,granularity){const map=new Map(); for(const r of rows){const info=bucketInfo(dateGetter(r),granularity); if(!map.has(info.key))map.set(info.key,{...info,value:0,count:0}); map.get(info.key).value+=Number(r.__valor||0); map.get(info.key).count+=1;} return [...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort);}
+
+  function renderTemporalChart({id,innerId,rows,dateGetter,granularity,dimension,datasetLabel,alsoStatus}){
+    const pairs=temporalPairs(rows,dateGetter,granularity), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key), data=pairs.map(x=>x.value), counts=pairs.map(x=>x.count);
+    sizeTemporalChart(innerId,pairs.length,granularity);
+    const isResolved=alsoStatus==='Resolvido';
+    makeChart(id,{type:'bar',data:{labels,datasets:[{label:datasetLabel,data,_counts:counts,backgroundColor:isResolved?'rgba(22,163,74,.46)':'rgba(59,130,246,.46)',hoverBackgroundColor:isResolved?'rgba(22,163,74,.88)':'rgba(59,130,246,.88)',borderColor:isResolved?'#15803d':'#2563eb',hoverBorderColor:isResolved?'#166534':'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const key=keys[els[0].index]; if(key)toggleChartFilter(dimension,key,alsoStatus);},scales:{x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],granularity)},grid:{display:false}},y:{beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',offset:3,clamp:false,clip:false,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569',backgroundColor:'rgba(255,255,255,.92)',borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}}}}});
   }
 
-  function makeChart(id, config) {
-    if (state.charts[id]) state.charts[id].destroy();
-    config.options = config.options || {};
-    config.options.animation = { duration: 180 };
-    state.charts[id] = new Chart($(id), config);
+  function renderCharts(){
+    const master=uniqueRowsByKey(getMasterRows());
+    const statusBase=applyChartFilters(master,'status');
+    const opens=statusBase.filter(r=>r.status==='open'), resolved=statusBase.filter(r=>r.status==='resolved'), claims=statusBase.filter(r=>r.status==='claim');
+    const vals=[opens.reduce((s,r)=>s+r.__valor,0),resolved.reduce((s,r)=>s+r.__valor,0),claims.reduce((s,r)=>s+r.__valor,0)], counts=[opens.length,resolved.length,claims.length], statusLabels=['Em aberto','Resolvido','Sinistro'];
+    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts,backgroundColor:['rgba(59,130,246,.46)','rgba(22,163,74,.46)','rgba(139,92,246,.46)'],hoverBackgroundColor:['rgba(59,130,246,.88)','rgba(22,163,74,.88)','rgba(139,92,246,.88)'],borderColor:['#2563eb','#15803d','#7c3aed'],hoverBorderColor:['#1d4ed8','#166534','#6d28d9'],borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
+
+    const resolutionBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'resolution'), resolutionMap=new Map();
+    for(const r of resolutionBase){const label=cleanText(r.resolucao)||'Sem resolução'; if(!resolutionMap.has(label))resolutionMap.set(label,{value:0,count:0}); const x=resolutionMap.get(label); x.value+=r.__valor; x.count++;}
+    const resolutionPairs=[...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
+    makeChart('chartResolution',{type:'bar',data:{labels:resolutionPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=resolutionPairs[els[0].index]?.[0]; if(label)toggleChartFilter('resolution',label,'Resolvido');},scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+
+    const responsibleBase=applyChartFilters(master.filter(r=>r.status==='resolved'&&cleanText(r.resolucao)==='Conferente não vinculou o material a OF'),'responsible'), responsibleMap=new Map();
+    for(const r of responsibleBase){const label=cleanText(r.responsavel)||'Não informado'; if(!responsibleMap.has(label))responsibleMap.set(label,{value:0,count:0}); const x=responsibleMap.get(label); x.value+=r.__valor; x.count++;}
+    const responsiblePairs=[...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
+    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(245,158,11,.48)',hoverBackgroundColor:'rgba(245,158,11,.90)',borderColor:'#d97706',hoverBorderColor:'#b45309',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label,'Resolvido');},scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+
+    const vocBase=applyChartFilters(master,'vocativo'), vocPairs=stackedPairs(vocBase,r=>r.__vocativo,8), vocLabels=vocPairs.map(x=>x[0]);
+    makeChart('chartVocativo',{type:'bar',data:{labels:vocLabels,datasets:[
+      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(59,130,246,.46)',hoverBackgroundColor:'rgba(59,130,246,.88)',borderColor:'#2563eb',hoverBorderColor:'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5},
+      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5},
+      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total',backgroundColor:'rgba(139,92,246,.46)',hoverBackgroundColor:'rgba(139,92,246,.88)',borderColor:'#7c3aed',hoverBorderColor:'#6d28d9',borderWidth:1,hoverBorderWidth:1.5}
+    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=['Em aberto','Resolvido','Sinistro'][el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+
+    renderTemporalChart({id:'chartOccurrence',innerId:'chartOccurrenceInner',rows:applyChartFilters(master.filter(r=>r.status==='open'),'occurrencePeriod'),dateGetter:r=>r.__dataOcorrencia,granularity:state.occurrenceGranularity,dimension:'occurrencePeriod',datasetLabel:'Em aberto',alsoStatus:'Em aberto'});
+    renderTemporalChart({id:'chartResolutionDate',innerId:'chartResolutionDateInner',rows:applyChartFilters(master.filter(r=>r.status==='resolved'),'resolutionPeriod'),dateGetter:r=>r.dataResolucao,granularity:state.resolutionGranularity,dimension:'resolutionPeriod',datasetLabel:'Resolvido',alsoStatus:'Resolvido'});
   }
 
-  const chartMoneyTooltip = {
-    callbacks: {
-      label: ctx => {
-        const raw = Number(ctx.raw || 0);
-        const count = Number(ctx.dataset?._counts?.[ctx.dataIndex] || 0);
-        const isDoughnut = ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie';
-        const hasMultipleDatasets = (ctx.chart.data.datasets || []).length > 1;
-        const total = isDoughnut
-          ? (ctx.dataset.data || []).reduce((s, v) => s + Number(v || 0), 0)
-          : hasMultipleDatasets
-            ? ctx.chart.data.datasets.reduce((s, ds) => s + Number(ds.data?.[ctx.dataIndex] || 0), 0)
-            : 0;
-        const pct = total ? raw / total * 100 : 0;
-        const qty = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'registro' : 'registros'}`;
-        const pctText = total ? ` (${pctFmt.format(pct)}%)` : '';
-        return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${qty}`;
+  function sortSignalText(row) {
+    const labels = [];
+    const key = row.__key || row.key;
+    if (state.crcMap.has(key)) labels.push('Prioridade CRC');
+    if (state.notLocatedMap.has(key)) labels.push('Não localizado no cliente');
+    return labels.join(' | ');
+  }
+
+  function sortValue(table, row, key) {
+    switch (key) {
+      case 'nota': return cleanText(row.__nota ?? row.nota);
+      case 'coleta': return cleanText(row.__coleta ?? row.coleta);
+      case 'valor': return Number(row.__valor ?? row.valorNota ?? 0);
+      case 'vocativo': return cleanText(row.__vocativo ?? row.vocativo);
+      case 'dataOcorrencia': {
+        const d = row.__dataOcorrencia || parseDateValue(row['Data Ocorrencia']);
+        return d instanceof Date && !Number.isNaN(d.getTime()) ? d.getTime() : null;
       }
-    }
-  };
-
-  const barDataLabels = {
-    anchor: 'center',
-    align: 'center',
-    clamp: true,
-    formatter: value => Number(value) > 0 ? compactMoneyFmt.format(Number(value)) : '',
-    font: { size: 9, weight: '800' },
-    textAlign: 'center'
-  };
-
-  function countLabel(count) {
-    const n = Number(count || 0);
-    return `${n.toLocaleString('pt-BR')} ${n === 1 ? 'registro' : 'registros'}`;
-  }
-
-  function temporalTickLines(pair, granularity) {
-    if (!pair) return [''];
-    if (pair.key === 'NONE') return ['Sem data'];
-
-    if (granularity === 'week') {
-      const match = String(pair.label).match(/^(.*?)\s+a\s+(.*)$/);
-      if (match) return [match[1], `a ${match[2]}`];
-    }
-    return [pair.label];
-  }
-
-  function sizeTemporalChart(innerId, bucketCount, granularity) {
-    const inner = $(innerId);
-    if (!inner) return;
-    const perBucket = granularity === 'day' ? 64 : granularity === 'week' ? 86 : 76;
-    const width = Math.max(520, Math.max(1, bucketCount) * perBucket);
-    inner.style.width = `${width}px`;
-  }
-
-  function stackedPairs(rows, getter, limit = null) {
-    const labelsMap = new Map();
-    for (const r of rows) {
-      const label = cleanText(getter(r)) || 'Sem informação';
-      if (!labelsMap.has(label)) labelsMap.set(label, { open:0, resolved:0, openCount:0, resolvedCount:0 });
-      labelsMap.get(label)[r.status] += Number(r.__valor || 0);
-      if (r.status === 'open') labelsMap.get(label).openCount += 1;
-      else labelsMap.get(label).resolvedCount += 1;
-    }
-    let pairs = [...labelsMap.entries()].sort((a,b)=>(b[1].open+b[1].resolved)-(a[1].open+a[1].resolved));
-    if (limit) pairs = pairs.slice(0, limit);
-    return pairs;
-  }
-
-  function statusValueFromLabel(label) {
-    return label === 'Resolvido' ? 'resolved' : 'open';
-  }
-
-  function temporalPairs(rows, dateGetter, granularity) {
-    const map = new Map();
-    for (const r of rows) {
-      const info = bucketInfo(dateGetter(r), granularity);
-      if (!map.has(info.key)) map.set(info.key, { ...info, value: 0, count: 0 });
-      map.get(info.key).value += Number(r.__valor || 0);
-      map.get(info.key).count += 1;
-    }
-    return [...map.values()].sort((a,b) => {
-      if (a.key === 'NONE') return 1;
-      if (b.key === 'NONE') return -1;
-      return a.sort - b.sort;
-    });
-  }
-
-  function renderTemporalChart({ id, innerId, rows, dateGetter, granularity, dimension, datasetLabel, alsoStatus }) {
-    const pairs = temporalPairs(rows, dateGetter, granularity);
-    const labels = pairs.map(x=>x.label);
-    const keys = pairs.map(x=>x.key);
-    const data = pairs.map(x=>x.value);
-    const counts = pairs.map(x=>x.count);
-
-    sizeTemporalChart(innerId, pairs.length, granularity);
-
-    makeChart(id, {
-      type:'bar',
-      data:{ labels, datasets:[{ label:datasetLabel, data, _counts:counts, backgroundColor: alsoStatus === 'Resolvido' ? 'rgba(22,163,74,.46)' : 'rgba(59,130,246,.46)', hoverBackgroundColor: alsoStatus === 'Resolvido' ? 'rgba(22,163,74,.88)' : 'rgba(59,130,246,.88)', borderColor: alsoStatus === 'Resolvido' ? '#15803d' : '#2563eb', hoverBorderColor: alsoStatus === 'Resolvido' ? '#166534' : '#1d4ed8', borderWidth:1, hoverBorderWidth:1.5 }] },
-      options:{
-        maintainAspectRatio:false,
-        layout:{ padding:{ top:20, right:10, bottom:2, left:2 } },
-        onClick:(evt,elements)=>{
-          if(!elements.length)return;
-          const key=keys[elements[0].index];
-          if(key) toggleChartFilter(dimension,key,alsoStatus || null);
-        },
-        scales:{
-          x:{
-            offset:true,
-            ticks:{
-              autoSkip:false,
-              maxRotation:0,
-              minRotation:0,
-              padding:8,
-              font:{size:9,weight:'700'},
-              callback:function(value,index){
-                return temporalTickLines(pairs[index], granularity);
-              }
-            },
-            grid:{ display:false }
-          },
-          y:{
-            beginAtZero:true,
-            grace:'10%',
-            ticks:{ callback:value=>Number(value).toLocaleString('pt-BR') }
-          }
-        },
-        plugins:{
-          legend:{display:false},
-          tooltip:chartMoneyTooltip,
-          datalabels:{
-            anchor:'end',
-            align:'top',
-            offset:3,
-            clamp:false,
-            clip:false,
-            formatter:value=>Number(value)>0?compactMoneyFmt.format(Number(value)):'',
-            font:{size:9,weight:'800'},
-            color:'#475569',
-            backgroundColor:'rgba(255,255,255,.92)',
-            borderRadius:4,
-            padding:{top:2,right:4,bottom:2,left:4},
-            textAlign:'center'
-          }
-        }
+      case 'cliente': return cleanText(row['Cliente']);
+      case 'destino': return cleanText(row['Destino']);
+      case 'uf': return cleanText(row['UF Destino']);
+      case 'range': return cleanText(row['Range de Dias']);
+      case 'prioridade': return cleanText(row['Prioridade']);
+      case 'resolucao': return cleanText(row.resolucao);
+      case 'responsavel': return cleanText(row.responsavel);
+      case 'dataResolucao': {
+        const d = parseDateValue(row.dataResolucao);
+        return d ? d.getTime() : null;
       }
+      case 'quemResolveu': return cleanText(row.quemResolveu);
+      case 'sinalizacoes': return sortSignalText(row);
+      case 'statusAtual': {
+        const parts = [row.stillPending ? 'Ainda consta na pendência' : 'Fora da pendência atual'];
+        if (table === 'resolved' && row.inClaim) parts.push('Também em sinistro');
+        if (table === 'claim' && row.inResolved) parts.push('Também resolvido');
+        return parts.join(' | ');
+      }
+      default: return '';
+    }
+  }
+
+  function compareSortValues(a, b, dir) {
+    const aEmpty = a === null || a === undefined || a === '';
+    const bEmpty = b === null || b === undefined || b === '';
+    if (aEmpty && bEmpty) return 0;
+    if (aEmpty) return 1;
+    if (bEmpty) return -1;
+    let cmp = 0;
+    if (typeof a === 'number' && typeof b === 'number') cmp = a - b;
+    else cmp = String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    return dir === 'desc' ? -cmp : cmp;
+  }
+
+  function applyTableSort(rows, table) {
+    const cfg = state.tableSort[table];
+    if (!cfg || !cfg.key) {
+      if (table === 'open') return rows.sort((a,b)=>Number(b.crcPriority)-Number(a.crcPriority)||b.__valor-a.__valor);
+      return rows.sort((a,b)=>Number(b.stillPending)-Number(a.stillPending)||Number(b.valorNota||0)-Number(a.valorNota||0));
+    }
+    return rows.sort((a,b) => {
+      const cmp = compareSortValues(sortValue(table,a,cfg.key), sortValue(table,b,cfg.key), cfg.dir);
+      if (cmp) return cmp;
+      return keyOf(a.__nota ?? a.nota, a.__coleta ?? a.coleta).localeCompare(keyOf(b.__nota ?? b.nota, b.__coleta ?? b.coleta), 'pt-BR', { numeric:true });
     });
   }
 
-  function renderCharts() {
-    const master = getMasterRows();
-
-    const statusBase = applyChartFilters(master, 'status');
-    const openRowsStatus = statusBase.filter(r=>r.status==='open');
-    const resolvedRowsStatus = statusBase.filter(r=>r.status==='resolved');
-    const openValue = openRowsStatus.reduce((s,r)=>s+r.__valor,0);
-    const resolvedValue = resolvedRowsStatus.reduce((s,r)=>s+r.__valor,0);
-    const statusCounts = [openRowsStatus.length, resolvedRowsStatus.length];
-    makeChart('chartStatus', {
-      type:'doughnut',
-      data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue], _counts:statusCounts, backgroundColor:['rgba(59,130,246,.46)','rgba(22,163,74,.46)'], hoverBackgroundColor:['rgba(59,130,246,.88)','rgba(22,163,74,.88)'], borderColor:['#2563eb','#15803d'], hoverBorderColor:['#1d4ed8','#166534'], borderWidth:1, hoverBorderWidth:1.5 }] },
-      options:{
-        maintainAspectRatio:false,
-        onClick:(evt,elements)=>{ if(!elements.length)return; const label=['Em aberto','Resolvido'][elements[0].index]; toggleChartFilter('status', label); },
-        plugins:{
-          legend:{position:'bottom'},
-          tooltip:chartMoneyTooltip,
-          datalabels:{
-            formatter:(value,ctx)=>{
-              const total=ctx.dataset.data.reduce((s,v)=>s+Number(v||0),0);
-              const pct=total?Number(value)/total*100:0;
-              return Number(value)>0 ? `${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(value))}` : '';
-            },
-            font:{size:10,weight:'800'},
-            textAlign:'center'
-          }
-        }
-      }
-    });
-
-    const resolutionBase = applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolution');
-    const resolutionMap = new Map();
-    for (const r of resolutionBase) {
-      const label = cleanText(r.resolucao) || 'Sem resolução';
-      if (!resolutionMap.has(label)) resolutionMap.set(label, { value:0, count:0 });
-      resolutionMap.get(label).value += Number(r.__valor || 0);
-      resolutionMap.get(label).count += 1;
-    }
-    const resolutionPairs = [...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
-    makeChart('chartResolution', {
-      type:'bar',
-      data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}] },
-      options:{
-        indexAxis:'y', maintainAspectRatio:false,
-        onClick:(evt,elements)=>{ if(!elements.length)return; const label=resolutionPairs[elements[0].index]?.[0]; if(label) toggleChartFilter('resolution', label, 'Resolvido'); },
-        scales:{
-          x:{beginAtZero:true,grace:'10%'},
-          y:{ticks:{font:{size:9,weight:'700'}}}
-        },
-        plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
-      }
-    });
-
-    const responsibleBase = applyChartFilters(
-      master.filter(r => r.status === 'resolved' && cleanText(r.resolucao) === 'Conferente não vinculou o material a OF'),
-      'responsible'
-    );
-    const responsibleMap = new Map();
-    for (const r of responsibleBase) {
-      const label = cleanText(r.responsavel) || 'Não informado';
-      if (!responsibleMap.has(label)) responsibleMap.set(label, { value:0, count:0 });
-      responsibleMap.get(label).value += Number(r.__valor || 0);
-      responsibleMap.get(label).count += 1;
-    }
-    const responsiblePairs = [...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
-    makeChart('chartResponsible', {
-      type:'bar',
-      data:{ labels:responsiblePairs.map(x=>x[0]), datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(245,158,11,.48)',hoverBackgroundColor:'rgba(245,158,11,.90)',borderColor:'#d97706',hoverBorderColor:'#b45309',borderWidth:1,hoverBorderWidth:1.5}] },
-      options:{
-        indexAxis:'y', maintainAspectRatio:false,
-        onClick:(evt,elements)=>{ if(!elements.length)return; const label=responsiblePairs[elements[0].index]?.[0]; if(label) toggleChartFilter('responsible', label, 'Resolvido'); },
-        scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},
-        plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
-      }
-    });
-
-    const vocativoBase = applyChartFilters(master, 'vocativo');
-    const vocativoPairs = stackedPairs(vocativoBase, r=>r.__vocativo, 8);
-    const vocativoLabels = vocativoPairs.map(x=>x[0]);
-    const vocativoAxisLabels = vocativoPairs.map(x=>x[0]);
-    makeChart('chartVocativo', {
-      type:'bar',
-      data:{
-        labels:vocativoAxisLabels,
-        datasets:[
-          {label:'Em aberto',data:vocativoPairs.map(x=>x[1].open),_counts:vocativoPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(59,130,246,.46)',hoverBackgroundColor:'rgba(59,130,246,.88)',borderColor:'#2563eb',hoverBorderColor:'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5},
-          {label:'Resolvido',data:vocativoPairs.map(x=>x[1].resolved),_counts:vocativoPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}
-        ]
-      },
-      options:{
-        indexAxis:'y',
-        maintainAspectRatio:false,
-        onClick:(evt,elements)=>{
-          if(!elements.length)return;
-          const el=elements[0];
-          const label=vocativoLabels[el.index];
-          const statusLabel=el.datasetIndex===1?'Resolvido':'Em aberto';
-          toggleChartFilter('vocativo',label,statusLabel);
-        },
-        scales:{
-          x:{stacked:true,beginAtZero:true,grace:'8%'},
-          y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}
-        },
-        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
-      }
-    });
-
-    renderTemporalChart({
-      id:'chartOccurrence',
-      innerId:'chartOccurrenceInner',
-      rows: applyChartFilters(master.filter(r=>r.status==='open'), 'occurrencePeriod'),
-      dateGetter:r=>r.__dataOcorrencia,
-      granularity:state.occurrenceGranularity,
-      dimension:'occurrencePeriod',
-      datasetLabel:'Em aberto',
-      alsoStatus:'Em aberto'
-    });
-
-    renderTemporalChart({
-      id:'chartResolutionDate',
-      innerId:'chartResolutionDateInner',
-      rows: applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolutionPeriod'),
-      dateGetter:r=>r.dataResolucao,
-      granularity:state.resolutionGranularity,
-      dimension:'resolutionPeriod',
-      datasetLabel:'Resolvido',
-      alsoStatus:'Resolvido'
+  function updateSortIndicators(table) {
+    document.querySelectorAll(`table[data-sort-table="${table}"] th[data-sort]`).forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      const cfg = state.tableSort[table];
+      if (cfg?.key === th.dataset.sort) th.classList.add(cfg.dir === 'desc' ? 'sort-desc' : 'sort-asc');
     });
   }
 
-  function renderOpenTable() {
-    const rows = getOpenRows(true).sort((a,b)=>b.__valor-a.__valor);
-    const totalPages = Math.max(1, Math.ceil(rows.length / CONFIG.PAGE_SIZE));
-    if (state.openPage > totalPages) state.openPage = totalPages;
-    const start = (state.openPage - 1) * CONFIG.PAGE_SIZE;
-    const pageRows = rows.slice(start, start + CONFIG.PAGE_SIZE);
-    $('openEmpty').classList.toggle('hidden', rows.length > 0);
-    $('openBody').innerHTML = pageRows.map(r => `<tr data-key="${esc(r.__key)}" class="${state.selectedKey === r.__key ? 'selected' : ''}">
-      <td>${esc(r.__nota)}</td>
-      <td>${esc(r.__coleta)}</td>
-      <td class="money">${moneyFmt.format(r.__valor)}</td>
-      <td>${esc(r.__vocativo)}</td>
-      <td>${esc(r.__dataOcorrencia ? dateFmt.format(r.__dataOcorrencia) : 'Sem data')}</td>
-      <td>${esc(r['Cliente'])}</td>
-      <td>${esc(r['Destino'])}</td>
-      <td>${esc(r['UF Destino'])}</td>
-      <td>${esc(r['Range de Dias'])}</td>
-      <td>${esc(r['Prioridade'])}</td>
-      <td>${r.__duplicateCount > 1 ? `<span class="badge warn">${r.__duplicateCount} linhas</span>` : '<span class="badge neutral">1</span>'}${r.__valueConflict ? ' <span class="badge warn">valor divergente</span>' : ''}</td>
-      <td><button class="row-btn resolve-row" data-key="${esc(r.__key)}">Resolver</button></td>
+  function setTableSort(table, key) {
+    const cfg = state.tableSort[table];
+    if (!cfg) return;
+    if (cfg.key === key) cfg.dir = cfg.dir === 'asc' ? 'desc' : 'asc';
+    else { cfg.key = key; cfg.dir = 'asc'; }
+    if (table === 'open') { state.openPage = 1; renderOpenTable(); }
+    else if (table === 'resolved') { state.resolvedPage = 1; renderResolvedTable(); }
+    else if (table === 'claim') { state.claimPage = 1; renderClaimTable(); }
+  }
+
+  function signalBadges(key){
+    const badges=[];
+    if(state.crcMap.has(key))badges.push('<span class="badge crc">Prioridade CRC</span>');
+    if(state.notLocatedMap.has(key))badges.push('<span class="badge lost">Não localizado no cliente</span>');
+    return badges.length?`<div class="signal-stack">${badges.join('')}</div>`:'—';
+  }
+
+  function renderOpenTable(){
+    const rows=applyTableSort(getOpenRows(true), 'open'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('open');
+    if(state.openPage>totalPages)state.openPage=totalPages; const start=(state.openPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('openEmpty').classList.toggle('hidden',rows.length>0);
+    $('openBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.__key)}" class="${state.selectedKey===r.__key?'selected ':''}${r.crcPriority?'crc-priority':''}">
+      <td>${esc(r.__nota)}</td><td>${esc(r.__coleta)}</td><td class="money">${moneyFmt.format(r.__valor)}</td><td>${esc(r.__vocativo)}</td><td>${esc(r.__dataOcorrencia?dateFmt.format(r.__dataOcorrencia):'Sem data')}</td><td>${esc(r['Cliente'])}</td><td>${esc(r['Destino'])}</td><td>${esc(r['UF Destino'])}</td><td>${esc(r['Range de Dias'])}</td><td>${esc(r['Prioridade'])}</td><td>${signalBadges(r.__key)}</td>
     </tr>`).join('');
-    $('openSummary').textContent = `${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.__valor,0))}`;
-    $('openPageLabel').textContent = `Página ${state.openPage} de ${totalPages}`;
-    $('openPrev').disabled = state.openPage <= 1;
-    $('openNext').disabled = state.openPage >= totalPages;
+    $('openSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.__valor,0))}`; $('openPageLabel').textContent=`Página ${state.openPage} de ${totalPages}`; $('openPrev').disabled=state.openPage<=1; $('openNext').disabled=state.openPage>=totalPages;
   }
 
-  function renderResolvedTable() {
-    const rows = getResolvedRows(true).sort((a,b)=>Number(b.stillPending)-Number(a.stillPending) || b.valorNota-a.valorNota);
-    const totalPages = Math.max(1, Math.ceil(rows.length / CONFIG.PAGE_SIZE));
-    if (state.resolvedPage > totalPages) state.resolvedPage = totalPages;
-    const start = (state.resolvedPage - 1) * CONFIG.PAGE_SIZE;
-    const pageRows = rows.slice(start, start + CONFIG.PAGE_SIZE);
-    $('resolvedEmpty').classList.toggle('hidden', rows.length > 0);
-    $('resolvedBody').innerHTML = pageRows.map(r => `<tr>
-      <td>${esc(r.nota)}</td>
-      <td>${esc(r.coleta)}</td>
-      <td class="money">${moneyFmt.format(r.valorNota)}</td>
-      <td>${esc(r.vocativo)}</td>
-      <td>${esc(r.resolucao)}</td>
-      <td>${esc(r.responsavel || '—')}</td>
-      <td>${esc(r.dataResolucao && parseDateValue(r.dataResolucao) ? dateFmt.format(parseDateValue(r.dataResolucao)) : 'Sem data')}</td>
-      <td>${esc(r.quemResolveu || 'Não informado')}</td>
-      <td>${r.stillPending ? '<span class="badge warn">Ainda consta na pendência</span>' : '<span class="badge ok">Fora da pendência atual</span>'}</td>
-      <td><button class="row-btn edit-resolved" data-key="${esc(r.key)}">Editar</button></td>
-    </tr>`).join('');
-    $('resolvedSummary').textContent = `${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
-    $('resolvedPageLabel').textContent = `Página ${state.resolvedPage} de ${totalPages}`;
-    $('resolvedPrev').disabled = state.resolvedPage <= 1;
-    $('resolvedNext').disabled = state.resolvedPage >= totalPages;
+  function renderResolvedTable(){
+    const rows=applyTableSort(getResolvedRows(true), 'resolved'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('resolved');
+    if(state.resolvedPage>totalPages)state.resolvedPage=totalPages; const start=(state.resolvedPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('resolvedEmpty').classList.toggle('hidden',rows.length>0);
+    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
+    $('resolvedSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('resolvedPageLabel').textContent=`Página ${state.resolvedPage} de ${totalPages}`; $('resolvedPrev').disabled=state.resolvedPage<=1; $('resolvedNext').disabled=state.resolvedPage>=totalPages;
   }
 
-  function openModal(data = {}, mode = 'manual') {
-    $('fNota').value = data.nota ?? '';
-    $('fColeta').value = data.coleta ?? '';
-    $('fValor').value = data.valorNota != null ? String(data.valorNota).replace('.', ',') : '';
-    $('fVocativo').value = data.vocativo ?? '';
-    $('fResolution').value = data.resolucao ?? '';
-    $('fResponsible').value = data.responsavel ?? '';
-    $('fSolvedBy').value = data.quemResolveu ?? '';
-    const locked = mode === 'report';
-    $('fNota').readOnly = locked;
-    $('fColeta').readOnly = locked;
-    $('fValor').readOnly = locked;
-    $('fVocativo').readOnly = locked;
-    $('modalTitle').textContent = mode === 'edit' ? 'Editar resolução' : mode === 'report' ? 'Resolver registro selecionado' : 'Nova resolução manual';
-    updateResponsibleVisibility();
-    $('modalBackdrop').classList.remove('hidden');
-  }
-  function closeModal() { $('modalBackdrop').classList.add('hidden'); }
-  function updateResponsibleVisibility() {
-    const show = state.responsibleResolutions.includes($('fResolution').value);
-    $('responsibleGroup').classList.toggle('hidden', !show);
-    if (!show) $('fResponsible').value = '';
+  function renderClaimTable(){
+    const rows=applyTableSort(getClaimRows(true), 'claim'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('claim');
+    if(state.claimPage>totalPages)state.claimPage=totalPages; const start=(state.claimPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('claimEmpty').classList.toggle('hidden',rows.length>0);
+    $('claimBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inResolved?' <span class="badge info">Também resolvido</span>':''}</td></tr>`).join('');
+    $('claimSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('claimPageLabel').textContent=`Página ${state.claimPage} de ${totalPages}`; $('claimPrev').disabled=state.claimPage<=1; $('claimNext').disabled=state.claimPage>=totalPages;
   }
 
-  function openReportResolution(key) {
-    const r = state.reportRows.find(x => x.__key === key);
-    if (!r) return;
-    state.selectedKey = key;
-    renderOpenTable();
-    $('btnResolveSelected').disabled = !state.apiReady;
-    openModal({ nota:r.__nota, coleta:r.__coleta, valorNota:r.__valor, vocativo:r.__vocativo }, 'report');
+  function openModal(data={},mode='manual'){
+    $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
+    const locked=mode==='report'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':'Nova resolução manual'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
+  }
+  const closeModal=()=>$('modalBackdrop').classList.add('hidden');
+  function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
+  function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openClaimModal(data={},mode='manual'){
+    $('sNota').value=data.nota??''; $('sColeta').value=data.coleta??''; $('sValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('sVocativo').value=data.vocativo??'';
+    const locked=mode==='report'; ['sNota','sColeta','sValor','sVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Novo sinistro manual'; $('claimModalBackdrop').classList.remove('hidden');
+  }
+  const closeClaimModal=()=>$('claimModalBackdrop').classList.add('hidden');
+  function openReportClaim(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openClaimModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function updateSelectedActions(){
+    const row=state.selectedKey?state.reportRows.find(r=>r.__key===state.selectedKey):null, enabled=!!row&&state.apiReady;
+    $('btnResolveSelected').disabled=!enabled; $('btnClaimSelected').disabled=!enabled; $('btnToggleCrc').disabled=!enabled; $('btnToggleLost').disabled=!enabled;
+    const isCrc=!!row&&state.crcMap.has(row.__key), isLost=!!row&&state.notLocatedMap.has(row.__key);
+    $('btnToggleCrc').textContent=isCrc?'Remover Prioridade CRC':'Marcar Prioridade CRC'; $('btnToggleCrc').classList.toggle('btn-active',isCrc);
+    $('btnToggleLost').textContent=isLost?'Remover Não localizado':'Marcar Não localizado'; $('btnToggleLost').classList.toggle('btn-active',isLost);
   }
 
-  $('openBody').addEventListener('click', (e) => {
-    const btn = e.target.closest('.resolve-row');
-    if (btn) { e.stopPropagation(); openReportResolution(btn.dataset.key); return; }
-    const tr = e.target.closest('tr[data-key]');
-    if (tr) { state.selectedKey = tr.dataset.key; renderOpenTable(); $('btnResolveSelected').disabled = !state.apiReady; }
+  $('openBody').addEventListener('click',e=>{
+    const resolveBtn=e.target.closest('.resolve-row'); if(resolveBtn){e.stopPropagation(); openReportResolution(resolveBtn.dataset.key); return;}
+    const claimBtn=e.target.closest('.claim-row'); if(claimBtn){e.stopPropagation(); openReportClaim(claimBtn.dataset.key); return;}
+    const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedKey=tr.dataset.key; renderOpenTable(); updateSelectedActions();}
   });
-  $('openBody').addEventListener('dblclick', (e) => {
-    const tr = e.target.closest('tr[data-key]');
-    if (tr) openReportResolution(tr.dataset.key);
-  });
-  $('resolvedBody').addEventListener('click', (e) => {
-    const btn = e.target.closest('.edit-resolved');
-    if (!btn) return;
-    const r = state.resolvedRows.find(x => x.key === btn.dataset.key);
-    if (r) openModal(r, 'edit');
+  $('openBody').addEventListener('dblclick',e=>{const tr=e.target.closest('tr[data-key]'); if(tr)openReportResolution(tr.dataset.key);});
+  $('resolvedBody').addEventListener('click',e=>{const btn=e.target.closest('.edit-resolved'); if(!btn)return; const r=state.resolvedRows.find(x=>x.key===btn.dataset.key); if(r)openModal(r,'edit');});
+  $('claimBody').addEventListener('click',async e=>{
+    const edit=e.target.closest('.edit-claim'); if(edit){const r=state.claimRows.find(x=>x.key===edit.dataset.key); if(r)openClaimModal(r,'edit'); return;}
+    const remove=e.target.closest('.remove-claim'); if(!remove)return;
+    const r=state.claimRows.find(x=>x.key===remove.dataset.key); if(!r)return;
+    if(!confirm(`Remover Nota ${r.nota} / Coleta ${r.coleta} da aba Sinistros?`))return;
+    try{await postAndConfirm({action:'removerSinistro',nota:r.nota,coleta:r.coleta},()=>!state.claimMap.has(r.key),'Não foi possível confirmar a remoção do sinistro.'); setNotice('ok','Sinistro removido',`Nota ${r.nota} / Coleta ${r.coleta} foi removida da aba Sinistros.`);}catch(err){setNotice('error','Falha ao remover',err.message);}
   });
 
-  $('resolutionForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!state.apiReady) return setNotice('error', 'Apps Script indisponível', 'Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload = {
-      nota: cleanText($('fNota').value),
-      coleta: cleanText($('fColeta').value),
-      valorNota: parseMoney($('fValor').value),
-      vocativo: cleanText($('fVocativo').value),
-      resolucao: $('fResolution').value,
-      responsavel: cleanText($('fResponsible').value),
-      quemResolveu: $('fSolvedBy').value
-    };
-    if (!payload.quemResolveu) {
-      $('fSolvedBy').focus();
-      return setNotice('error', 'Selecione quem resolveu', 'Escolha Italo ou Bruna antes de salvar a resolução.');
-    }
-    const btn = $('btnSave');
-    const old = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Salvando...';
-    try {
-      await postAndConfirm(payload);
-      await refreshResolved();
-      state.selectedKey = null;
-      closeModal();
-      setNotice('ok', 'Registro confirmado', `Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada no Google Planilhas.`);
-    } catch (err) {
-      setNotice('error', 'Falha ao gravar', `${err.message}. O registro não foi marcado como resolvido.`);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = old;
-    }
+  $('resolutionForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload={action:'salvarResolvido',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText($('fResponsible').value),quemResolveu:$('fSolvedBy').value};
+    if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
+    const btn=$('btnSave'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{const key=keyOf(payload.nota,payload.coleta); await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
-  $('btnApiTest').addEventListener('click', () => {
-    try {
-      const url = `${getAppsScriptBase()}?action=health&_=${Date.now()}`;
-      window.open(url, '_blank', 'noopener');
-    } catch (err) {
-      setNotice('error', 'URL do Apps Script inválida', err.message);
-    }
+  $('claimForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload={action:'salvarSinistro',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const btn=$('btnSaveClaim'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{const key=keyOf(payload.nota,payload.coleta); await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
-  $('btnRefresh').addEventListener('click', async () => {
-    try { await connectApi(); } catch (_) {}
-  });
-  $('btnManual').addEventListener('click', () => openModal({}, 'manual'));
-  $('btnResolveSelected').addEventListener('click', () => { if (state.selectedKey) openReportResolution(state.selectedKey); });
-  $('modalClose').addEventListener('click', closeModal);
-  $('modalCancel').addEventListener('click', closeModal);
-  $('modalBackdrop').addEventListener('click', e => { if (e.target === $('modalBackdrop')) closeModal(); });
-  $('fResolution').addEventListener('change', updateResponsibleVisibility);
+  async function toggleMarker(type){
+    if(!state.selectedKey||!state.apiReady)return; const r=state.reportRows.find(x=>x.__key===state.selectedKey); if(!r)return;
+    const isCrc=type==='crc', map=isCrc?state.crcMap:state.notLocatedMap, action=isCrc?'setPrioridadeCrc':'setNaoLocalizado', ativo=!map.has(r.__key), label=isCrc?'Prioridade CRC':'Não localizado no cliente';
+    try{await postAndConfirm({action,nota:r.__nota,coleta:r.__coleta,ativo},()=>((isCrc?state.crcMap:state.notLocatedMap).has(r.__key)===ativo),`Não foi possível confirmar ${label}.`); setNotice('ok',ativo?`${label} marcado`:`${label} removido`,`Nota ${r.__nota} / Coleta ${r.__coleta}.`);}catch(err){setNotice('error','Falha ao atualizar',err.message);}
+  }
 
-  document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
-    const open = tab.dataset.tab === 'open';
-    $('panelOpen').classList.toggle('hidden', !open);
-    $('panelResolved').classList.toggle('hidden', open);
+  $('btnApiTest').addEventListener('click',()=>{try{window.open(`${getAppsScriptBase()}?action=health&_=${Date.now()}`,'_blank','noopener');}catch(err){setNotice('error','URL do Apps Script inválida',err.message);}});
+  $('btnRefresh').addEventListener('click',()=>connectApi());
+  $('btnManual').addEventListener('click',()=>openModal({},'manual'));
+  $('btnManualClaim').addEventListener('click',()=>openClaimModal({},'manual'));
+  $('btnResolveSelected').addEventListener('click',()=>{if(state.selectedKey)openReportResolution(state.selectedKey);});
+  $('btnClaimSelected').addEventListener('click',()=>{if(state.selectedKey)openReportClaim(state.selectedKey);});
+  $('btnToggleCrc').addEventListener('click',()=>toggleMarker('crc'));
+  $('btnToggleLost').addEventListener('click',()=>toggleMarker('lost'));
+  $('modalClose').addEventListener('click',closeModal); $('modalCancel').addEventListener('click',closeModal); $('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();}); $('fResolution').addEventListener('change',updateResponsibleVisibility);
+  $('claimModalClose').addEventListener('click',closeClaimModal); $('claimModalCancel').addEventListener('click',closeClaimModal); $('claimModalBackdrop').addEventListener('click',e=>{if(e.target===$('claimModalBackdrop'))closeClaimModal();});
+
+  document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===tab));
+    const target=tab.dataset.tab;
+    $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
   }));
+  $('btnClearChartFilters').addEventListener('click',clearChartFilters);
+  $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView();});
+  $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView();});
+  $('chartFilterChips').addEventListener('click',e=>{const chip=e.target.closest('.filter-chip'); if(!chip)return; const dim=chip.dataset.dim,value=chip.dataset.value; if(state.chartFilters[dim]){state.chartFilters[dim].delete(value); rebuildView();}});
+  ['openSearch','openClient','openRange','openPriority'].forEach(id=>$(id).addEventListener(id==='openSearch'?'input':'change',()=>{state.openPage=1;renderOpenTable();}));
+  ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id=>$(id).addEventListener(id==='resolvedSearch'?'input':'change',()=>{state.resolvedPage=1;renderResolvedTable();}));
+  ['claimSearch','claimPresence'].forEach(id=>$(id).addEventListener(id==='claimSearch'?'input':'change',()=>{state.claimPage=1;renderClaimTable();}));
+  $('openPrev').addEventListener('click',()=>{if(state.openPage>1){state.openPage--;renderOpenTable();}}); $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
+  $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}}); $('resolvedNext').addEventListener('click',()=>{state.resolvedPage++;renderResolvedTable();});
+  $('claimPrev').addEventListener('click',()=>{if(state.claimPage>1){state.claimPage--;renderClaimTable();}}); $('claimNext').addEventListener('click',()=>{state.claimPage++;renderClaimTable();});
 
-  $('btnClearChartFilters').addEventListener('click', clearChartFilters);
-
-  $('occurrenceGranularity').addEventListener('change', () => {
-    state.occurrenceGranularity = $('occurrenceGranularity').value;
-    state.chartFilters.occurrencePeriod.clear();
-    state.openPage = 1;
-    state.resolvedPage = 1;
-    rebuildView();
+  document.querySelectorAll('table[data-sort-table] th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const table = th.closest('table')?.dataset.sortTable;
+      if (table) setTableSort(table, th.dataset.sort);
+    });
   });
-
-  $('resolutionGranularity').addEventListener('change', () => {
-    state.resolutionGranularity = $('resolutionGranularity').value;
-    state.chartFilters.resolutionPeriod.clear();
-    state.openPage = 1;
-    state.resolvedPage = 1;
-    rebuildView();
-  });
-
-  $('chartFilterChips').addEventListener('click', (e) => {
-    const chip = e.target.closest('.filter-chip');
-    if (!chip) return;
-    const dim = chip.dataset.dim;
-    const value = chip.dataset.value;
-    if (state.chartFilters[dim]) {
-      state.chartFilters[dim].delete(value);
-      rebuildView();
-    }
-  });
-
-  ['openSearch','openClient','openRange','openPriority'].forEach(id => $(id).addEventListener(id === 'openSearch' ? 'input' : 'change', () => { state.openPage=1; renderOpenTable(); }));
-  ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id => $(id).addEventListener(id === 'resolvedSearch' ? 'input' : 'change', () => { state.resolvedPage=1; renderResolvedTable(); }));
-  $('openPrev').addEventListener('click',()=>{ if(state.openPage>1){state.openPage--;renderOpenTable();} });
-  $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
-  $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}});
-  $('resolvedNext').addEventListener('click',()=>{state.resolvedPage++;renderResolvedTable();});
 
   connectApi();
   rebuildView();
