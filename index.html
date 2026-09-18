@@ -6,6 +6,7 @@
   <title>Pendência Temporária</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -124,7 +125,7 @@
 
     .charts-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
+      grid-template-columns: repeat(2, minmax(0,1fr));
       gap: 14px;
       margin-bottom: 20px;
     }
@@ -136,8 +137,36 @@
       padding: 15px;
       box-shadow: 0 7px 22px rgba(15,23,42,.05);
     }
-    .chart-card h3 { margin: 0 0 12px; font-size: 14px; }
-    .chart-wrap { height: 270px; position: relative; }
+    .chart-card h3 { margin: 0; font-size: 14px; }
+    .chart-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .chart-card-title { min-width:0; }
+    .chart-card .chart-hint { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .chart-granularity {
+      border:1px solid var(--line);
+      border-radius:9px;
+      background:#fff;
+      padding:7px 9px;
+      font-size:11px;
+      font-weight:800;
+      color:#334155;
+      flex:0 0 auto;
+    }
+    .chart-wrap { height: 290px; position: relative; }
+    .chart-wrap canvas { cursor: pointer; }
+
+    .chart-filter-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      margin: 0 0 14px; padding: 11px 13px; border: 1px solid #c7d7ff; border-radius: 12px;
+      background: #f5f8ff;
+    }
+    .chart-filter-info { display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-width:0; }
+    .chart-filter-info > strong { font-size: 12px; color:#334155; }
+    .filter-chip {
+      border: 1px solid #bfd0ff; background:#fff; color:#1d4ed8; border-radius:999px;
+      padding:5px 9px; font-size:11px; font-weight:800; cursor:pointer;
+    }
+    .filter-chip:hover { background:#eaf1ff; }
+    .chart-filter-empty { color:var(--muted); font-size:11px; }
 
     .tabs {
       display: flex;
@@ -231,7 +260,7 @@
 
     @media (max-width: 1180px) {
       .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); }
-      .charts-grid { grid-template-columns: 1fr 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
       header { padding: 12px; align-items: flex-start; flex-direction: column; }
@@ -279,9 +308,9 @@
 
     <section class="kpis">
       <article class="kpi">
-        <div class="label">Valor do relatório atual</div>
+        <div class="label">Valor total conciliado</div>
         <div class="value" id="kpiTotal">R$ 0,00</div>
-        <div class="sub" id="kpiTotalSub">Nenhum relatório carregado</div>
+        <div class="sub" id="kpiTotalSub">União Excel + Google Planilhas</div>
       </article>
       <article class="kpi open">
         <div class="label">Valor em aberto</div>
@@ -289,7 +318,7 @@
         <div class="sub" id="kpiOpenSub">0 registros</div>
       </article>
       <article class="kpi resolved">
-        <div class="label">Resolvido no relatório atual</div>
+        <div class="label">Valor resolvido</div>
         <div class="value" id="kpiResolved">R$ 0,00</div>
         <div class="sub" id="kpiResolvedSub">0 registros</div>
       </article>
@@ -301,17 +330,53 @@
       <article class="kpi">
         <div class="label">% resolvido por valor</div>
         <div class="value" id="kpiPercent">0,00%</div>
-        <div class="sub" id="kpiPercentSub">Base: relatório atual</div>
+        <div class="sub" id="kpiPercentSub">Base: união das duas bases sem duplicar Nota + Coleta</div>
       </article>
     </section>
 
+    <div class="chart-filter-bar">
+      <div class="chart-filter-info">
+        <strong>Seleções dos gráficos:</strong>
+        <span id="chartFilterChips" class="chart-filter-empty">Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.</span>
+      </div>
+      <button class="btn" id="btnClearChartFilters" disabled>Limpar seleções</button>
+    </div>
+
     <section class="charts-grid">
-      <article class="chart-card"><h3>Valor em aberto × resolvido</h3><div class="chart-wrap"><canvas id="chartStatus"></canvas></div></article>
-      <article class="chart-card"><h3>Valor resolvido por tipo de resolução</h3><div class="chart-wrap"><canvas id="chartResolution"></canvas></div></article>
-      <article class="chart-card"><h3>Top clientes — valor em aberto</h3><div class="chart-wrap"><canvas id="chartClient"></canvas></div></article>
-      <article class="chart-card"><h3>Top vocativos — valor em aberto</h3><div class="chart-wrap"><canvas id="chartVocativo"></canvas></div></article>
-      <article class="chart-card"><h3>Valor em aberto por Range de Dias</h3><div class="chart-wrap"><canvas id="chartRange"></canvas></div></article>
-      <article class="chart-card"><h3>Valor em aberto por Prioridade</h3><div class="chart-wrap"><canvas id="chartPriority"></canvas></div></article>
+      <article class="chart-card">
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Valor em aberto × resolvido</h3><div class="chart-hint">Clique em uma fatia para selecionar o status.</div></div></div>
+        <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Valor resolvido por tipo de resolução</h3><div class="chart-hint">Inclui todos os resolvidos do Google, estejam ou não no Excel atual.</div></div></div>
+        <div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido</h3><div class="chart-hint">Barras empilhadas. Clique em um segmento para filtrar.</div></div></div>
+        <div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-card-head">
+          <div class="chart-card-title"><h3>Valor em aberto por Data Ocorrência</h3><div class="chart-hint">Somente casos em aberto. Clique em uma barra para filtrar o painel.</div></div>
+          <select id="occurrenceGranularity" class="chart-granularity" aria-label="Agrupamento da Data Ocorrência">
+            <option value="day">Dia</option>
+            <option value="week" selected>Semana</option>
+            <option value="month">Mês</option>
+          </select>
+        </div>
+        <div class="chart-wrap"><canvas id="chartOccurrence"></canvas></div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-card-head">
+          <div class="chart-card-title"><h3>Valor resolvido por Data de Resolução</h3><div class="chart-hint">A Data de Resolução é gravada automaticamente no Google Planilhas no primeiro registro.</div></div>
+          <select id="resolutionGranularity" class="chart-granularity" aria-label="Agrupamento da Data de Resolução">
+            <option value="day">Dia</option>
+            <option value="week" selected>Semana</option>
+            <option value="month">Mês</option>
+          </select>
+        </div>
+        <div class="chart-wrap"><canvas id="chartResolutionDate"></canvas></div>
+      </article>
     </section>
 
     <nav class="tabs">
@@ -332,7 +397,7 @@
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Cliente</th><th>Destino</th><th>UF</th><th>Range</th><th>Prioridade</th><th>Repetições no Excel</th><th>Ação</th>
+            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Data Ocorrência</th><th>Cliente</th><th>Destino</th><th>UF</th><th>Range</th><th>Prioridade</th><th>Repetições no Excel</th><th>Ação</th>
           </tr></thead>
           <tbody id="openBody"></tbody>
         </table>
@@ -353,7 +418,7 @@
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Status no relatório atual</th><th>Ação</th>
+            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Data Resolução</th><th>Status no relatório atual</th><th>Ação</th>
           </tr></thead>
           <tbody id="resolvedBody"></tbody>
         </table>
@@ -396,7 +461,7 @@
 <script>
   // ALTERE SOMENTE ESTA URL DEPOIS QUE PUBLICAR O APPS SCRIPT COMO APLICATIVO DA WEB.
   const CONFIG = {
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxUjFH7SOQV3p9DOQPFkXpxj2eac3rcRXiXuKoc-sstpWhWS2Wwc5O-jln0ylVTn5Ow/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/SEU_DEPLOYMENT_ID/exec',
     PAGE_SIZE: 100
   };
 
@@ -411,15 +476,103 @@
     selectedKey: null,
     openPage: 1,
     resolvedPage: 1,
-    charts: {}
+    charts: {},
+    occurrenceGranularity: 'week',
+    resolutionGranularity: 'week',
+    chartFilters: {
+      status: new Set(),
+      resolution: new Set(),
+      vocativo: new Set(),
+      occurrencePeriod: new Set(),
+      resolutionPeriod: new Set()
+    }
   };
 
   const $ = (id) => document.getElementById(id);
   const moneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const pctFmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const compactMoneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
+  if (window.ChartDataLabels) Chart.register(window.ChartDataLabels);
   const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const cleanText = (v) => String(v ?? '').trim();
   const keyOf = (nota, coleta) => `${cleanText(nota)}||${cleanText(coleta)}`;
+  const dateFmt = new Intl.DateTimeFormat('pt-BR');
+  const monthFmt = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+
+  function parseDateValue(value) {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + value * 86400000);
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    const text = cleanText(value);
+    if (!text) return null;
+    let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    match = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+    const d = new Date(text);
+    return Number.isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function isoDateLocal(date) {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function addDays(date, days) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+
+  function startOfWeekMonday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + offset);
+    return d;
+  }
+
+  function bucketInfo(dateValue, granularity) {
+    const date = parseDateValue(dateValue);
+    if (!date) return { key: 'NONE', label: 'Sem data', sort: 9e15 };
+
+    if (granularity === 'month') {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      return { key: `M:${isoDateLocal(start)}`, label: monthFmt.format(start).replace('.', ''), sort: start.getTime() };
+    }
+
+    if (granularity === 'week') {
+      const start = startOfWeekMonday(date);
+      const end = addDays(start, 6);
+      const label = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}–${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${end.getFullYear()}`;
+      return { key: `W:${isoDateLocal(start)}`, label, sort: start.getTime() };
+    }
+
+    return { key: `D:${isoDateLocal(date)}`, label: dateFmt.format(date), sort: date.getTime() };
+  }
+
+  function bucketLabelFromKey(key) {
+    if (key === 'NONE') return 'Sem data';
+    const parts = String(key).split(':');
+    const prefix = parts[0];
+    const date = parseDateValue(parts[1]);
+    if (!date) return key;
+    if (prefix === 'M') return monthFmt.format(date).replace('.', '');
+    if (prefix === 'W') {
+      const end = addDays(date, 6);
+      return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}–${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${end.getFullYear()}`;
+    }
+    return dateFmt.format(date);
+  }
 
   function parseMoney(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -441,43 +594,91 @@
     badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
   }
 
-  async function api(action, options = {}) {
+  function getAppsScriptBase() {
     const base = cleanText(CONFIG.APPS_SCRIPT_URL);
     if (!base || base.includes('SEU_DEPLOYMENT_ID') || !base.endsWith('/exec')) {
       throw new Error('Configure APPS_SCRIPT_URL com a URL /exec do Apps Script no index.html.');
     }
+    return base;
+  }
 
-    const method = String(options.method || 'GET').toUpperCase();
-    let response;
+  let jsonpSeq = 0;
+  function apiGet(action, timeoutMs = 15000) {
+    const base = getAppsScriptBase();
 
-    if (method === 'GET') {
-      const url = `${base}?action=${encodeURIComponent(action)}&_=${Date.now()}`;
-      response = await fetch(url, { method: 'GET', redirect: 'follow', cache: 'no-store' });
-    } else {
-      const originalBody = options.body ? JSON.parse(options.body) : {};
-      response = await fetch(base, {
-        method: 'POST',
-        redirect: 'follow',
-        cache: 'no-store',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, ...originalBody })
-      });
+    return new Promise((resolve, reject) => {
+      const callback = `__gasJsonp_${Date.now()}_${++jsonpSeq}`;
+      const script = document.createElement('script');
+      let finished = false;
+
+      const cleanup = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        try { delete window[callback]; } catch (_) { window[callback] = undefined; }
+        script.remove();
+      };
+
+      window[callback] = (payload) => {
+        cleanup();
+        if (!payload || payload.ok === false) {
+          reject(new Error(payload?.error || 'O Apps Script retornou uma resposta inválida.'));
+          return;
+        }
+        resolve(payload);
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('Não foi possível carregar a resposta do Apps Script. Confira a implantação e a permissão de acesso.'));
+      };
+
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('Tempo esgotado ao consultar o Google Apps Script.'));
+      }, timeoutMs);
+
+      script.src = `${base}?action=${encodeURIComponent(action)}&callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  async function postAndConfirm(payload) {
+    const base = getAppsScriptBase();
+
+    // mode:no-cors evita o bloqueio de CORS do navegador. A resposta fica opaca,
+    // por isso a confirmação é feita em seguida por uma nova leitura JSONP.
+    await fetch(base, {
+      method: 'POST',
+      mode: 'no-cors',
+      cache: 'no-store',
+      body: JSON.stringify({ action: 'salvar', ...payload })
+    });
+
+    const wantedKey = keyOf(payload.nota, payload.coleta);
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await wait(attempt === 0 ? 450 : 700);
+      try {
+        const result = await apiGet('resolvidos');
+        const found = (result.rows || []).find(r => keyOf(r.nota, r.coleta) === wantedKey);
+        if (found && cleanText(found.resolucao) === cleanText(payload.resolucao)) {
+          return { ok: true, row: found };
+        }
+      } catch (err) {
+        lastError = err;
+      }
     }
 
-    const text = await response.text();
-    let payload;
-    try { payload = JSON.parse(text); }
-    catch (_) { throw new Error('O Apps Script não retornou JSON válido. Confira a implantação e use a URL terminada em /exec.'); }
-
-    if (!response.ok || payload?.ok === false) {
-      throw new Error(payload?.error || `Erro HTTP ${response.status}`);
-    }
-    return payload;
+    throw new Error(lastError?.message || 'O envio foi feito, mas não foi possível confirmar a gravação no Google Planilhas.');
   }
 
   async function connectApi() {
     try {
-      const config = await api('config');
+      const config = await apiGet('config');
       state.resolutions = config.resolutions || [];
       state.responsibleResolutions = config.responsibleResolutions || [];
       state.apiReady = true;
@@ -491,18 +692,23 @@
   }
 
   async function refreshResolved() {
-    const payload = await api('resolvidos');
-    state.resolvedRows = (payload.rows || []).map(r => ({
-      nota: cleanText(r.nota),
-      coleta: cleanText(r.coleta),
-      valorNota: parseMoney(r.valorNota),
-      vocativo: cleanText(r.vocativo),
-      resolucao: cleanText(r.resolucao),
-      responsavel: cleanText(r.responsavel),
-      key: keyOf(r.nota, r.coleta)
-    }));
-    state.resolvedMap = new Map();
-    for (const r of state.resolvedRows) state.resolvedMap.set(r.key, r);
+    const payload = await apiGet('resolvidos');
+    const byKey = new Map();
+    for (const r of (payload.rows || [])) {
+      const normalized = {
+        nota: cleanText(r.nota),
+        coleta: cleanText(r.coleta),
+        valorNota: parseMoney(r.valorNota),
+        vocativo: cleanText(r.vocativo),
+        resolucao: cleanText(r.resolucao),
+        responsavel: cleanText(r.responsavel),
+        dataResolucao: cleanText(r.dataResolucao),
+        key: keyOf(r.nota, r.coleta)
+      };
+      if (normalized.nota && normalized.coleta) byKey.set(normalized.key, normalized);
+    }
+    state.resolvedRows = [...byKey.values()];
+    state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
     state.resolvedPage = 1;
     rebuildView();
   }
@@ -542,6 +748,7 @@
             __coleta: coleta,
             __valor: value,
             __vocativo: cleanText(row['Vocativo']),
+            __dataOcorrencia: parseDateValue(row['Data Ocorrencia']),
             __duplicateCount: 1,
             __valueConflict: false
           });
@@ -557,6 +764,7 @@
           for (const [field, val] of Object.entries(row)) {
             if (!cleanText(current[field]) && cleanText(val)) current[field] = val;
           }
+          if (!current.__dataOcorrencia) current.__dataOcorrencia = parseDateValue(row['Data Ocorrencia']);
         }
       }
 
@@ -582,8 +790,92 @@
     $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v => `<option>${esc(v)}</option>`).join('');
   }
 
+  const chartFilterDefs = {
+    status: { label: 'Status', getter: r => r.status === 'resolved' ? 'Resolvido' : 'Em aberto' },
+    resolution: { label: 'Resolução', getter: r => cleanText(r.resolucao) || 'Sem resolução' },
+    vocativo: { label: 'Vocativo', getter: r => cleanText(r.__vocativo) || 'Sem informação' },
+    occurrencePeriod: { label: 'Data ocorrência', getter: r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
+    resolutionPeriod: { label: 'Data resolução', getter: r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
+  };
+
+  function getMasterRows() {
+    const reportMap = new Map(state.reportRows.map(r => [r.__key, r]));
+    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys()]);
+    const rows = [];
+    for (const key of keys) {
+      const report = reportMap.get(key);
+      const resolved = state.resolvedMap.get(key);
+      const isResolved = !!resolved;
+      rows.push({
+        ...(report || {}),
+        __key: key,
+        __nota: report ? report.__nota : cleanText(resolved?.nota),
+        __coleta: report ? report.__coleta : cleanText(resolved?.coleta),
+        __valor: report ? Number(report.__valor || 0) : Number(resolved?.valorNota || 0),
+        __vocativo: report ? report.__vocativo : cleanText(resolved?.vocativo),
+        status: isResolved ? 'resolved' : 'open',
+        resolucao: cleanText(resolved?.resolucao),
+        responsavel: cleanText(resolved?.responsavel),
+        dataResolucao: cleanText(resolved?.dataResolucao),
+        __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
+        stillPending: !!report && isResolved,
+        valorNota: report ? Number(report.__valor || 0) : Number(resolved?.valorNota || 0),
+        nota: report ? report.__nota : cleanText(resolved?.nota),
+        coleta: report ? report.__coleta : cleanText(resolved?.coleta),
+        vocativo: report ? report.__vocativo : cleanText(resolved?.vocativo),
+        key
+      });
+    }
+    return rows;
+  }
+
+  function applyChartFilters(rows, excludeDimension = null) {
+    return rows.filter(r => {
+      for (const [dimension, selected] of Object.entries(state.chartFilters)) {
+        if (dimension === excludeDimension || !selected.size) continue;
+        const value = chartFilterDefs[dimension].getter(r);
+        if (!selected.has(value)) return false;
+      }
+      return true;
+    });
+  }
+
+  function toggleChartFilter(dimension, value, alsoStatus = null) {
+    const selected = state.chartFilters[dimension];
+    if (selected.has(value)) selected.delete(value); else selected.add(value);
+    if (alsoStatus) {
+      const statusSet = state.chartFilters.status;
+      if (!statusSet.has(alsoStatus)) statusSet.add(alsoStatus);
+    }
+    state.openPage = 1;
+    state.resolvedPage = 1;
+    rebuildView();
+  }
+
+  function clearChartFilters() {
+    Object.values(state.chartFilters).forEach(set => set.clear());
+    state.openPage = 1;
+    state.resolvedPage = 1;
+    rebuildView();
+  }
+
+  function renderChartFilterChips() {
+    const holder = $('chartFilterChips');
+    const chips = [];
+    for (const [dimension, selected] of Object.entries(state.chartFilters)) {
+      for (const value of selected) {
+        const displayValue = (dimension === 'occurrencePeriod' || dimension === 'resolutionPeriod') ? bucketLabelFromKey(value) : value;
+        chips.push(`<button type="button" class="filter-chip" data-dim="${esc(dimension)}" data-value="${esc(value)}" title="Remover filtro">${esc(chartFilterDefs[dimension].label)}: ${esc(displayValue)} ×</button>`);
+      }
+    }
+    holder.className = chips.length ? '' : 'chart-filter-empty';
+    holder.innerHTML = chips.length ? chips.join('') : 'Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.';
+    $('btnClearChartFilters').disabled = !chips.length;
+  }
+
   function getOpenRows(applyFilters = true) {
-    let rows = state.reportRows.filter(r => !state.resolvedMap.has(r.__key));
+    let rows = getMasterRows().filter(r => r.status === 'open');
+    rows = applyChartFilters(rows);
     if (!applyFilters) return rows;
     const q = cleanText($('openSearch').value).toLowerCase();
     const client = $('openClient').value;
@@ -602,16 +894,8 @@
   }
 
   function getResolvedRows(applyFilters = true) {
-    const reportMap = new Map(state.reportRows.map(r => [r.__key, r]));
-    let rows = state.resolvedRows.map(g => {
-      const report = reportMap.get(g.key);
-      return {
-        ...g,
-        valorNota: report ? report.__valor : g.valorNota,
-        vocativo: report ? report.__vocativo : g.vocativo,
-        stillPending: !!report
-      };
-    });
+    let rows = getMasterRows().filter(r => r.status === 'resolved');
+    rows = applyChartFilters(rows);
     if (!applyFilters) return rows;
     const q = cleanText($('resolvedSearch').value).toLowerCase();
     const resolution = $('resolvedFilter').value;
@@ -629,6 +913,7 @@
   }
 
   function rebuildView() {
+    renderChartFilterChips();
     renderKpis();
     renderCharts();
     renderOpenTable();
@@ -637,24 +922,27 @@
   }
 
   function renderKpis() {
-    const report = state.reportRows;
-    const open = getOpenRows(false);
-    const resolvedCurrent = report.filter(r => state.resolvedMap.has(r.__key));
-    const total = report.reduce((s,r)=>s+r.__valor,0);
+    const master = applyChartFilters(getMasterRows());
+    const open = master.filter(r => r.status === 'open');
+    const resolved = master.filter(r => r.status === 'resolved');
+    const still = resolved.filter(r => r.stillPending);
+    const total = master.reduce((s,r)=>s+r.__valor,0);
     const openValue = open.reduce((s,r)=>s+r.__valor,0);
-    const resolvedValue = resolvedCurrent.reduce((s,r)=>s+r.__valor,0);
+    const resolvedValue = resolved.reduce((s,r)=>s+r.__valor,0);
+    const stillValue = still.reduce((s,r)=>s+r.__valor,0);
     const pct = total ? (resolvedValue/total)*100 : 0;
     $('kpiTotal').textContent = moneyFmt.format(total);
-    $('kpiTotalSub').textContent = `${report.length.toLocaleString('pt-BR')} chaves únicas Nota + Coleta`;
+    $('kpiTotalSub').textContent = `${master.length.toLocaleString('pt-BR')} chaves únicas na união Excel + Google`;
     $('kpiOpen').textContent = moneyFmt.format(openValue);
     $('kpiOpenSub').textContent = `${open.length.toLocaleString('pt-BR')} registros`;
     $('kpiResolved').textContent = moneyFmt.format(resolvedValue);
-    $('kpiResolvedSub').textContent = `${resolvedCurrent.length.toLocaleString('pt-BR')} registros do relatório atual`;
-    $('kpiStill').textContent = moneyFmt.format(resolvedValue);
-    $('kpiStillSub').textContent = `${resolvedCurrent.length.toLocaleString('pt-BR')} já resolvidos que ainda constam no Excel`;
+    $('kpiResolvedSub').textContent = `${resolved.length.toLocaleString('pt-BR')} registros resolvidos`;
+    $('kpiStill').textContent = moneyFmt.format(stillValue);
+    $('kpiStillSub').textContent = `${still.length.toLocaleString('pt-BR')} resolvidos que ainda constam no Excel`;
     $('kpiPercent').textContent = `${pctFmt.format(pct)}%`;
+    $('kpiPercentSub').textContent = `Resolvido ÷ total conciliado (${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)})`;
     $('openCount').textContent = open.length.toLocaleString('pt-BR');
-    $('resolvedCount').textContent = state.resolvedRows.length.toLocaleString('pt-BR');
+    $('resolvedCount').textContent = resolved.length.toLocaleString('pt-BR');
   }
 
   function sumBy(rows, labelGetter, valueGetter = r => r.__valor) {
@@ -668,32 +956,181 @@
 
   function makeChart(id, config) {
     if (state.charts[id]) state.charts[id].destroy();
+    config.options = config.options || {};
+    config.options.animation = { duration: 180 };
     state.charts[id] = new Chart($(id), config);
   }
-  const chartMoneyTooltip = { callbacks: { label: ctx => `${ctx.dataset.label || ''}: ${moneyFmt.format(ctx.raw || 0)}` } };
+
+  const chartMoneyTooltip = {
+    callbacks: {
+      label: ctx => {
+        const raw = Number(ctx.raw || 0);
+        const isDoughnut = ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie';
+        const total = isDoughnut
+          ? (ctx.dataset.data || []).reduce((s, v) => s + Number(v || 0), 0)
+          : ctx.chart.data.datasets.reduce((s, ds) => s + Number(ds.data?.[ctx.dataIndex] || 0), 0);
+        const pct = total ? raw / total * 100 : 0;
+        return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)} (${pctFmt.format(pct)}%)`;
+      }
+    }
+  };
+
+  const barDataLabels = {
+    anchor: 'center',
+    align: 'center',
+    clamp: true,
+    formatter: value => Number(value) > 0 ? compactMoneyFmt.format(Number(value)) : '',
+    font: { size: 10, weight: '700' }
+  };
+
+  function stackedPairs(rows, getter, limit = null) {
+    const labelsMap = new Map();
+    for (const r of rows) {
+      const label = cleanText(getter(r)) || 'Sem informação';
+      if (!labelsMap.has(label)) labelsMap.set(label, { open:0, resolved:0 });
+      labelsMap.get(label)[r.status] += Number(r.__valor || 0);
+    }
+    let pairs = [...labelsMap.entries()].sort((a,b)=>(b[1].open+b[1].resolved)-(a[1].open+a[1].resolved));
+    if (limit) pairs = pairs.slice(0, limit);
+    return pairs;
+  }
+
+  function statusValueFromLabel(label) {
+    return label === 'Resolvido' ? 'resolved' : 'open';
+  }
+
+  function temporalPairs(rows, dateGetter, granularity) {
+    const map = new Map();
+    for (const r of rows) {
+      const info = bucketInfo(dateGetter(r), granularity);
+      if (!map.has(info.key)) map.set(info.key, { ...info, value: 0 });
+      map.get(info.key).value += Number(r.__valor || 0);
+    }
+    return [...map.values()].sort((a,b) => {
+      if (a.key === 'NONE') return 1;
+      if (b.key === 'NONE') return -1;
+      return a.sort - b.sort;
+    });
+  }
+
+  function renderTemporalChart({ id, rows, dateGetter, granularity, dimension, datasetLabel, alsoStatus }) {
+    const pairs = temporalPairs(rows, dateGetter, granularity);
+    const labels = pairs.map(x=>x.label);
+    const keys = pairs.map(x=>x.key);
+    const data = pairs.map(x=>x.value);
+
+    makeChart(id, {
+      type:'bar',
+      data:{ labels, datasets:[{ label:datasetLabel, data }] },
+      options:{
+        maintainAspectRatio:false,
+        onClick:(evt,elements)=>{
+          if(!elements.length)return;
+          const key=keys[elements[0].index];
+          if(key) toggleChartFilter(dimension,key,alsoStatus || null);
+        },
+        scales:{
+          x:{ ticks:{ autoSkip:true, maxRotation:55, minRotation:0 } },
+          y:{ beginAtZero:true }
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:chartMoneyTooltip,
+          datalabels:{
+            anchor:'end',
+            align:'top',
+            clamp:true,
+            formatter:value=>Number(value)>0?compactMoneyFmt.format(Number(value)):'',
+            font:{size:9,weight:'700'}
+          }
+        }
+      }
+    });
+  }
 
   function renderCharts() {
-    const open = getOpenRows(false);
-    const resolvedCurrent = state.reportRows.filter(r => state.resolvedMap.has(r.__key));
-    const openValue = open.reduce((s,r)=>s+r.__valor,0);
-    const resolvedValue = resolvedCurrent.reduce((s,r)=>s+r.__valor,0);
+    const master = getMasterRows();
 
-    makeChart('chartStatus', { type:'doughnut', data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue] }] }, options:{ maintainAspectRatio:false, plugins:{ legend:{position:'bottom'}, tooltip:chartMoneyTooltip } } });
+    const statusBase = applyChartFilters(master, 'status');
+    const openValue = statusBase.filter(r=>r.status==='open').reduce((s,r)=>s+r.__valor,0);
+    const resolvedValue = statusBase.filter(r=>r.status==='resolved').reduce((s,r)=>s+r.__valor,0);
+    makeChart('chartStatus', {
+      type:'doughnut',
+      data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue] }] },
+      options:{
+        maintainAspectRatio:false,
+        onClick:(evt,elements)=>{ if(!elements.length)return; const label=['Em aberto','Resolvido'][elements[0].index]; toggleChartFilter('status', label); },
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:chartMoneyTooltip,
+          datalabels:{
+            formatter:(value,ctx)=>{ const total=ctx.dataset.data.reduce((s,v)=>s+Number(v||0),0); const pct=total?Number(value)/total*100:0; return Number(value)>0 ? `${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(value))}` : ''; },
+            font:{size:11,weight:'800'},
+            textAlign:'center'
+          }
+        }
+      }
+    });
 
-    const resolutionPairs = sumBy(resolvedCurrent, r => state.resolvedMap.get(r.__key)?.resolucao || 'Sem resolução');
-    makeChart('chartResolution', { type:'bar', data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Valor',data:resolutionPairs.map(x=>x[1])}] }, options:{ indexAxis:'y', maintainAspectRatio:false, scales:{x:{beginAtZero:true}}, plugins:{legend:{display:false},tooltip:chartMoneyTooltip} } });
+    const resolutionBase = applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolution');
+    const resolutionPairs = sumBy(resolutionBase, r => r.resolucao || 'Sem resolução');
+    makeChart('chartResolution', {
+      type:'bar',
+      data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1])}] },
+      options:{
+        indexAxis:'y', maintainAspectRatio:false,
+        onClick:(evt,elements)=>{ if(!elements.length)return; const label=resolutionPairs[elements[0].index]?.[0]; if(label) toggleChartFilter('resolution', label, 'Resolvido'); },
+        scales:{x:{beginAtZero:true}},
+        plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
+      }
+    });
 
-    const clients = sumBy(open, r=>r['Cliente']).slice(0,10);
-    makeChart('chartClient', { type:'bar', data:{labels:clients.map(x=>x[0]),datasets:[{label:'Valor',data:clients.map(x=>x[1])}]}, options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+    const vocativoBase = applyChartFilters(master, 'vocativo');
+    const vocativoPairs = stackedPairs(vocativoBase, r=>r.__vocativo, 10);
+    const vocativoLabels = vocativoPairs.map(x=>x[0]);
+    makeChart('chartVocativo', {
+      type:'bar',
+      data:{
+        labels:vocativoLabels,
+        datasets:[
+          {label:'Em aberto',data:vocativoPairs.map(x=>x[1].open),stack:'total'},
+          {label:'Resolvido',data:vocativoPairs.map(x=>x[1].resolved),stack:'total'}
+        ]
+      },
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(evt,elements)=>{
+          if(!elements.length)return;
+          const el=elements[0];
+          const label=vocativoLabels[el.index];
+          const statusLabel=el.datasetIndex===1?'Resolvido':'Em aberto';
+          toggleChartFilter('vocativo',label,statusLabel);
+        },
+        scales:{x:{stacked:true,beginAtZero:true},y:{stacked:true,beginAtZero:true}},
+        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
+      }
+    });
 
-    const vocs = sumBy(open, r=>r.__vocativo).slice(0,10);
-    makeChart('chartVocativo', { type:'bar', data:{labels:vocs.map(x=>x[0]),datasets:[{label:'Valor',data:vocs.map(x=>x[1])}]}, options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+    renderTemporalChart({
+      id:'chartOccurrence',
+      rows: applyChartFilters(master.filter(r=>r.status==='open'), 'occurrencePeriod'),
+      dateGetter:r=>r.__dataOcorrencia,
+      granularity:state.occurrenceGranularity,
+      dimension:'occurrencePeriod',
+      datasetLabel:'Em aberto',
+      alsoStatus:'Em aberto'
+    });
 
-    const ranges = sumBy(open, r=>r['Range de Dias']);
-    makeChart('chartRange', { type:'bar', data:{labels:ranges.map(x=>x[0]),datasets:[{label:'Valor',data:ranges.map(x=>x[1])}]}, options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
-
-    const priorities = sumBy(open, r=>r['Prioridade']);
-    makeChart('chartPriority', { type:'bar', data:{labels:priorities.map(x=>x[0]),datasets:[{label:'Valor',data:priorities.map(x=>x[1])}]}, options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+    renderTemporalChart({
+      id:'chartResolutionDate',
+      rows: applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolutionPeriod'),
+      dateGetter:r=>r.dataResolucao,
+      granularity:state.resolutionGranularity,
+      dimension:'resolutionPeriod',
+      datasetLabel:'Resolvido',
+      alsoStatus:'Resolvido'
+    });
   }
 
   function renderOpenTable() {
@@ -708,6 +1145,7 @@
       <td>${esc(r.__coleta)}</td>
       <td class="money">${moneyFmt.format(r.__valor)}</td>
       <td>${esc(r.__vocativo)}</td>
+      <td>${esc(r.__dataOcorrencia ? dateFmt.format(r.__dataOcorrencia) : 'Sem data')}</td>
       <td>${esc(r['Cliente'])}</td>
       <td>${esc(r['Destino'])}</td>
       <td>${esc(r['UF Destino'])}</td>
@@ -736,6 +1174,7 @@
       <td>${esc(r.vocativo)}</td>
       <td>${esc(r.resolucao)}</td>
       <td>${esc(r.responsavel || '—')}</td>
+      <td>${esc(r.dataResolucao && parseDateValue(r.dataResolucao) ? dateFmt.format(parseDateValue(r.dataResolucao)) : 'Sem data')}</td>
       <td>${r.stillPending ? '<span class="badge warn">Ainda consta na pendência</span>' : '<span class="badge ok">Fora da pendência atual</span>'}</td>
       <td><button class="row-btn edit-resolved" data-key="${esc(r.key)}">Editar</button></td>
     </tr>`).join('');
@@ -810,7 +1249,7 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Salvando...';
     try {
-      await api('salvar', { method:'POST', body: JSON.stringify(payload) });
+      await postAndConfirm(payload);
       await refreshResolved();
       state.selectedKey = null;
       closeModal();
@@ -839,6 +1278,35 @@
     $('panelOpen').classList.toggle('hidden', !open);
     $('panelResolved').classList.toggle('hidden', open);
   }));
+
+  $('btnClearChartFilters').addEventListener('click', clearChartFilters);
+
+  $('occurrenceGranularity').addEventListener('change', () => {
+    state.occurrenceGranularity = $('occurrenceGranularity').value;
+    state.chartFilters.occurrencePeriod.clear();
+    state.openPage = 1;
+    state.resolvedPage = 1;
+    rebuildView();
+  });
+
+  $('resolutionGranularity').addEventListener('change', () => {
+    state.resolutionGranularity = $('resolutionGranularity').value;
+    state.chartFilters.resolutionPeriod.clear();
+    state.openPage = 1;
+    state.resolvedPage = 1;
+    rebuildView();
+  });
+
+  $('chartFilterChips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    const dim = chip.dataset.dim;
+    const value = chip.dataset.value;
+    if (state.chartFilters[dim]) {
+      state.chartFilters[dim].delete(value);
+      rebuildView();
+    }
+  });
 
   ['openSearch','openClient','openRange','openPriority'].forEach(id => $(id).addEventListener(id === 'openSearch' ? 'input' : 'change', () => { state.openPage=1; renderOpenTable(); }));
   ['resolvedSearch','resolvedFilter','resolvedPresence'].forEach(id => $(id).addEventListener(id === 'resolvedSearch' ? 'input' : 'change', () => { state.resolvedPage=1; renderResolvedTable(); }));
