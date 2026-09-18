@@ -125,22 +125,23 @@
 
     .charts-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-bottom: 18px;
     }
     .chart-card {
-      min-height: 330px;
+      min-height: 270px;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 15px;
-      box-shadow: 0 7px 22px rgba(15,23,42,.05);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 5px 16px rgba(15,23,42,.045);
+      overflow: hidden;
     }
-    .chart-card h3 { margin: 0; font-size: 14px; }
-    .chart-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .chart-card h3 { margin: 0; font-size: 13px; line-height: 1.25; }
+    .chart-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px; }
     .chart-card-title { min-width:0; }
-    .chart-card .chart-hint { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .chart-card .chart-hint { color: var(--muted); font-size: 10px; line-height: 1.25; margin-top: 3px; }
     .chart-granularity {
       border:1px solid var(--line);
       border-radius:9px;
@@ -151,8 +152,25 @@
       color:#334155;
       flex:0 0 auto;
     }
-    .chart-wrap { height: 290px; position: relative; }
+    .chart-wrap { height: 215px; position: relative; }
     .chart-wrap canvas { cursor: pointer; }
+    .chart-card.chart-wide { grid-column: auto; }
+    .chart-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 2px 10px;
+      scrollbar-gutter: stable;
+    }
+    .chart-scroll-inner {
+      position: relative;
+      height: 220px;
+      min-width: 100%;
+    }
+    .chart-scroll::-webkit-scrollbar { height: 8px; }
+    .chart-scroll::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
+    .chart-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .chart-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     .chart-filter-bar {
       display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
@@ -260,7 +278,7 @@
 
     @media (max-width: 1180px) {
       .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); }
-      .charts-grid { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
     @media (max-width: 760px) {
       header { padding: 12px; align-items: flex-start; flex-direction: column; }
@@ -283,6 +301,7 @@
       <p>Conciliação do relatório carregado com os casos resolvidos no Google Planilhas.</p>
     </div>
     <div class="header-actions">
+      <button class="btn hidden" id="btnApiTest">Testar API</button>
       <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
       <button class="btn btn-soft" id="btnManual">Nova resolução manual</button>
       <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
@@ -344,38 +363,46 @@
 
     <section class="charts-grid">
       <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Valor em aberto × resolvido</h3><div class="chart-hint">Clique em uma fatia para selecionar o status.</div></div></div>
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
         <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
       </article>
       <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Valor resolvido por tipo de resolução</h3><div class="chart-hint">Inclui todos os resolvidos do Google, estejam ou não no Excel atual.</div></div></div>
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo</h3><div class="chart-hint">Todos os casos resolvidos. Quantidade no hover.</div></div></div>
         <div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
       </article>
       <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido</h3><div class="chart-hint">Barras empilhadas. Clique em um segmento para filtrar.</div></div></div>
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Somente “Conferente não vinculou o material a OF”.</div></div></div>
+        <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
+      </article>
+      <article class="chart-card">
+        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
         <div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
       </article>
       <article class="chart-card">
         <div class="chart-card-head">
-          <div class="chart-card-title"><h3>Valor em aberto por Data Ocorrência</h3><div class="chart-hint">Somente casos em aberto. Clique em uma barra para filtrar o painel.</div></div>
+          <div class="chart-card-title"><h3>Em aberto por Data Ocorrência</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
           <select id="occurrenceGranularity" class="chart-granularity" aria-label="Agrupamento da Data Ocorrência">
             <option value="day">Dia</option>
             <option value="week" selected>Semana</option>
             <option value="month">Mês</option>
           </select>
         </div>
-        <div class="chart-wrap"><canvas id="chartOccurrence"></canvas></div>
+        <div class="chart-scroll">
+          <div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
+        </div>
       </article>
       <article class="chart-card">
         <div class="chart-card-head">
-          <div class="chart-card-title"><h3>Valor resolvido por Data de Resolução</h3><div class="chart-hint">A Data de Resolução é gravada automaticamente no Google Planilhas no primeiro registro.</div></div>
+          <div class="chart-card-title"><h3>Resolvido por Data de Resolução</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
           <select id="resolutionGranularity" class="chart-granularity" aria-label="Agrupamento da Data de Resolução">
             <option value="day">Dia</option>
             <option value="week" selected>Semana</option>
             <option value="month">Mês</option>
           </select>
         </div>
-        <div class="chart-wrap"><canvas id="chartResolutionDate"></canvas></div>
+        <div class="chart-scroll">
+          <div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
+        </div>
       </article>
     </section>
 
@@ -412,13 +439,14 @@
           <input class="field" id="resolvedSearch" placeholder="Pesquisar Nota, Coleta, resolução..." />
           <select class="field" id="resolvedFilter"><option value="">Todas as resoluções</option></select>
           <select class="field" id="resolvedPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+          <select class="field" id="resolvedSolver"><option value="">Quem resolveu: todos</option></select>
         </div>
         <small id="resolvedSummary">0 registros</small>
       </div>
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Data Resolução</th><th>Status no relatório atual</th><th>Ação</th>
+            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Data Resolução</th><th>Quem resolveu</th><th>Status no relatório atual</th><th>Ação</th>
           </tr></thead>
           <tbody id="resolvedBody"></tbody>
         </table>
@@ -443,6 +471,7 @@
           <div class="form-group"><label for="fValor">Valor Nota</label><input id="fValor" inputmode="decimal" placeholder="0,00" required /></div>
           <div class="form-group"><label for="fVocativo">Vocativo</label><input id="fVocativo" required /></div>
           <div class="form-group full"><label for="fResolution">Resolução</label><select id="fResolution" required><option value="">Selecione...</option></select></div>
+          <div class="form-group full"><label for="fSolvedBy">Quem resolveu <span style="font-weight:400">(obrigatório)</span></label><select id="fSolvedBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint">Essa informação será gravada para todos os casos resolvidos.</div></div>
           <div class="form-group full hidden" id="responsibleGroup">
             <label for="fResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label>
             <input id="fResponsible" placeholder="Digite livremente o nome da pessoa" />
@@ -461,7 +490,7 @@
 <script>
   // ALTERE SOMENTE ESTA URL DEPOIS QUE PUBLICAR O APPS SCRIPT COMO APLICATIVO DA WEB.
   const CONFIG = {
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxUjFH7SOQV3p9DOQPFkXpxj2eac3rcRXiXuKoc-sstpWhWS2Wwc5O-jln0ylVTn5Ow/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwXa5kibQil8oI5VyzixRoAcSiBFKMZH3g93QQtVzddyOVjcL0xl9Xr2SvvY4H3yyLY/exec',
     PAGE_SIZE: 100
   };
 
@@ -473,6 +502,7 @@
     resolvedMap: new Map(),
     resolutions: [],
     responsibleResolutions: [],
+    solvers: [],
     selectedKey: null,
     openPage: 1,
     resolvedPage: 1,
@@ -482,6 +512,7 @@
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
+      responsible: new Set(),
       vocativo: new Set(),
       occurrencePeriod: new Set(),
       resolutionPeriod: new Set()
@@ -553,7 +584,11 @@
     if (granularity === 'week') {
       const start = startOfWeekMonday(date);
       const end = addDays(start, 6);
-      const label = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}–${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${end.getFullYear()}`;
+      const sy = String(start.getFullYear()).slice(-2);
+      const ey = String(end.getFullYear()).slice(-2);
+      const startLabel = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}/${sy}`;
+      const endLabel = `${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
+      const label = `${startLabel} a ${endLabel}`;
       return { key: `W:${isoDateLocal(start)}`, label, sort: start.getTime() };
     }
 
@@ -569,7 +604,9 @@
     if (prefix === 'M') return monthFmt.format(date).replace('.', '');
     if (prefix === 'W') {
       const end = addDays(date, 6);
-      return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}–${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${end.getFullYear()}`;
+      const sy = String(date.getFullYear()).slice(-2);
+      const ey = String(end.getFullYear()).slice(-2);
+      return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${sy} a ${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
     }
     return dateFmt.format(date);
   }
@@ -592,6 +629,8 @@
     const badge = $('apiStatus');
     badge.className = `badge ${type === 'ok' ? 'ok' : type === 'error' ? 'warn' : 'warn'}`;
     badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
+    const canTest = type !== 'ok' && cleanText(CONFIG.APPS_SCRIPT_URL) && !CONFIG.APPS_SCRIPT_URL.includes('SEU_DEPLOYMENT_ID');
+    $('btnApiTest').classList.toggle('hidden', !canTest);
   }
 
   function getAppsScriptBase() {
@@ -630,7 +669,7 @@
 
       script.onerror = () => {
         cleanup();
-        reject(new Error('Não foi possível carregar a resposta do Apps Script. Confira a implantação e a permissão de acesso.'));
+        reject(new Error('O Apps Script não respondeu ao GitHub Pages. Clique em “Testar API”. Se o teste abrir uma tela de login, acesso negado ou erro, publique novamente como Aplicativo da Web, executando como você e com acesso “Qualquer pessoa”. Depois execute configurar() e atualize a versão implantada.'));
       };
 
       const timer = setTimeout(() => {
@@ -681,6 +720,7 @@
       const config = await apiGet('config');
       state.resolutions = config.resolutions || [];
       state.responsibleResolutions = config.responsibleResolutions || [];
+      state.solvers = config.solvers || [];
       state.apiReady = true;
       fillResolutionSelectors();
       await refreshResolved();
@@ -703,6 +743,7 @@
         resolucao: cleanText(r.resolucao),
         responsavel: cleanText(r.responsavel),
         dataResolucao: cleanText(r.dataResolucao),
+        quemResolveu: cleanText(r.quemResolveu),
         key: keyOf(r.nota, r.coleta)
       };
       if (normalized.nota && normalized.coleta) byKey.set(normalized.key, normalized);
@@ -716,6 +757,8 @@
   function fillResolutionSelectors() {
     $('fResolution').innerHTML = '<option value="">Selecione...</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('fSolvedBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   }
 
   $('fileInput').addEventListener('change', async (event) => {
@@ -793,6 +836,7 @@
   const chartFilterDefs = {
     status: { label: 'Status', getter: r => r.status === 'resolved' ? 'Resolvido' : 'Em aberto' },
     resolution: { label: 'Resolução', getter: r => cleanText(r.resolucao) || 'Sem resolução' },
+    responsible: { label: 'Responsável pela falha', getter: r => cleanText(r.responsavel) || 'Não informado' },
     vocativo: { label: 'Vocativo', getter: r => cleanText(r.__vocativo) || 'Sem informação' },
     occurrencePeriod: { label: 'Data ocorrência', getter: r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
     resolutionPeriod: { label: 'Data resolução', getter: r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
@@ -817,6 +861,7 @@
         resolucao: cleanText(resolved?.resolucao),
         responsavel: cleanText(resolved?.responsavel),
         dataResolucao: cleanText(resolved?.dataResolucao),
+        quemResolveu: cleanText(resolved?.quemResolveu),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
         stillPending: !!report && isResolved,
         valorNota: report ? Number(report.__valor || 0) : Number(resolved?.valorNota || 0),
@@ -900,12 +945,14 @@
     const q = cleanText($('resolvedSearch').value).toLowerCase();
     const resolution = $('resolvedFilter').value;
     const presence = $('resolvedPresence').value;
+    const solver = $('resolvedSolver').value;
     return rows.filter(r => {
       if (resolution && r.resolucao !== resolution) return false;
       if (presence === 'sim' && !r.stillPending) return false;
       if (presence === 'nao' && r.stillPending) return false;
+      if (solver && cleanText(r.quemResolveu) !== solver) return false;
       if (q) {
-        const hay = [r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel].join(' ').toLowerCase();
+        const hay = [r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel,r.quemResolveu].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -965,12 +1012,18 @@
     callbacks: {
       label: ctx => {
         const raw = Number(ctx.raw || 0);
+        const count = Number(ctx.dataset?._counts?.[ctx.dataIndex] || 0);
         const isDoughnut = ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie';
+        const hasMultipleDatasets = (ctx.chart.data.datasets || []).length > 1;
         const total = isDoughnut
           ? (ctx.dataset.data || []).reduce((s, v) => s + Number(v || 0), 0)
-          : ctx.chart.data.datasets.reduce((s, ds) => s + Number(ds.data?.[ctx.dataIndex] || 0), 0);
+          : hasMultipleDatasets
+            ? ctx.chart.data.datasets.reduce((s, ds) => s + Number(ds.data?.[ctx.dataIndex] || 0), 0)
+            : 0;
         const pct = total ? raw / total * 100 : 0;
-        return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)} (${pctFmt.format(pct)}%)`;
+        const qty = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'registro' : 'registros'}`;
+        const pctText = total ? ` (${pctFmt.format(pct)}%)` : '';
+        return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${qty}`;
       }
     }
   };
@@ -980,15 +1033,42 @@
     align: 'center',
     clamp: true,
     formatter: value => Number(value) > 0 ? compactMoneyFmt.format(Number(value)) : '',
-    font: { size: 10, weight: '700' }
+    font: { size: 9, weight: '800' },
+    textAlign: 'center'
   };
+
+  function countLabel(count) {
+    const n = Number(count || 0);
+    return `${n.toLocaleString('pt-BR')} ${n === 1 ? 'registro' : 'registros'}`;
+  }
+
+  function temporalTickLines(pair, granularity) {
+    if (!pair) return [''];
+    if (pair.key === 'NONE') return ['Sem data'];
+
+    if (granularity === 'week') {
+      const match = String(pair.label).match(/^(.*?)\s+a\s+(.*)$/);
+      if (match) return [match[1], `a ${match[2]}`];
+    }
+    return [pair.label];
+  }
+
+  function sizeTemporalChart(innerId, bucketCount, granularity) {
+    const inner = $(innerId);
+    if (!inner) return;
+    const perBucket = granularity === 'day' ? 64 : granularity === 'week' ? 86 : 76;
+    const width = Math.max(520, Math.max(1, bucketCount) * perBucket);
+    inner.style.width = `${width}px`;
+  }
 
   function stackedPairs(rows, getter, limit = null) {
     const labelsMap = new Map();
     for (const r of rows) {
       const label = cleanText(getter(r)) || 'Sem informação';
-      if (!labelsMap.has(label)) labelsMap.set(label, { open:0, resolved:0 });
+      if (!labelsMap.has(label)) labelsMap.set(label, { open:0, resolved:0, openCount:0, resolvedCount:0 });
       labelsMap.get(label)[r.status] += Number(r.__valor || 0);
+      if (r.status === 'open') labelsMap.get(label).openCount += 1;
+      else labelsMap.get(label).resolvedCount += 1;
     }
     let pairs = [...labelsMap.entries()].sort((a,b)=>(b[1].open+b[1].resolved)-(a[1].open+a[1].resolved));
     if (limit) pairs = pairs.slice(0, limit);
@@ -1003,8 +1083,9 @@
     const map = new Map();
     for (const r of rows) {
       const info = bucketInfo(dateGetter(r), granularity);
-      if (!map.has(info.key)) map.set(info.key, { ...info, value: 0 });
+      if (!map.has(info.key)) map.set(info.key, { ...info, value: 0, count: 0 });
       map.get(info.key).value += Number(r.__valor || 0);
+      map.get(info.key).count += 1;
     }
     return [...map.values()].sort((a,b) => {
       if (a.key === 'NONE') return 1;
@@ -1013,25 +1094,46 @@
     });
   }
 
-  function renderTemporalChart({ id, rows, dateGetter, granularity, dimension, datasetLabel, alsoStatus }) {
+  function renderTemporalChart({ id, innerId, rows, dateGetter, granularity, dimension, datasetLabel, alsoStatus }) {
     const pairs = temporalPairs(rows, dateGetter, granularity);
     const labels = pairs.map(x=>x.label);
     const keys = pairs.map(x=>x.key);
     const data = pairs.map(x=>x.value);
+    const counts = pairs.map(x=>x.count);
+
+    sizeTemporalChart(innerId, pairs.length, granularity);
 
     makeChart(id, {
       type:'bar',
-      data:{ labels, datasets:[{ label:datasetLabel, data }] },
+      data:{ labels, datasets:[{ label:datasetLabel, data, _counts:counts, backgroundColor: alsoStatus === 'Resolvido' ? 'rgba(22,163,74,.46)' : 'rgba(59,130,246,.46)', hoverBackgroundColor: alsoStatus === 'Resolvido' ? 'rgba(22,163,74,.88)' : 'rgba(59,130,246,.88)', borderColor: alsoStatus === 'Resolvido' ? '#15803d' : '#2563eb', hoverBorderColor: alsoStatus === 'Resolvido' ? '#166534' : '#1d4ed8', borderWidth:1, hoverBorderWidth:1.5 }] },
       options:{
         maintainAspectRatio:false,
+        layout:{ padding:{ top:20, right:10, bottom:2, left:2 } },
         onClick:(evt,elements)=>{
           if(!elements.length)return;
           const key=keys[elements[0].index];
           if(key) toggleChartFilter(dimension,key,alsoStatus || null);
         },
         scales:{
-          x:{ ticks:{ autoSkip:true, maxRotation:55, minRotation:0 } },
-          y:{ beginAtZero:true }
+          x:{
+            offset:true,
+            ticks:{
+              autoSkip:false,
+              maxRotation:0,
+              minRotation:0,
+              padding:8,
+              font:{size:9,weight:'700'},
+              callback:function(value,index){
+                return temporalTickLines(pairs[index], granularity);
+              }
+            },
+            grid:{ display:false }
+          },
+          y:{
+            beginAtZero:true,
+            grace:'10%',
+            ticks:{ callback:value=>Number(value).toLocaleString('pt-BR') }
+          }
         },
         plugins:{
           legend:{display:false},
@@ -1039,9 +1141,16 @@
           datalabels:{
             anchor:'end',
             align:'top',
-            clamp:true,
+            offset:3,
+            clamp:false,
+            clip:false,
             formatter:value=>Number(value)>0?compactMoneyFmt.format(Number(value)):'',
-            font:{size:9,weight:'700'}
+            font:{size:9,weight:'800'},
+            color:'#475569',
+            backgroundColor:'rgba(255,255,255,.92)',
+            borderRadius:4,
+            padding:{top:2,right:4,bottom:2,left:4},
+            textAlign:'center'
           }
         }
       }
@@ -1052,11 +1161,14 @@
     const master = getMasterRows();
 
     const statusBase = applyChartFilters(master, 'status');
-    const openValue = statusBase.filter(r=>r.status==='open').reduce((s,r)=>s+r.__valor,0);
-    const resolvedValue = statusBase.filter(r=>r.status==='resolved').reduce((s,r)=>s+r.__valor,0);
+    const openRowsStatus = statusBase.filter(r=>r.status==='open');
+    const resolvedRowsStatus = statusBase.filter(r=>r.status==='resolved');
+    const openValue = openRowsStatus.reduce((s,r)=>s+r.__valor,0);
+    const resolvedValue = resolvedRowsStatus.reduce((s,r)=>s+r.__valor,0);
+    const statusCounts = [openRowsStatus.length, resolvedRowsStatus.length];
     makeChart('chartStatus', {
       type:'doughnut',
-      data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue] }] },
+      data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue], _counts:statusCounts, backgroundColor:['rgba(59,130,246,.46)','rgba(22,163,74,.46)'], hoverBackgroundColor:['rgba(59,130,246,.88)','rgba(22,163,74,.88)'], borderColor:['#2563eb','#15803d'], hoverBorderColor:['#1d4ed8','#166534'], borderWidth:1, hoverBorderWidth:1.5 }] },
       options:{
         maintainAspectRatio:false,
         onClick:(evt,elements)=>{ if(!elements.length)return; const label=['Em aberto','Resolvido'][elements[0].index]; toggleChartFilter('status', label); },
@@ -1064,8 +1176,12 @@
           legend:{position:'bottom'},
           tooltip:chartMoneyTooltip,
           datalabels:{
-            formatter:(value,ctx)=>{ const total=ctx.dataset.data.reduce((s,v)=>s+Number(v||0),0); const pct=total?Number(value)/total*100:0; return Number(value)>0 ? `${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(value))}` : ''; },
-            font:{size:11,weight:'800'},
+            formatter:(value,ctx)=>{
+              const total=ctx.dataset.data.reduce((s,v)=>s+Number(v||0),0);
+              const pct=total?Number(value)/total*100:0;
+              return Number(value)>0 ? `${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(value))}` : '';
+            },
+            font:{size:10,weight:'800'},
             textAlign:'center'
           }
         }
@@ -1073,28 +1189,62 @@
     });
 
     const resolutionBase = applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolution');
-    const resolutionPairs = sumBy(resolutionBase, r => r.resolucao || 'Sem resolução');
+    const resolutionMap = new Map();
+    for (const r of resolutionBase) {
+      const label = cleanText(r.resolucao) || 'Sem resolução';
+      if (!resolutionMap.has(label)) resolutionMap.set(label, { value:0, count:0 });
+      resolutionMap.get(label).value += Number(r.__valor || 0);
+      resolutionMap.get(label).count += 1;
+    }
+    const resolutionPairs = [...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
     makeChart('chartResolution', {
       type:'bar',
-      data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1])}] },
+      data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}] },
       options:{
         indexAxis:'y', maintainAspectRatio:false,
         onClick:(evt,elements)=>{ if(!elements.length)return; const label=resolutionPairs[elements[0].index]?.[0]; if(label) toggleChartFilter('resolution', label, 'Resolvido'); },
-        scales:{x:{beginAtZero:true}},
+        scales:{
+          x:{beginAtZero:true,grace:'10%'},
+          y:{ticks:{font:{size:9,weight:'700'}}}
+        },
+        plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
+      }
+    });
+
+    const responsibleBase = applyChartFilters(
+      master.filter(r => r.status === 'resolved' && cleanText(r.resolucao) === 'Conferente não vinculou o material a OF'),
+      'responsible'
+    );
+    const responsibleMap = new Map();
+    for (const r of responsibleBase) {
+      const label = cleanText(r.responsavel) || 'Não informado';
+      if (!responsibleMap.has(label)) responsibleMap.set(label, { value:0, count:0 });
+      responsibleMap.get(label).value += Number(r.__valor || 0);
+      responsibleMap.get(label).count += 1;
+    }
+    const responsiblePairs = [...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
+    makeChart('chartResponsible', {
+      type:'bar',
+      data:{ labels:responsiblePairs.map(x=>x[0]), datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(245,158,11,.48)',hoverBackgroundColor:'rgba(245,158,11,.90)',borderColor:'#d97706',hoverBorderColor:'#b45309',borderWidth:1,hoverBorderWidth:1.5}] },
+      options:{
+        indexAxis:'y', maintainAspectRatio:false,
+        onClick:(evt,elements)=>{ if(!elements.length)return; const label=responsiblePairs[elements[0].index]?.[0]; if(label) toggleChartFilter('responsible', label, 'Resolvido'); },
+        scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},
         plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
       }
     });
 
     const vocativoBase = applyChartFilters(master, 'vocativo');
-    const vocativoPairs = stackedPairs(vocativoBase, r=>r.__vocativo, 10);
+    const vocativoPairs = stackedPairs(vocativoBase, r=>r.__vocativo, 8);
     const vocativoLabels = vocativoPairs.map(x=>x[0]);
+    const vocativoAxisLabels = vocativoPairs.map(x=>x[0]);
     makeChart('chartVocativo', {
       type:'bar',
       data:{
-        labels:vocativoLabels,
+        labels:vocativoAxisLabels,
         datasets:[
-          {label:'Em aberto',data:vocativoPairs.map(x=>x[1].open),stack:'total'},
-          {label:'Resolvido',data:vocativoPairs.map(x=>x[1].resolved),stack:'total'}
+          {label:'Em aberto',data:vocativoPairs.map(x=>x[1].open),_counts:vocativoPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(59,130,246,.46)',hoverBackgroundColor:'rgba(59,130,246,.88)',borderColor:'#2563eb',hoverBorderColor:'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5},
+          {label:'Resolvido',data:vocativoPairs.map(x=>x[1].resolved),_counts:vocativoPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}
         ]
       },
       options:{
@@ -1107,13 +1257,17 @@
           const statusLabel=el.datasetIndex===1?'Resolvido':'Em aberto';
           toggleChartFilter('vocativo',label,statusLabel);
         },
-        scales:{x:{stacked:true,beginAtZero:true},y:{stacked:true,beginAtZero:true}},
+        scales:{
+          x:{stacked:true,beginAtZero:true,grace:'8%'},
+          y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}
+        },
         plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:barDataLabels}
       }
     });
 
     renderTemporalChart({
       id:'chartOccurrence',
+      innerId:'chartOccurrenceInner',
       rows: applyChartFilters(master.filter(r=>r.status==='open'), 'occurrencePeriod'),
       dateGetter:r=>r.__dataOcorrencia,
       granularity:state.occurrenceGranularity,
@@ -1124,6 +1278,7 @@
 
     renderTemporalChart({
       id:'chartResolutionDate',
+      innerId:'chartResolutionDateInner',
       rows: applyChartFilters(master.filter(r=>r.status==='resolved'), 'resolutionPeriod'),
       dateGetter:r=>r.dataResolucao,
       granularity:state.resolutionGranularity,
@@ -1175,6 +1330,7 @@
       <td>${esc(r.resolucao)}</td>
       <td>${esc(r.responsavel || '—')}</td>
       <td>${esc(r.dataResolucao && parseDateValue(r.dataResolucao) ? dateFmt.format(parseDateValue(r.dataResolucao)) : 'Sem data')}</td>
+      <td>${esc(r.quemResolveu || 'Não informado')}</td>
       <td>${r.stillPending ? '<span class="badge warn">Ainda consta na pendência</span>' : '<span class="badge ok">Fora da pendência atual</span>'}</td>
       <td><button class="row-btn edit-resolved" data-key="${esc(r.key)}">Editar</button></td>
     </tr>`).join('');
@@ -1191,6 +1347,7 @@
     $('fVocativo').value = data.vocativo ?? '';
     $('fResolution').value = data.resolucao ?? '';
     $('fResponsible').value = data.responsavel ?? '';
+    $('fSolvedBy').value = data.quemResolveu ?? '';
     const locked = mode === 'report';
     $('fNota').readOnly = locked;
     $('fColeta').readOnly = locked;
@@ -1242,8 +1399,13 @@
       valorNota: parseMoney($('fValor').value),
       vocativo: cleanText($('fVocativo').value),
       resolucao: $('fResolution').value,
-      responsavel: cleanText($('fResponsible').value)
+      responsavel: cleanText($('fResponsible').value),
+      quemResolveu: $('fSolvedBy').value
     };
+    if (!payload.quemResolveu) {
+      $('fSolvedBy').focus();
+      return setNotice('error', 'Selecione quem resolveu', 'Escolha Italo ou Bruna antes de salvar a resolução.');
+    }
     const btn = $('btnSave');
     const old = btn.innerHTML;
     btn.disabled = true;
@@ -1259,6 +1421,15 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = old;
+    }
+  });
+
+  $('btnApiTest').addEventListener('click', () => {
+    try {
+      const url = `${getAppsScriptBase()}?action=health&_=${Date.now()}`;
+      window.open(url, '_blank', 'noopener');
+    } catch (err) {
+      setNotice('error', 'URL do Apps Script inválida', err.message);
     }
   });
 
@@ -1309,7 +1480,7 @@
   });
 
   ['openSearch','openClient','openRange','openPriority'].forEach(id => $(id).addEventListener(id === 'openSearch' ? 'input' : 'change', () => { state.openPage=1; renderOpenTable(); }));
-  ['resolvedSearch','resolvedFilter','resolvedPresence'].forEach(id => $(id).addEventListener(id === 'resolvedSearch' ? 'input' : 'change', () => { state.resolvedPage=1; renderResolvedTable(); }));
+  ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id => $(id).addEventListener(id === 'resolvedSearch' ? 'input' : 'change', () => { state.resolvedPage=1; renderResolvedTable(); }));
   $('openPrev').addEventListener('click',()=>{ if(state.openPage>1){state.openPage--;renderOpenTable();} });
   $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
   $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}});
