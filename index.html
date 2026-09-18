@@ -1,26 +1,854 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        *{
-            margin: 0%;
-        }
-        img{
-            width: 100%;
-            height: 100%;
-            margin: auto;
-            margin-top: 10%;
-        }
-        body{
-            background-color: rgb(38, 38, 38);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pendência Temporária</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #6d778a;
+      --line: #dfe5ee;
+      --primary: #2563eb;
+      --primary-soft: #eaf1ff;
+      --success: #15803d;
+      --success-soft: #eaf7ef;
+      --warning: #b45309;
+      --warning-soft: #fff7e8;
+      --danger: #b91c1c;
+      --danger-soft: #feecec;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    .app-shell { min-height: 100vh; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .brand h1 { margin: 0; font-size: 20px; }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 14px;
+      font-weight: 700;
+      transition: .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(15,23,42,.08); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-soft { background: var(--primary-soft); color: #174ea6; border-color: #cfddff; }
+
+    main { padding: 22px; max-width: 1700px; margin: 0 auto; }
+    .notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .notice.ok { border-color: #b7e4c7; background: #f2fbf5; }
+    .notice.warn { border-color: #fed7aa; background: #fff9ed; }
+    .notice.error { border-color: #fecaca; background: #fff1f2; }
+    .notice small { color: var(--muted); }
+
+    .upload-card {
+      background: var(--panel);
+      border: 1px dashed #a9b7cc;
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    .upload-card h2 { margin: 0 0 6px; font-size: 18px; }
+    .upload-card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .file-input { max-width: 420px; width: 100%; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(170px,1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(15,23,42,.05);
+      min-height: 112px;
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .kpi .value { margin-top: 9px; font-size: 25px; font-weight: 900; letter-spacing: -.02em; }
+    .kpi .sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .kpi.open .value { color: var(--danger); }
+    .kpi.resolved .value { color: var(--success); }
+    .kpi.alert .value { color: var(--warning); }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .chart-card {
+      min-height: 330px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 15px;
+      box-shadow: 0 7px 22px rgba(15,23,42,.05);
+    }
+    .chart-card h3 { margin: 0 0 12px; font-size: 14px; }
+    .chart-wrap { height: 270px; position: relative; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 4px 0 12px;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+    .tab.active { color: var(--primary); background: var(--primary-soft); border-color: #c7d7ff; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .panel-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .field {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 9px 10px;
+      background: #fff;
+      min-width: 170px;
+    }
+    .table-scroll { overflow: auto; max-height: 590px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1120px; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid #edf1f6; text-align: left; font-size: 12px; white-space: nowrap; }
+    th { position: sticky; top: 0; z-index: 3; background: #f8fafc; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+    tbody tr { transition: background .12s ease; }
+    tbody tr:hover { background: #f8fbff; }
+    tbody tr.selected { background: #dbeafe !important; outline: 1px solid #93c5fd; outline-offset: -1px; }
+    .money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .badge.ok { background: var(--success-soft); color: var(--success); }
+    .badge.warn { background: var(--warning-soft); color: var(--warning); }
+    .badge.neutral { background: #eef2f7; color: #475569; }
+    .badge.info { background: var(--primary-soft); color: #1d4ed8; }
+    .row-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 9px; font-weight: 800; font-size: 11px; }
+
+    .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding: 10px 14px; color: var(--muted); font-size: 12px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(15,23,42,.48);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .modal {
+      width: min(640px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(15,23,42,.28);
+      border: 1px solid #e2e8f0;
+    }
+    .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 18px 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 12px; font-weight: 800; color: #475569; }
+    .form-group input, .form-group select { border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; width: 100%; }
+    .hint { font-size: 11px; color: var(--muted); }
+    .modal-actions { padding: 15px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+    .close-x { border: 0; background: transparent; font-size: 24px; line-height: 1; color: #64748b; }
+
+    .empty { padding: 35px 18px; text-align: center; color: var(--muted); }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1180px) {
+      .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); }
+      .charts-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 760px) {
+      header { padding: 12px; align-items: flex-start; flex-direction: column; }
+      main { padding: 12px; }
+      .upload-card { align-items: stretch; flex-direction: column; }
+      .kpis { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: auto; }
+      .header-actions { width: 100%; }
+      .header-actions .btn { flex: 1; }
+    }
+  </style>
 </head>
 <body>
-    <img src="indicador1.png" alt="">
+<div class="app-shell">
+  <header>
+    <div class="brand">
+      <h1>Pendência Temporária</h1>
+      <p>Conciliação do relatório carregado com os casos resolvidos no Google Planilhas.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
+      <button class="btn btn-soft" id="btnManual">Nova resolução manual</button>
+      <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="notice" class="notice warn">
+      <div>
+        <strong id="noticeTitle">Configuração necessária</strong><br>
+        <small id="noticeText">Cole a URL /exec do Google Apps Script na constante APPS_SCRIPT_URL antes de publicar.</small>
+      </div>
+      <span id="apiStatus" class="badge warn">API não conectada</span>
+    </div>
+
+    <section class="upload-card">
+      <div>
+        <h2>Carregar relatório de Pendência Temporária</h2>
+        <p>O sistema usa a chave <strong>Nota + Coleta</strong>. Registros repetidos no Excel são consolidados para não duplicar valores.</p>
+      </div>
+      <input class="file-input" type="file" id="fileInput" accept=".xlsx,.xls" />
+    </section>
+
+    <section class="kpis">
+      <article class="kpi">
+        <div class="label">Valor do relatório atual</div>
+        <div class="value" id="kpiTotal">R$ 0,00</div>
+        <div class="sub" id="kpiTotalSub">Nenhum relatório carregado</div>
+      </article>
+      <article class="kpi open">
+        <div class="label">Valor em aberto</div>
+        <div class="value" id="kpiOpen">R$ 0,00</div>
+        <div class="sub" id="kpiOpenSub">0 registros</div>
+      </article>
+      <article class="kpi resolved">
+        <div class="label">Resolvido no relatório atual</div>
+        <div class="value" id="kpiResolved">R$ 0,00</div>
+        <div class="sub" id="kpiResolvedSub">0 registros</div>
+      </article>
+      <article class="kpi alert">
+        <div class="label">Resolvido e ainda na pendência</div>
+        <div class="value" id="kpiStill">R$ 0,00</div>
+        <div class="sub" id="kpiStillSub">0 registros</div>
+      </article>
+      <article class="kpi">
+        <div class="label">% resolvido por valor</div>
+        <div class="value" id="kpiPercent">0,00%</div>
+        <div class="sub" id="kpiPercentSub">Base: relatório atual</div>
+      </article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="chart-card"><h3>Valor em aberto × resolvido</h3><div class="chart-wrap"><canvas id="chartStatus"></canvas></div></article>
+      <article class="chart-card"><h3>Valor resolvido por tipo de resolução</h3><div class="chart-wrap"><canvas id="chartResolution"></canvas></div></article>
+      <article class="chart-card"><h3>Top clientes — valor em aberto</h3><div class="chart-wrap"><canvas id="chartClient"></canvas></div></article>
+      <article class="chart-card"><h3>Top vocativos — valor em aberto</h3><div class="chart-wrap"><canvas id="chartVocativo"></canvas></div></article>
+      <article class="chart-card"><h3>Valor em aberto por Range de Dias</h3><div class="chart-wrap"><canvas id="chartRange"></canvas></div></article>
+      <article class="chart-card"><h3>Valor em aberto por Prioridade</h3><div class="chart-wrap"><canvas id="chartPriority"></canvas></div></article>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
+      <button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
+    </nav>
+
+    <section class="panel" id="panelOpen">
+      <div class="panel-head">
+        <div class="filters">
+          <input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente..." />
+          <select class="field" id="openClient"><option value="">Todos os clientes</option></select>
+          <select class="field" id="openRange"><option value="">Todos os ranges</option></select>
+          <select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
+        </div>
+        <small id="openSummary">0 registros</small>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Cliente</th><th>Destino</th><th>UF</th><th>Range</th><th>Prioridade</th><th>Repetições no Excel</th><th>Ação</th>
+          </tr></thead>
+          <tbody id="openBody"></tbody>
+        </table>
+        <div class="empty" id="openEmpty">Carregue um relatório para visualizar as pendências.</div>
+      </div>
+      <div class="pager"><button class="btn" id="openPrev">Anterior</button><span id="openPageLabel">Página 1</span><button class="btn" id="openNext">Próxima</button></div>
+    </section>
+
+    <section class="panel hidden" id="panelResolved">
+      <div class="panel-head">
+        <div class="filters">
+          <input class="field" id="resolvedSearch" placeholder="Pesquisar Nota, Coleta, resolução..." />
+          <select class="field" id="resolvedFilter"><option value="">Todas as resoluções</option></select>
+          <select class="field" id="resolvedPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+        </div>
+        <small id="resolvedSummary">0 registros</small>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Nota</th><th>Coleta</th><th class="money">Valor Nota</th><th>Vocativo</th><th>Resolução</th><th>Responsável pela falha</th><th>Status no relatório atual</th><th>Ação</th>
+          </tr></thead>
+          <tbody id="resolvedBody"></tbody>
+        </table>
+        <div class="empty" id="resolvedEmpty">Nenhum caso resolvido encontrado no Google Planilhas.</div>
+      </div>
+      <div class="pager"><button class="btn" id="resolvedPrev">Anterior</button><span id="resolvedPageLabel">Página 1</span><button class="btn" id="resolvedNext">Próxima</button></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div><h2 id="modalTitle">Registrar resolução</h2><div class="hint" id="modalHint">Os dados serão gravados diretamente no Google Planilhas.</div></div>
+      <button class="close-x" id="modalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="resolutionForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="fNota">Nota</label><input id="fNota" required /></div>
+          <div class="form-group"><label for="fColeta">Coleta</label><input id="fColeta" required /></div>
+          <div class="form-group"><label for="fValor">Valor Nota</label><input id="fValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="fVocativo">Vocativo</label><input id="fVocativo" required /></div>
+          <div class="form-group full"><label for="fResolution">Resolução</label><select id="fResolution" required><option value="">Selecione...</option></select></div>
+          <div class="form-group full hidden" id="responsibleGroup">
+            <label for="fResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label>
+            <input id="fResponsible" placeholder="Digite livremente o nome da pessoa" />
+            <div class="hint">Este campo aparece somente para “Conferente não vinculou o material a OF” e “Coleta retirada de OF”.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="modalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">Salvar no Google Planilhas</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // ALTERE SOMENTE ESTA URL DEPOIS QUE PUBLICAR O APPS SCRIPT COMO APLICATIVO DA WEB.
+  const CONFIG = {
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxUjFH7SOQV3p9DOQPFkXpxj2eac3rcRXiXuKoc-sstpWhWS2Wwc5O-jln0ylVTn5Ow/exec',
+    PAGE_SIZE: 100
+  };
+
+  const state = {
+    apiReady: false,
+    reportLoaded: false,
+    reportRows: [],
+    resolvedRows: [],
+    resolvedMap: new Map(),
+    resolutions: [],
+    responsibleResolutions: [],
+    selectedKey: null,
+    openPage: 1,
+    resolvedPage: 1,
+    charts: {}
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const moneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pctFmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const cleanText = (v) => String(v ?? '').trim();
+  const keyOf = (nota, coleta) => `${cleanText(nota)}||${cleanText(coleta)}`;
+
+  function parseMoney(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    let s = cleanText(value).replace(/R\$/gi, '').replace(/\s/g, '');
+    if (!s) return 0;
+    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (s.includes(',')) s = s.replace(',', '.');
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function setNotice(type, title, text) {
+    const n = $('notice');
+    n.className = `notice ${type}`;
+    $('noticeTitle').textContent = title;
+    $('noticeText').textContent = text;
+    const badge = $('apiStatus');
+    badge.className = `badge ${type === 'ok' ? 'ok' : type === 'error' ? 'warn' : 'warn'}`;
+    badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
+  }
+
+  async function api(action, options = {}) {
+    const base = cleanText(CONFIG.APPS_SCRIPT_URL);
+    if (!base || base.includes('SEU_DEPLOYMENT_ID') || !base.endsWith('/exec')) {
+      throw new Error('Configure APPS_SCRIPT_URL com a URL /exec do Apps Script no index.html.');
+    }
+
+    const method = String(options.method || 'GET').toUpperCase();
+    let response;
+
+    if (method === 'GET') {
+      const url = `${base}?action=${encodeURIComponent(action)}&_=${Date.now()}`;
+      response = await fetch(url, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+    } else {
+      const originalBody = options.body ? JSON.parse(options.body) : {};
+      response = await fetch(base, {
+        method: 'POST',
+        redirect: 'follow',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...originalBody })
+      });
+    }
+
+    const text = await response.text();
+    let payload;
+    try { payload = JSON.parse(text); }
+    catch (_) { throw new Error('O Apps Script não retornou JSON válido. Confira a implantação e use a URL terminada em /exec.'); }
+
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(payload?.error || `Erro HTTP ${response.status}`);
+    }
+    return payload;
+  }
+
+  async function connectApi() {
+    try {
+      const config = await api('config');
+      state.resolutions = config.resolutions || [];
+      state.responsibleResolutions = config.responsibleResolutions || [];
+      state.apiReady = true;
+      fillResolutionSelectors();
+      await refreshResolved();
+      setNotice('ok', 'Google Planilhas conectado', 'Leitura e gravação estão disponíveis. O registro só será marcado como resolvido após confirmação do Google Apps Script.');
+    } catch (err) {
+      state.apiReady = false;
+      setNotice('error', 'Não foi possível conectar ao Google Apps Script', err.message);
+    }
+  }
+
+  async function refreshResolved() {
+    const payload = await api('resolvidos');
+    state.resolvedRows = (payload.rows || []).map(r => ({
+      nota: cleanText(r.nota),
+      coleta: cleanText(r.coleta),
+      valorNota: parseMoney(r.valorNota),
+      vocativo: cleanText(r.vocativo),
+      resolucao: cleanText(r.resolucao),
+      responsavel: cleanText(r.responsavel),
+      key: keyOf(r.nota, r.coleta)
+    }));
+    state.resolvedMap = new Map();
+    for (const r of state.resolvedRows) state.resolvedMap.set(r.key, r);
+    state.resolvedPage = 1;
+    rebuildView();
+  }
+
+  function fillResolutionSelectors() {
+    $('fResolution').innerHTML = '<option value="">Selecione...</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  }
+
+  $('fileInput').addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+      const sheetName = workbook.SheetNames.includes('Export') ? 'Export' : workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '', raw: true });
+      const required = ['Nota', 'Coleta', 'Valor Nota', 'Vocativo'];
+      const headers = rows.length ? Object.keys(rows[0]) : [];
+      const missing = required.filter(h => !headers.includes(h));
+      if (missing.length) throw new Error(`Colunas obrigatórias não encontradas: ${missing.join(', ')}`);
+
+      const byKey = new Map();
+      let duplicateLines = 0;
+      let valueConflicts = 0;
+      for (const row of rows) {
+        const nota = cleanText(row['Nota']);
+        const coleta = cleanText(row['Coleta']);
+        if (!nota || !coleta) continue;
+        const key = keyOf(nota, coleta);
+        const value = parseMoney(row['Valor Nota']);
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            ...row,
+            __key: key,
+            __nota: nota,
+            __coleta: coleta,
+            __valor: value,
+            __vocativo: cleanText(row['Vocativo']),
+            __duplicateCount: 1,
+            __valueConflict: false
+          });
+        } else {
+          duplicateLines++;
+          const current = byKey.get(key);
+          current.__duplicateCount++;
+          if (Math.abs(current.__valor - value) > 0.005) {
+            current.__valueConflict = true;
+            valueConflicts++;
+            current.__valor = Math.max(current.__valor, value);
+          }
+          for (const [field, val] of Object.entries(row)) {
+            if (!cleanText(current[field]) && cleanText(val)) current[field] = val;
+          }
+        }
+      }
+
+      state.reportRows = Array.from(byKey.values());
+      state.reportLoaded = true;
+      state.selectedKey = null;
+      state.openPage = 1;
+      rebuildFilters();
+      rebuildView();
+      const detail = `${rows.length.toLocaleString('pt-BR')} linhas lidas; ${state.reportRows.length.toLocaleString('pt-BR')} chaves únicas Nota + Coleta; ${duplicateLines.toLocaleString('pt-BR')} linhas repetidas consolidadas` + (valueConflicts ? `; ${valueConflicts} divergências de valor sinalizadas` : '.');
+      setNotice(state.apiReady ? 'ok' : 'warn', 'Relatório carregado', detail);
+    } catch (err) {
+      setNotice('error', 'Erro ao carregar o Excel', err.message);
+    }
+  });
+
+  function rebuildFilters() {
+    const clients = [...new Set(state.reportRows.map(r => cleanText(r['Cliente'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    const ranges = [...new Set(state.reportRows.map(r => cleanText(r['Range de Dias'])).filter(Boolean))];
+    const priorities = [...new Set(state.reportRows.map(r => cleanText(r['Prioridade'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v => `<option>${esc(v)}</option>`).join('');
+    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v => `<option>${esc(v)}</option>`).join('');
+    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v => `<option>${esc(v)}</option>`).join('');
+  }
+
+  function getOpenRows(applyFilters = true) {
+    let rows = state.reportRows.filter(r => !state.resolvedMap.has(r.__key));
+    if (!applyFilters) return rows;
+    const q = cleanText($('openSearch').value).toLowerCase();
+    const client = $('openClient').value;
+    const range = $('openRange').value;
+    const priority = $('openPriority').value;
+    return rows.filter(r => {
+      if (client && cleanText(r['Cliente']) !== client) return false;
+      if (range && cleanText(r['Range de Dias']) !== range) return false;
+      if (priority && cleanText(r['Prioridade']) !== priority) return false;
+      if (q) {
+        const hay = [r.__nota,r.__coleta,r.__vocativo,r['Cliente'],r['Destino'],r['UF Destino'],r['Range de Dias'],r['Prioridade']].map(cleanText).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function getResolvedRows(applyFilters = true) {
+    const reportMap = new Map(state.reportRows.map(r => [r.__key, r]));
+    let rows = state.resolvedRows.map(g => {
+      const report = reportMap.get(g.key);
+      return {
+        ...g,
+        valorNota: report ? report.__valor : g.valorNota,
+        vocativo: report ? report.__vocativo : g.vocativo,
+        stillPending: !!report
+      };
+    });
+    if (!applyFilters) return rows;
+    const q = cleanText($('resolvedSearch').value).toLowerCase();
+    const resolution = $('resolvedFilter').value;
+    const presence = $('resolvedPresence').value;
+    return rows.filter(r => {
+      if (resolution && r.resolucao !== resolution) return false;
+      if (presence === 'sim' && !r.stillPending) return false;
+      if (presence === 'nao' && r.stillPending) return false;
+      if (q) {
+        const hay = [r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function rebuildView() {
+    renderKpis();
+    renderCharts();
+    renderOpenTable();
+    renderResolvedTable();
+    $('btnResolveSelected').disabled = !state.selectedKey || !state.apiReady;
+  }
+
+  function renderKpis() {
+    const report = state.reportRows;
+    const open = getOpenRows(false);
+    const resolvedCurrent = report.filter(r => state.resolvedMap.has(r.__key));
+    const total = report.reduce((s,r)=>s+r.__valor,0);
+    const openValue = open.reduce((s,r)=>s+r.__valor,0);
+    const resolvedValue = resolvedCurrent.reduce((s,r)=>s+r.__valor,0);
+    const pct = total ? (resolvedValue/total)*100 : 0;
+    $('kpiTotal').textContent = moneyFmt.format(total);
+    $('kpiTotalSub').textContent = `${report.length.toLocaleString('pt-BR')} chaves únicas Nota + Coleta`;
+    $('kpiOpen').textContent = moneyFmt.format(openValue);
+    $('kpiOpenSub').textContent = `${open.length.toLocaleString('pt-BR')} registros`;
+    $('kpiResolved').textContent = moneyFmt.format(resolvedValue);
+    $('kpiResolvedSub').textContent = `${resolvedCurrent.length.toLocaleString('pt-BR')} registros do relatório atual`;
+    $('kpiStill').textContent = moneyFmt.format(resolvedValue);
+    $('kpiStillSub').textContent = `${resolvedCurrent.length.toLocaleString('pt-BR')} já resolvidos que ainda constam no Excel`;
+    $('kpiPercent').textContent = `${pctFmt.format(pct)}%`;
+    $('openCount').textContent = open.length.toLocaleString('pt-BR');
+    $('resolvedCount').textContent = state.resolvedRows.length.toLocaleString('pt-BR');
+  }
+
+  function sumBy(rows, labelGetter, valueGetter = r => r.__valor) {
+    const map = new Map();
+    for (const r of rows) {
+      const label = cleanText(labelGetter(r)) || 'Sem informação';
+      map.set(label, (map.get(label) || 0) + Number(valueGetter(r) || 0));
+    }
+    return [...map.entries()].sort((a,b)=>b[1]-a[1]);
+  }
+
+  function makeChart(id, config) {
+    if (state.charts[id]) state.charts[id].destroy();
+    state.charts[id] = new Chart($(id), config);
+  }
+  const chartMoneyTooltip = { callbacks: { label: ctx => `${ctx.dataset.label || ''}: ${moneyFmt.format(ctx.raw || 0)}` } };
+
+  function renderCharts() {
+    const open = getOpenRows(false);
+    const resolvedCurrent = state.reportRows.filter(r => state.resolvedMap.has(r.__key));
+    const openValue = open.reduce((s,r)=>s+r.__valor,0);
+    const resolvedValue = resolvedCurrent.reduce((s,r)=>s+r.__valor,0);
+
+    makeChart('chartStatus', { type:'doughnut', data:{ labels:['Em aberto','Resolvido'], datasets:[{ data:[openValue,resolvedValue] }] }, options:{ maintainAspectRatio:false, plugins:{ legend:{position:'bottom'}, tooltip:chartMoneyTooltip } } });
+
+    const resolutionPairs = sumBy(resolvedCurrent, r => state.resolvedMap.get(r.__key)?.resolucao || 'Sem resolução');
+    makeChart('chartResolution', { type:'bar', data:{ labels:resolutionPairs.map(x=>x[0]), datasets:[{label:'Valor',data:resolutionPairs.map(x=>x[1])}] }, options:{ indexAxis:'y', maintainAspectRatio:false, scales:{x:{beginAtZero:true}}, plugins:{legend:{display:false},tooltip:chartMoneyTooltip} } });
+
+    const clients = sumBy(open, r=>r['Cliente']).slice(0,10);
+    makeChart('chartClient', { type:'bar', data:{labels:clients.map(x=>x[0]),datasets:[{label:'Valor',data:clients.map(x=>x[1])}]}, options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+
+    const vocs = sumBy(open, r=>r.__vocativo).slice(0,10);
+    makeChart('chartVocativo', { type:'bar', data:{labels:vocs.map(x=>x[0]),datasets:[{label:'Valor',data:vocs.map(x=>x[1])}]}, options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+
+    const ranges = sumBy(open, r=>r['Range de Dias']);
+    makeChart('chartRange', { type:'bar', data:{labels:ranges.map(x=>x[0]),datasets:[{label:'Valor',data:ranges.map(x=>x[1])}]}, options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+
+    const priorities = sumBy(open, r=>r['Prioridade']);
+    makeChart('chartPriority', { type:'bar', data:{labels:priorities.map(x=>x[0]),datasets:[{label:'Valor',data:priorities.map(x=>x[1])}]}, options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:chartMoneyTooltip}} });
+  }
+
+  function renderOpenTable() {
+    const rows = getOpenRows(true).sort((a,b)=>b.__valor-a.__valor);
+    const totalPages = Math.max(1, Math.ceil(rows.length / CONFIG.PAGE_SIZE));
+    if (state.openPage > totalPages) state.openPage = totalPages;
+    const start = (state.openPage - 1) * CONFIG.PAGE_SIZE;
+    const pageRows = rows.slice(start, start + CONFIG.PAGE_SIZE);
+    $('openEmpty').classList.toggle('hidden', rows.length > 0);
+    $('openBody').innerHTML = pageRows.map(r => `<tr data-key="${esc(r.__key)}" class="${state.selectedKey === r.__key ? 'selected' : ''}">
+      <td>${esc(r.__nota)}</td>
+      <td>${esc(r.__coleta)}</td>
+      <td class="money">${moneyFmt.format(r.__valor)}</td>
+      <td>${esc(r.__vocativo)}</td>
+      <td>${esc(r['Cliente'])}</td>
+      <td>${esc(r['Destino'])}</td>
+      <td>${esc(r['UF Destino'])}</td>
+      <td>${esc(r['Range de Dias'])}</td>
+      <td>${esc(r['Prioridade'])}</td>
+      <td>${r.__duplicateCount > 1 ? `<span class="badge warn">${r.__duplicateCount} linhas</span>` : '<span class="badge neutral">1</span>'}${r.__valueConflict ? ' <span class="badge warn">valor divergente</span>' : ''}</td>
+      <td><button class="row-btn resolve-row" data-key="${esc(r.__key)}">Resolver</button></td>
+    </tr>`).join('');
+    $('openSummary').textContent = `${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.__valor,0))}`;
+    $('openPageLabel').textContent = `Página ${state.openPage} de ${totalPages}`;
+    $('openPrev').disabled = state.openPage <= 1;
+    $('openNext').disabled = state.openPage >= totalPages;
+  }
+
+  function renderResolvedTable() {
+    const rows = getResolvedRows(true).sort((a,b)=>Number(b.stillPending)-Number(a.stillPending) || b.valorNota-a.valorNota);
+    const totalPages = Math.max(1, Math.ceil(rows.length / CONFIG.PAGE_SIZE));
+    if (state.resolvedPage > totalPages) state.resolvedPage = totalPages;
+    const start = (state.resolvedPage - 1) * CONFIG.PAGE_SIZE;
+    const pageRows = rows.slice(start, start + CONFIG.PAGE_SIZE);
+    $('resolvedEmpty').classList.toggle('hidden', rows.length > 0);
+    $('resolvedBody').innerHTML = pageRows.map(r => `<tr>
+      <td>${esc(r.nota)}</td>
+      <td>${esc(r.coleta)}</td>
+      <td class="money">${moneyFmt.format(r.valorNota)}</td>
+      <td>${esc(r.vocativo)}</td>
+      <td>${esc(r.resolucao)}</td>
+      <td>${esc(r.responsavel || '—')}</td>
+      <td>${r.stillPending ? '<span class="badge warn">Ainda consta na pendência</span>' : '<span class="badge ok">Fora da pendência atual</span>'}</td>
+      <td><button class="row-btn edit-resolved" data-key="${esc(r.key)}">Editar</button></td>
+    </tr>`).join('');
+    $('resolvedSummary').textContent = `${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
+    $('resolvedPageLabel').textContent = `Página ${state.resolvedPage} de ${totalPages}`;
+    $('resolvedPrev').disabled = state.resolvedPage <= 1;
+    $('resolvedNext').disabled = state.resolvedPage >= totalPages;
+  }
+
+  function openModal(data = {}, mode = 'manual') {
+    $('fNota').value = data.nota ?? '';
+    $('fColeta').value = data.coleta ?? '';
+    $('fValor').value = data.valorNota != null ? String(data.valorNota).replace('.', ',') : '';
+    $('fVocativo').value = data.vocativo ?? '';
+    $('fResolution').value = data.resolucao ?? '';
+    $('fResponsible').value = data.responsavel ?? '';
+    const locked = mode === 'report';
+    $('fNota').readOnly = locked;
+    $('fColeta').readOnly = locked;
+    $('fValor').readOnly = locked;
+    $('fVocativo').readOnly = locked;
+    $('modalTitle').textContent = mode === 'edit' ? 'Editar resolução' : mode === 'report' ? 'Resolver registro selecionado' : 'Nova resolução manual';
+    updateResponsibleVisibility();
+    $('modalBackdrop').classList.remove('hidden');
+  }
+  function closeModal() { $('modalBackdrop').classList.add('hidden'); }
+  function updateResponsibleVisibility() {
+    const show = state.responsibleResolutions.includes($('fResolution').value);
+    $('responsibleGroup').classList.toggle('hidden', !show);
+    if (!show) $('fResponsible').value = '';
+  }
+
+  function openReportResolution(key) {
+    const r = state.reportRows.find(x => x.__key === key);
+    if (!r) return;
+    state.selectedKey = key;
+    renderOpenTable();
+    $('btnResolveSelected').disabled = !state.apiReady;
+    openModal({ nota:r.__nota, coleta:r.__coleta, valorNota:r.__valor, vocativo:r.__vocativo }, 'report');
+  }
+
+  $('openBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('.resolve-row');
+    if (btn) { e.stopPropagation(); openReportResolution(btn.dataset.key); return; }
+    const tr = e.target.closest('tr[data-key]');
+    if (tr) { state.selectedKey = tr.dataset.key; renderOpenTable(); $('btnResolveSelected').disabled = !state.apiReady; }
+  });
+  $('openBody').addEventListener('dblclick', (e) => {
+    const tr = e.target.closest('tr[data-key]');
+    if (tr) openReportResolution(tr.dataset.key);
+  });
+  $('resolvedBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('.edit-resolved');
+    if (!btn) return;
+    const r = state.resolvedRows.find(x => x.key === btn.dataset.key);
+    if (r) openModal(r, 'edit');
+  });
+
+  $('resolutionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!state.apiReady) return setNotice('error', 'Apps Script indisponível', 'Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload = {
+      nota: cleanText($('fNota').value),
+      coleta: cleanText($('fColeta').value),
+      valorNota: parseMoney($('fValor').value),
+      vocativo: cleanText($('fVocativo').value),
+      resolucao: $('fResolution').value,
+      responsavel: cleanText($('fResponsible').value)
+    };
+    const btn = $('btnSave');
+    const old = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Salvando...';
+    try {
+      await api('salvar', { method:'POST', body: JSON.stringify(payload) });
+      await refreshResolved();
+      state.selectedKey = null;
+      closeModal();
+      setNotice('ok', 'Registro confirmado', `Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada no Google Planilhas.`);
+    } catch (err) {
+      setNotice('error', 'Falha ao gravar', `${err.message}. O registro não foi marcado como resolvido.`);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = old;
+    }
+  });
+
+  $('btnRefresh').addEventListener('click', async () => {
+    try { await connectApi(); } catch (_) {}
+  });
+  $('btnManual').addEventListener('click', () => openModal({}, 'manual'));
+  $('btnResolveSelected').addEventListener('click', () => { if (state.selectedKey) openReportResolution(state.selectedKey); });
+  $('modalClose').addEventListener('click', closeModal);
+  $('modalCancel').addEventListener('click', closeModal);
+  $('modalBackdrop').addEventListener('click', e => { if (e.target === $('modalBackdrop')) closeModal(); });
+  $('fResolution').addEventListener('change', updateResponsibleVisibility);
+
+  document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+    const open = tab.dataset.tab === 'open';
+    $('panelOpen').classList.toggle('hidden', !open);
+    $('panelResolved').classList.toggle('hidden', open);
+  }));
+
+  ['openSearch','openClient','openRange','openPriority'].forEach(id => $(id).addEventListener(id === 'openSearch' ? 'input' : 'change', () => { state.openPage=1; renderOpenTable(); }));
+  ['resolvedSearch','resolvedFilter','resolvedPresence'].forEach(id => $(id).addEventListener(id === 'resolvedSearch' ? 'input' : 'change', () => { state.resolvedPage=1; renderResolvedTable(); }));
+  $('openPrev').addEventListener('click',()=>{ if(state.openPage>1){state.openPage--;renderOpenTable();} });
+  $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
+  $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}});
+  $('resolvedNext').addEventListener('click',()=>{state.resolvedPage++;renderResolvedTable();});
+
+  connectApi();
+  rebuildView();
+</script>
 </body>
 </html>
