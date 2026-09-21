@@ -64,6 +64,21 @@
       min-width: 0;
     }
     .header-actions .btn { white-space: nowrap; }
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex: 0 0 auto;
+    }
+    .action-group + .action-group {
+      margin-left: 3px;
+      padding-left: 6px;
+      border-left: 1px solid #e2e8f0;
+    }
+    .header-actions .btn {
+      padding: 6px 8px;
+      font-size: 10px;
+    }
 
     .btn {
       border: 1px solid var(--line);
@@ -412,14 +427,22 @@
       <p>Conciliação do relatório carregado com os casos resolvidos no Google Planilhas.</p>
     </div>
     <div class="header-actions">
-      <button class="btn hidden" id="btnApiTest">Testar API</button>
-      <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
-      <button class="btn btn-soft" id="btnManual">Nova resolução manual</button>
-      <button class="btn btn-claim" id="btnManualClaim">Novo sinistro manual</button>
-      <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
-      <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
-      <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
-      <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
+      <div class="action-group">
+        <button class="btn hidden" id="btnApiTest">Testar API</button>
+        <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
+      </div>
+      <div class="action-group" aria-label="Ações de resolução">
+        <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
+        <button class="btn btn-soft" id="btnManual">Resolver (Manual)</button>
+      </div>
+      <div class="action-group" aria-label="Ações de sinistro">
+        <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
+        <button class="btn btn-claim" id="btnManualClaim">Encaminhar sinistro (Manual)</button>
+      </div>
+      <div class="action-group" aria-label="Sinalizações">
+        <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
+        <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
+      </div>
     </div>
   </header>
 
@@ -655,7 +678,8 @@
 <script>
   const CONFIG = {
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwXa5kibQil8oI5VyzixRoAcSiBFKMZH3g93QQtVzddyOVjcL0xl9Xr2SvvY4H3yyLY/exec',
-    PAGE_SIZE: 100
+    PAGE_SIZE: 100,
+    REALTIME_INTERVAL_MS: 5000
   };
 
   const state = {
@@ -675,6 +699,9 @@
     openPage: 1,
     resolvedPage: 1,
     claimPage: 1,
+    realtimeTimer: null,
+    realtimeSyncInFlight: false,
+    remoteSignature: '',
     tableSort: {
       open: { key: null, dir: 'asc' },
       resolved: { key: null, dir: 'asc' },
@@ -850,7 +877,20 @@
     return map;
   }
 
+  function getRemoteSignature(payload) {
+    return JSON.stringify({
+      resolvidos: payload?.resolvidos || [],
+      sinistros: payload?.sinistros || [],
+      prioridadeCrc: payload?.prioridadeCrc || [],
+      naoLocalizado: payload?.naoLocalizado || [],
+      resolutions: payload?.resolutions || [],
+      responsibleResolutions: payload?.responsibleResolutions || [],
+      solvers: payload?.solvers || []
+    });
+  }
+
   function applyBootstrap(payload, render = true) {
+    state.remoteSignature = getRemoteSignature(payload);
     state.resolutions = payload.resolutions || [];
     state.responsibleResolutions = payload.responsibleResolutions || [];
     state.solvers = payload.solvers || [];
@@ -870,12 +910,35 @@
     return payload;
   }
 
+  async function syncRealtime() {
+    if (!state.apiReady || state.realtimeSyncInFlight || document.hidden) return;
+    state.realtimeSyncInFlight = true;
+    try {
+      const payload = await apiGet('bootstrap');
+      const nextSignature = getRemoteSignature(payload);
+      if (nextSignature !== state.remoteSignature) {
+        applyBootstrap(payload, false);
+        rebuildView();
+      }
+    } catch (err) {
+      console.warn('Falha na sincronização automática:', err);
+    } finally {
+      state.realtimeSyncInFlight = false;
+    }
+  }
+
+  function startRealtimeSync() {
+    if (state.realtimeTimer) clearInterval(state.realtimeTimer);
+    state.realtimeTimer = setInterval(syncRealtime, CONFIG.REALTIME_INTERVAL_MS);
+  }
+
   async function connectApi() {
     try {
       await refreshGoogleData(false);
       state.apiReady = true;
       rebuildView();
-      setNotice('ok', 'Google Planilhas conectado', 'Resolvidos, Sinistros, Prioridade CRC e Não localizado no cliente foram carregados.');
+      startRealtimeSync();
+      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
     } catch (err) {
       state.apiReady = false;
       rebuildView();
@@ -1298,7 +1361,7 @@
   function openModal(data={},mode='manual'){
     $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
     const locked=mode==='report'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
-    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':'Nova resolução manual'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
+    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
   }
   const closeModal=()=>$('modalBackdrop').classList.add('hidden');
   function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
@@ -1307,7 +1370,7 @@
   function openClaimModal(data={},mode='manual'){
     $('sNota').value=data.nota??''; $('sColeta').value=data.coleta??''; $('sValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('sVocativo').value=data.vocativo??'';
     const locked=mode==='report'; ['sNota','sColeta','sValor','sVocativo'].forEach(id=>$(id).readOnly=locked);
-    $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Novo sinistro manual'; $('claimModalBackdrop').classList.remove('hidden');
+    $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Encaminhar sinistro (Manual)'; $('claimModalBackdrop').classList.remove('hidden');
   }
   const closeClaimModal=()=>$('claimModalBackdrop').classList.add('hidden');
   function openReportClaim(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openClaimModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
@@ -1389,6 +1452,11 @@
       if (table) setTableSort(table, th.dataset.sort);
     });
   });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncRealtime();
+  });
+  window.addEventListener('focus', syncRealtime);
 
   connectApi();
   rebuildView();
