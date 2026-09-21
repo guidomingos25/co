@@ -417,206 +417,429 @@
     @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); } }
     @media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
 
+  
+
+    /* ===== Layout profissional: operação + dashboard ===== */
+    :root {
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #eef2f7;
+      --text-strong: #0f172a;
+      --text-soft: #64748b;
+      --border: #e2e8f0;
+      --header-bg: rgba(255,255,255,.94);
+      --table-head: #f8fafc;
+      --row-hover: #f8fbff;
+      --selected-row: #dbeafe;
+      --shadow-soft: 0 8px 24px rgba(15,23,42,.06);
+    }
+    body[data-theme="dark"] {
+      --bg: #0b1120;
+      --panel: #111827;
+      --surface: #111827;
+      --surface-2: #162033;
+      --surface-3: #1e293b;
+      --text: #e5e7eb;
+      --text-strong: #f8fafc;
+      --text-soft: #94a3b8;
+      --muted: #94a3b8;
+      --line: #263449;
+      --border: #263449;
+      --header-bg: rgba(11,17,32,.94);
+      --table-head: #162033;
+      --row-hover: #17243a;
+      --selected-row: #17335f;
+      --primary-soft: #172554;
+      --success-soft: #123524;
+      --warning-soft: #3b2b0e;
+      --danger-soft: #3f1d24;
+      --shadow-soft: 0 10px 30px rgba(0,0,0,.22);
+      color-scheme: dark;
+    }
+    body { background: var(--bg); color: var(--text-strong); transition: background .18s ease, color .18s ease; }
+    .app-header {
+      position: sticky; top: 0; z-index: 50;
+      height: 58px; padding: 8px 18px;
+      display: grid; grid-template-columns: minmax(220px,1fr) auto minmax(220px,1fr);
+      align-items: center; gap: 16px;
+      background: var(--header-bg); border-bottom: 1px solid var(--border); backdrop-filter: blur(14px);
+    }
+    .app-header .brand { min-width:0; }
+    .app-header .brand h1 { margin:0; font-size:17px; color:var(--text-strong); }
+    .app-header .brand p { margin:2px 0 0; font-size:9.5px; color:var(--text-soft); }
+    .view-switch { display:flex; align-items:center; gap:4px; padding:3px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); }
+    .view-btn { border:0; border-radius:7px; padding:7px 16px; background:transparent; color:var(--text-soft); font-size:11px; font-weight:800; }
+    .view-btn.active { background:var(--surface); color:var(--primary); box-shadow:0 1px 4px rgba(15,23,42,.08); }
+    .header-tools { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
+    .icon-text-btn { border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-strong); padding:7px 10px; font-size:10px; font-weight:800; }
+    .icon-text-btn:hover { background:var(--surface-2); }
+    .api-dot { width:10px; height:10px; border-radius:999px; display:inline-block; flex:0 0 auto; box-shadow:0 0 0 4px rgba(148,163,184,.12); background:#94a3b8; }
+    .api-dot.ok { background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.13); }
+    .api-dot.error { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.13); }
+    .api-dot.connecting { background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,.13); }
+
+    main { padding: 12px 16px 20px; }
+    .app-view.hidden { display:none !important; }
+    .work-toolbar {
+      display:flex; align-items:stretch; justify-content:space-between; gap:10px; margin-bottom:10px;
+      position: sticky;
+      top: var(--app-header-height, 58px);
+      z-index: 49;
+      background: var(--bg);
+      padding: 8px 0 7px;
+      margin-top: -4px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 7px 16px rgba(15,23,42,.045);
+    }
+    .compact-upload { min-width:245px; display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); }
+    .compact-upload-copy { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
+    .toolbar-eyebrow { color:var(--text-soft); font-size:8px; line-height:1; font-weight:900; letter-spacing:.1em; }
+    .file-name { max-width:180px; color:var(--text-strong); font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .upload-btn { flex:0 0 auto; }
+    .visually-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+    .toolbar-actions { flex:1 1 auto; display:flex; justify-content:flex-end; gap:8px; min-width:0; }
+    .toolbar-group { display:flex; align-items:center; gap:5px; padding:5px 6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); white-space:nowrap; }
+    .toolbar-label { padding:0 3px; color:var(--text-soft); font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .toolbar-group .btn { padding:6px 8px; font-size:9.5px; }
+
+    .kpis { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .kpi { min-height:76px; padding:10px 12px; border-radius:12px; background:var(--surface); border-color:var(--border); box-shadow:var(--shadow-soft); }
+    .kpi .label { font-size:9px; color:var(--text-soft); }
+    .kpi .value { margin-top:5px; font-size:18px; }
+    .kpi .sub { margin-top:3px; font-size:9px; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .report-workspace { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-soft); overflow:hidden; }
+    .workspace-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; padding:10px 12px 0; }
+    .workspace-heading h2, .dashboard-heading h2 { margin:2px 0 0; font-size:16px; color:var(--text-strong); }
+    .workspace-help { color:var(--text-soft); font-size:9px; }
+    .report-workspace .tabs { margin:6px 10px 8px; }
+    .report-workspace .panel { border:0; border-top:1px solid var(--border); border-radius:0; box-shadow:none; margin:0; background:var(--surface); }
+    .panel-head { padding:9px 10px; border-color:var(--border); }
+    .field { background:var(--surface); color:var(--text-strong); border-color:var(--border); padding:7px 8px; font-size:10px; min-width:150px; }
+    .table-scroll { max-height: calc(100vh - 315px); min-height:320px; background:var(--surface); }
+    th { background:var(--table-head); color:var(--text-soft); border-color:var(--border); }
+    th, td { border-bottom-color:var(--border); }
+    tbody tr:hover { background:var(--row-hover); }
+    tbody tr.selected { background:var(--selected-row) !important; }
+    .pager { border-top:1px solid var(--border); background:var(--surface-2); }
+
+    .dashboard-heading { display:flex; align-items:flex-end; justify-content:space-between; margin:2px 0 10px; }
+    .dashboard-heading p { margin:3px 0 0; color:var(--text-soft); font-size:10px; }
+    .chart-filter-bar { border-color:var(--border); background:var(--surface); box-shadow:var(--shadow-soft); }
+    .chart-filter-info > strong, .chart-filter-empty { color:var(--text-soft); }
+    .filter-chip { background:var(--surface-2); border-color:var(--border); }
+    .charts-grid { gap:10px; }
+    .chart-card { min-height:260px; background:var(--surface); border-color:var(--border); box-shadow:var(--shadow-soft); }
+    .chart-card h3 { color:var(--text-strong); }
+    .chart-granularity { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
+
+    .btn { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
+    .btn-soft { background:var(--primary-soft); color:#3b82f6; }
+
+    /* Mais destaque para as ações somente no tema claro, sem alterar tamanhos */
+    body[data-theme="light"] .btn-primary {
+      background:#2563eb; color:#fff; border-color:#2563eb;
+      box-shadow:0 2px 7px rgba(37,99,235,.16);
+    }
+    body[data-theme="light"] .btn-primary:hover { background:#1d4ed8; border-color:#1d4ed8; }
+    body[data-theme="light"] .btn-soft {
+      background:#dbeafe; color:#1d4ed8; border-color:#93c5fd;
+    }
+    body[data-theme="light"] .btn-soft:hover { background:#bfdbfe; border-color:#60a5fa; }
+    body[data-theme="light"] .btn-claim {
+      background:#f3e8ff; color:#6d28d9; border-color:#c4b5fd;
+    }
+    body[data-theme="light"] .btn-claim:hover { background:#e9d5ff; border-color:#a78bfa; }
+    body[data-theme="light"] .btn-crc {
+      background:#fff7d6; color:#92400e; border-color:#fbbf24;
+    }
+    body[data-theme="light"] .btn-crc:hover { background:#fef3c7; border-color:#f59e0b; }
+    body[data-theme="light"] .btn-lost {
+      background:#f1f5f9; color:#334155; border-color:#94a3b8;
+    }
+    body[data-theme="light"] .btn-lost:hover { background:#e2e8f0; border-color:#64748b; }
+
+    body[data-theme="dark"] .btn-primary { background:#2563eb; color:white; border-color:#2563eb; }
+    body[data-theme="dark"] .btn-claim { background:#2a1743; color:#c4b5fd; border-color:#5b3a83; }
+    body[data-theme="dark"] .btn-crc { background:#3a2e0f; color:#fcd34d; border-color:#6b5513; }
+    body[data-theme="dark"] .btn-lost { background:#1e293b; color:#cbd5e1; border-color:#334155; }
+    body[data-theme="dark"] .tab { background:var(--surface); border-color:var(--border); color:var(--text-soft); }
+    body[data-theme="dark"] .tab.active { background:#172554; color:#93c5fd; border-color:#1d4ed8; }
+    body[data-theme="dark"] tr.crc-priority { background:#302a12; box-shadow:inset 4px 0 0 #f59e0b; }
+    body[data-theme="dark"] tr.crc-priority:hover { background:#3a3214; }
+    body[data-theme="dark"] tr.crc-priority.selected { background:var(--selected-row) !important; }
+
+    .notice.app-toast { position:fixed; right:16px; bottom:16px; z-index:2000; width:min(420px,calc(100vw - 32px)); margin:0; display:none; background:var(--surface); color:var(--text-strong); border:1px solid var(--border); box-shadow:0 18px 50px rgba(15,23,42,.22); }
+    .notice.app-toast.show { display:flex; }
+    .notice.app-toast.ok { border-color:#86efac; }
+    .notice.app-toast.error { border-color:#fca5a5; }
+    .notice.app-toast.warn { border-color:#fcd34d; }
+    .toast-actions { display:flex; align-items:center; gap:6px; }
+    #apiStatus { display:none; }
+
+    @media (max-width:1450px) {
+      .app-header { grid-template-columns:minmax(190px,.8fr) auto minmax(170px,.8fr); }
+      .toolbar-actions { gap:5px; }
+      .toolbar-group { gap:3px; padding:4px; }
+      .toolbar-group .btn { padding:5px 6px; font-size:8.8px; }
+      .toolbar-label { display:none; }
+      .kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
+    @media (max-width:1050px) {
+      .app-header { grid-template-columns:1fr auto; height:auto; }
+      .view-switch { grid-row:2; grid-column:1 / -1; justify-self:start; }
+      .header-tools { grid-column:2; grid-row:1; }
+      .work-toolbar { flex-direction:column; }
+      .compact-upload { width:100%; }
+      .toolbar-actions { justify-content:flex-start; flex-wrap:wrap; }
+      .table-scroll { max-height:calc(100vh - 390px); }
+    }
+    @media (max-width:760px) {
+      .app-header { position:sticky; top:0; padding:8px; }
+      .app-header .brand p { display:none; }
+      .header-tools .icon-text-btn { padding:6px 8px; font-size:9px; }
+      main { padding:8px; }
+      .view-switch { width:100%; }
+      .view-btn { flex:1; }
+      .toolbar-actions { display:grid; grid-template-columns:1fr; }
+      .toolbar-group { flex-wrap:wrap; }
+      .toolbar-group .btn { flex:1 1 auto; }
+      .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .kpi { min-height:72px; }
+      .workspace-help { display:none; }
+      .table-scroll { max-height:60vh; min-height:300px; }
+    }
+
   </style>
 </head>
 <body>
 <div class="app-shell">
-  <header>
+  <header class="app-header">
     <div class="brand">
       <h1>Pendência Temporária</h1>
-      <p>Conciliação do relatório carregado com os casos resolvidos no Google Planilhas.</p>
+      <p>Gestão operacional e acompanhamento de pendências</p>
     </div>
-    <div class="header-actions">
-      <div class="action-group">
-        <button class="btn hidden" id="btnApiTest">Testar API</button>
-        <button class="btn" id="btnRefresh">Atualizar Google Planilhas</button>
-      </div>
-      <div class="action-group" aria-label="Ações de resolução">
-        <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
-        <button class="btn btn-soft" id="btnManual">Resolver (Manual)</button>
-      </div>
-      <div class="action-group" aria-label="Ações de sinistro">
-        <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
-        <button class="btn btn-claim" id="btnManualClaim">Encaminhar sinistro (Manual)</button>
-      </div>
-      <div class="action-group" aria-label="Sinalizações">
-        <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
-        <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
-      </div>
+    <nav class="view-switch" aria-label="Navegação principal">
+      <button class="view-btn active" id="btnViewOperation" type="button">Operação</button>
+      <button class="view-btn" id="btnViewDashboard" type="button">Dashboard</button>
+    </nav>
+    <div class="header-tools">
+      <button class="icon-text-btn" id="btnRefresh" type="button" title="Atualizar dados do Google Planilhas">Atualizar</button>
+      <span class="api-dot connecting" id="apiDot" title="Conectando ao Google Planilhas" aria-label="Status da integração"></span>
+      <button class="icon-text-btn" id="btnTheme" type="button" title="Alternar tema">Escuro</button>
     </div>
   </header>
 
   <main>
-    <div id="notice" class="notice warn">
+    <div id="notice" class="notice app-toast" aria-live="polite">
       <div>
-        <strong id="noticeTitle">Configuração necessária</strong><br>
-        <small id="noticeText">Cole a URL /exec do Google Apps Script na constante APPS_SCRIPT_URL antes de publicar.</small>
+        <strong id="noticeTitle"></strong><br>
+        <small id="noticeText"></small>
       </div>
-      <span id="apiStatus" class="badge warn">API não conectada</span>
+      <div class="toast-actions">
+        <button class="btn hidden" id="btnApiTest" type="button">Testar API</button>
+        <span id="apiStatus" class="badge warn">API não conectada</span>
+      </div>
     </div>
 
-    <section class="upload-card">
-      <div>
-        <h2>Carregar relatório de Pendência Temporária</h2>
-        <p>O sistema usa a chave <strong>Nota + Coleta</strong>. Registros repetidos no Excel são consolidados para não duplicar valores.</p>
-      </div>
-      <input class="file-input" type="file" id="fileInput" accept=".xlsx,.xls" />
+    <section id="operationView" class="app-view">
+      <section class="work-toolbar">
+        <div class="compact-upload">
+          <div class="compact-upload-copy">
+            <span class="toolbar-eyebrow">BASE EXCEL</span>
+            <span class="file-name" id="fileName">Nenhum relatório carregado</span>
+          </div>
+          <label class="btn upload-btn" for="fileInput">Carregar relatório</label>
+          <input class="file-input visually-hidden" type="file" id="fileInput" accept=".xlsx,.xls" />
+        </div>
+        <div class="toolbar-actions">
+          <div class="toolbar-group resolution-group">
+            <span class="toolbar-label">Resolução</span>
+            <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
+            <button class="btn btn-soft" id="btnManual">Resolver (Manual)</button>
+          </div>
+          <div class="toolbar-group claim-group">
+            <span class="toolbar-label">Sinistro</span>
+            <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
+            <button class="btn btn-claim" id="btnManualClaim">Encaminhar sinistro (Manual)</button>
+          </div>
+          <div class="toolbar-group signal-group">
+            <span class="toolbar-label">Sinalizações</span>
+            <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
+            <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpis">
+<article class="kpi">
+<div class="label">Valor total conciliado</div>
+<div class="value" id="kpiTotal">R$ 0,00</div>
+<div class="sub" id="kpiTotalSub">União Excel + Resolvidos + Sinistros</div>
+</article>
+<article class="kpi open">
+<div class="label">Valor em aberto</div>
+<div class="value" id="kpiOpen">R$ 0,00</div>
+<div class="sub" id="kpiOpenSub">0 registros</div>
+</article>
+<article class="kpi resolved">
+<div class="label">Valor resolvido</div>
+<div class="value" id="kpiResolved">R$ 0,00</div>
+<div class="sub" id="kpiResolvedSub">0 registros</div>
+</article>
+<article class="kpi claim">
+<div class="label">Valor em sinistro</div>
+<div class="value" id="kpiClaim">R$ 0,00</div>
+<div class="sub" id="kpiClaimSub">0 registros</div>
+</article>
+<article class="kpi">
+<div class="label">% resolvido por valor</div>
+<div class="value" id="kpiResolvedPct">0,00%</div>
+<div class="sub" id="kpiResolvedPctSub">Resolvido ÷ total conciliado</div>
+</article>
+<article class="kpi claim">
+<div class="label">% sinistro por valor</div>
+<div class="value" id="kpiClaimPct">0,00%</div>
+<div class="sub" id="kpiClaimPctSub">Sinistro ÷ total conciliado</div>
+</article>
+</section>
+
+      <section class="report-workspace">
+        <div class="workspace-heading">
+          <div>
+            <span class="toolbar-eyebrow">RELATÓRIO OPERACIONAL</span>
+            <h2>Registros</h2>
+          </div>
+          <span class="workspace-help">Selecione uma linha para habilitar as ações acima.</span>
+        </div>
+        <nav class="tabs">
+<button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
+<button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
+<button class="tab" data-tab="claims">Sinistros <span id="claimCount">0</span></button>
+</nav>
+        <section class="panel" id="panelOpen">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente..."/>
+<select class="field" id="openClient"><option value="">Todos os clientes</option></select>
+<select class="field" id="openRange"><option value="">Todos os ranges</option></select>
+<select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
+</div>
+<small id="openSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="open">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataOcorrencia" title="Ordenar por Data Ocorrência">Data Ocorrência</th><th class="sortable" data-sort="cliente" title="Ordenar por Cliente">Cliente</th><th class="sortable" data-sort="destino" title="Ordenar por Destino">Destino</th><th class="sortable" data-sort="uf" title="Ordenar por UF">UF</th><th class="sortable" data-sort="range" title="Ordenar por Range">Range</th><th class="sortable" data-sort="prioridade" title="Ordenar por Prioridade">Prioridade</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th>
+</tr></thead>
+<tbody id="openBody"></tbody>
+</table>
+<div class="empty" id="openEmpty">Carregue um relatório para visualizar as pendências.</div>
+</div>
+<div class="pager"><button class="btn" id="openPrev">Anterior</button><span id="openPageLabel">Página 1</span><button class="btn" id="openNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelResolved">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="resolvedSearch" placeholder="Pesquisar Nota, Coleta, resolução..."/>
+<select class="field" id="resolvedFilter"><option value="">Todas as resoluções</option></select>
+<select class="field" id="resolvedPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+<select class="field" id="resolvedSolver"><option value="">Quem resolveu: todos</option></select>
+</div>
+<small id="resolvedSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="resolved">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="resolucao" title="Ordenar por Resolução">Resolução</th><th class="sortable" data-sort="responsavel" title="Ordenar por Responsável pela falha">Responsável pela falha</th><th class="sortable" data-sort="dataResolucao" title="Ordenar por Data Resolução">Data Resolução</th><th class="sortable" data-sort="quemResolveu" title="Ordenar por Quem resolveu">Quem resolveu</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+</tr></thead>
+<tbody id="resolvedBody"></tbody>
+</table>
+<div class="empty" id="resolvedEmpty">Nenhum caso resolvido encontrado no Google Planilhas.</div>
+</div>
+<div class="pager"><button class="btn" id="resolvedPrev">Anterior</button><span id="resolvedPageLabel">Página 1</span><button class="btn" id="resolvedNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelClaims">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="claimSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..."/>
+<select class="field" id="claimPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+</div>
+<small id="claimSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="claim">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+</tr></thead>
+<tbody id="claimBody"></tbody>
+</table>
+<div class="empty" id="claimEmpty">Nenhum caso encaminhado para sinistro.</div>
+</div>
+<div class="pager"><button class="btn" id="claimPrev">Anterior</button><span id="claimPageLabel">Página 1</span><button class="btn" id="claimNext">Próxima</button></div>
+</section>
+      </section>
     </section>
 
-    <section class="kpis">
-      <article class="kpi">
-        <div class="label">Valor total conciliado</div>
-        <div class="value" id="kpiTotal">R$ 0,00</div>
-        <div class="sub" id="kpiTotalSub">União Excel + Resolvidos + Sinistros</div>
-      </article>
-      <article class="kpi open">
-        <div class="label">Valor em aberto</div>
-        <div class="value" id="kpiOpen">R$ 0,00</div>
-        <div class="sub" id="kpiOpenSub">0 registros</div>
-      </article>
-      <article class="kpi resolved">
-        <div class="label">Valor resolvido</div>
-        <div class="value" id="kpiResolved">R$ 0,00</div>
-        <div class="sub" id="kpiResolvedSub">0 registros</div>
-      </article>
-      <article class="kpi claim">
-        <div class="label">Valor em sinistro</div>
-        <div class="value" id="kpiClaim">R$ 0,00</div>
-        <div class="sub" id="kpiClaimSub">0 registros</div>
-      </article>
-      <article class="kpi">
-        <div class="label">% resolvido por valor</div>
-        <div class="value" id="kpiResolvedPct">0,00%</div>
-        <div class="sub" id="kpiResolvedPctSub">Resolvido ÷ total conciliado</div>
-      </article>
-      <article class="kpi claim">
-        <div class="label">% sinistro por valor</div>
-        <div class="value" id="kpiClaimPct">0,00%</div>
-        <div class="sub" id="kpiClaimPctSub">Sinistro ÷ total conciliado</div>
-      </article>
-    </section>
-
-    <div class="chart-filter-bar">
-      <div class="chart-filter-info">
-        <strong>Seleções dos gráficos:</strong>
-        <span id="chartFilterChips" class="chart-filter-empty">Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.</span>
-      </div>
-      <button class="btn" id="btnClearChartFilters" disabled>Limpar seleções</button>
-    </div>
-
-    <section class="charts-grid">
-      <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido × sinistro</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
-        <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
-      </article>
-      <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo</h3><div class="chart-hint">Todos os casos resolvidos. Quantidade no hover.</div></div></div>
-        <div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
-      </article>
-      <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Somente “Conferente não vinculou o material a OF”.</div></div></div>
-        <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
-      </article>
-      <article class="chart-card">
-        <div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido × sinistro</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
-        <div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
-      </article>
-      <article class="chart-card">
-        <div class="chart-card-head">
-          <div class="chart-card-title"><h3>Em aberto por Data Ocorrência</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
-          <select id="occurrenceGranularity" class="chart-granularity" aria-label="Agrupamento da Data Ocorrência">
-            <option value="day">Dia</option>
-            <option value="week" selected>Semana</option>
-            <option value="month">Mês</option>
-          </select>
+    <section id="dashboardView" class="app-view hidden">
+      <div class="dashboard-heading">
+        <div>
+          <span class="toolbar-eyebrow">ANÁLISE</span>
+          <h2>Dashboard</h2>
+          <p>Selecione uma barra ou fatia para destacar a seleção e cruzar os demais gráficos.</p>
         </div>
-        <div class="chart-scroll">
-          <div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
-        </div>
-      </article>
-      <article class="chart-card">
-        <div class="chart-card-head">
-          <div class="chart-card-title"><h3>Resolvido por Data de Resolução</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
-          <select id="resolutionGranularity" class="chart-granularity" aria-label="Agrupamento da Data de Resolução">
-            <option value="day">Dia</option>
-            <option value="week" selected>Semana</option>
-            <option value="month">Mês</option>
-          </select>
-        </div>
-        <div class="chart-scroll">
-          <div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
-        </div>
-      </article>
-    </section>
-
-    <nav class="tabs">
-      <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
-      <button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
-      <button class="tab" data-tab="claims">Sinistros <span id="claimCount">0</span></button>
-    </nav>
-
-    <section class="panel" id="panelOpen">
-      <div class="panel-head">
-        <div class="filters">
-          <input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente..." />
-          <select class="field" id="openClient"><option value="">Todos os clientes</option></select>
-          <select class="field" id="openRange"><option value="">Todos os ranges</option></select>
-          <select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
-        </div>
-        <small id="openSummary">0 registros</small>
       </div>
-      <div class="table-scroll">
-        <table data-sort-table="open">
-          <thead><tr>
-            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataOcorrencia" title="Ordenar por Data Ocorrência">Data Ocorrência</th><th class="sortable" data-sort="cliente" title="Ordenar por Cliente">Cliente</th><th class="sortable" data-sort="destino" title="Ordenar por Destino">Destino</th><th class="sortable" data-sort="uf" title="Ordenar por UF">UF</th><th class="sortable" data-sort="range" title="Ordenar por Range">Range</th><th class="sortable" data-sort="prioridade" title="Ordenar por Prioridade">Prioridade</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th>
-          </tr></thead>
-          <tbody id="openBody"></tbody>
-        </table>
-        <div class="empty" id="openEmpty">Carregue um relatório para visualizar as pendências.</div>
-      </div>
-      <div class="pager"><button class="btn" id="openPrev">Anterior</button><span id="openPageLabel">Página 1</span><button class="btn" id="openNext">Próxima</button></div>
-    </section>
-
-    <section class="panel hidden" id="panelResolved">
-      <div class="panel-head">
-        <div class="filters">
-          <input class="field" id="resolvedSearch" placeholder="Pesquisar Nota, Coleta, resolução..." />
-          <select class="field" id="resolvedFilter"><option value="">Todas as resoluções</option></select>
-          <select class="field" id="resolvedPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
-          <select class="field" id="resolvedSolver"><option value="">Quem resolveu: todos</option></select>
-        </div>
-        <small id="resolvedSummary">0 registros</small>
-      </div>
-      <div class="table-scroll">
-        <table data-sort-table="resolved">
-          <thead><tr>
-            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="resolucao" title="Ordenar por Resolução">Resolução</th><th class="sortable" data-sort="responsavel" title="Ordenar por Responsável pela falha">Responsável pela falha</th><th class="sortable" data-sort="dataResolucao" title="Ordenar por Data Resolução">Data Resolução</th><th class="sortable" data-sort="quemResolveu" title="Ordenar por Quem resolveu">Quem resolveu</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
-          </tr></thead>
-          <tbody id="resolvedBody"></tbody>
-        </table>
-        <div class="empty" id="resolvedEmpty">Nenhum caso resolvido encontrado no Google Planilhas.</div>
-      </div>
-      <div class="pager"><button class="btn" id="resolvedPrev">Anterior</button><span id="resolvedPageLabel">Página 1</span><button class="btn" id="resolvedNext">Próxima</button></div>
-    </section>
-
-    <section class="panel hidden" id="panelClaims">
-      <div class="panel-head">
-        <div class="filters">
-          <input class="field" id="claimSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..." />
-          <select class="field" id="claimPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
-        </div>
-        <small id="claimSummary">0 registros</small>
-      </div>
-      <div class="table-scroll">
-        <table data-sort-table="claim">
-          <thead><tr>
-            <th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
-          </tr></thead>
-          <tbody id="claimBody"></tbody>
-        </table>
-        <div class="empty" id="claimEmpty">Nenhum caso encaminhado para sinistro.</div>
-      </div>
-      <div class="pager"><button class="btn" id="claimPrev">Anterior</button><span id="claimPageLabel">Página 1</span><button class="btn" id="claimNext">Próxima</button></div>
+      <div class="chart-filter-bar">
+<div class="chart-filter-info">
+<strong>Seleções dos gráficos:</strong>
+<span class="chart-filter-empty" id="chartFilterChips">Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.</span>
+</div>
+<button class="btn" disabled="" id="btnClearChartFilters">Limpar seleções</button>
+</div>
+      <section class="charts-grid">
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido × sinistro</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
+<div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo</h3><div class="chart-hint">Todos os casos resolvidos. Quantidade no hover.</div></div></div>
+<div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Somente “Conferente não vinculou o material a OF”.</div></div></div>
+<div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido × sinistro</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
+<div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head">
+<div class="chart-card-title"><h3>Em aberto por Data Ocorrência</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
+<select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
+<option value="day">Dia</option>
+<option value="week">Semana</option>
+<option selected="" value="month">Mês</option>
+</select>
+</div>
+<div class="chart-scroll">
+<div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
+</div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head">
+<div class="chart-card-title"><h3>Resolvido por Data de Resolução</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
+<select aria-label="Agrupamento da Data de Resolução" class="chart-granularity" id="resolutionGranularity">
+<option value="day">Dia</option>
+<option value="week">Semana</option>
+<option selected="" value="month">Mês</option>
+</select>
+</div>
+<div class="chart-scroll">
+<div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
+</div>
+</article>
+</section>
     </section>
   </main>
 </div>
@@ -708,8 +931,8 @@
       claim: { key: null, dir: 'asc' }
     },
     charts: {},
-    occurrenceGranularity: 'week',
-    resolutionGranularity: 'week',
+    occurrenceGranularity: 'month',
+    resolutionGranularity: 'month',
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
@@ -800,16 +1023,55 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  let noticeTimer = null;
+  function setApiIndicator(status, title = '') {
+    const dot = $('apiDot');
+    if (!dot) return;
+    dot.className = `api-dot ${status}`;
+    dot.title = title || (status === 'ok' ? 'Google Planilhas conectado' : status === 'connecting' ? 'Conectando ao Google Planilhas' : 'Falha na integração com Google Planilhas');
+  }
+
   function setNotice(type, title, text) {
     const n = $('notice');
-    n.className = `notice ${type}`;
-    $('noticeTitle').textContent = title;
-    $('noticeText').textContent = text;
+    if (!n) return;
+    $('noticeTitle').textContent = title || '';
+    $('noticeText').textContent = text || '';
     const badge = $('apiStatus');
-    badge.className = `badge ${type === 'ok' ? 'ok' : 'warn'}`;
-    badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
-    const canTest = type !== 'ok' && cleanText(CONFIG.APPS_SCRIPT_URL) && !CONFIG.APPS_SCRIPT_URL.includes('SEU_DEPLOYMENT_ID');
-    $('btnApiTest').classList.toggle('hidden', !canTest);
+    if (badge) {
+      badge.className = `badge ${type === 'ok' ? 'ok' : 'warn'}`;
+      badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
+    }
+    const canTest = type === 'error' && cleanText(CONFIG.APPS_SCRIPT_URL) && !CONFIG.APPS_SCRIPT_URL.includes('SEU_DEPLOYMENT_ID');
+    if ($('btnApiTest')) $('btnApiTest').classList.toggle('hidden', !canTest);
+
+    // Carregamento do Excel e conexão normal não ocupam espaço na tela.
+    const silent = title === 'Relatório carregado' || title === 'Google Planilhas conectado';
+    clearTimeout(noticeTimer);
+    n.className = `notice app-toast ${type}`;
+    if (silent) return;
+    n.classList.add('show');
+    noticeTimer = setTimeout(() => n.classList.remove('show'), type === 'error' ? 7000 : 3500);
+  }
+
+  function setAppView(view) {
+    const dashboard = view === 'dashboard';
+    $('operationView').classList.toggle('hidden', dashboard);
+    $('dashboardView').classList.toggle('hidden', !dashboard);
+    $('btnViewOperation').classList.toggle('active', !dashboard);
+    $('btnViewDashboard').classList.toggle('active', dashboard);
+    if (dashboard) requestAnimationFrame(() => renderCharts());
+  }
+
+  function applyTheme(theme) {
+    const dark = theme === 'dark';
+    document.body.dataset.theme = dark ? 'dark' : 'light';
+    localStorage.setItem('pendencia-theme', dark ? 'dark' : 'light');
+    if ($('btnTheme')) $('btnTheme').textContent = dark ? 'Claro' : 'Escuro';
+    if (window.Chart) {
+      Chart.defaults.color = dark ? '#cbd5e1' : '#475569';
+      Chart.defaults.borderColor = dark ? 'rgba(148,163,184,.18)' : 'rgba(100,116,139,.16)';
+      if (!$('dashboardView')?.classList.contains('hidden')) requestAnimationFrame(() => renderCharts());
+    }
   }
 
   function getAppsScriptBase() {
@@ -920,7 +1182,9 @@
         applyBootstrap(payload, false);
         rebuildView();
       }
+      setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
     } catch (err) {
+      setApiIndicator('error', 'Falha temporária na sincronização automática');
       console.warn('Falha na sincronização automática:', err);
     } finally {
       state.realtimeSyncInFlight = false;
@@ -933,14 +1197,17 @@
   }
 
   async function connectApi() {
+    setApiIndicator('connecting', 'Conectando ao Google Planilhas');
     try {
       await refreshGoogleData(false);
       state.apiReady = true;
       rebuildView();
       startRealtimeSync();
+      setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
       setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
     } catch (err) {
       state.apiReady = false;
+      setApiIndicator('error', 'Não foi possível conectar ao Google Planilhas');
       rebuildView();
       setNotice('error', 'Não foi possível conectar ao Google Apps Script', err.message);
     }
@@ -970,6 +1237,7 @@
   $('fileInput').addEventListener('change', async event => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if ($('fileName')) $('fileName').textContent = file.name;
     try {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type:'array', cellDates:true });
@@ -1159,7 +1427,7 @@
   function rebuildView() {
     renderChartFilterChips();
     renderKpis();
-    renderCharts();
+    if (!$('dashboardView')?.classList.contains('hidden')) renderCharts();
     renderOpenTable();
     renderResolvedTable();
     renderClaimTable();
@@ -1183,7 +1451,70 @@
     $('claimCount').textContent=state.claimRows.length.toLocaleString('pt-BR');
   }
 
-  function makeChart(id, config) { if (state.charts[id]) state.charts[id].destroy(); config.options=config.options||{}; config.options.animation={duration:180}; state.charts[id]=new Chart($(id),config); }
+  function chartSelectionValues(id, labels) {
+    if (id === 'chartStatus') return { dimension:'status', values:labels };
+    if (id === 'chartResolution') return { dimension:'resolution', values:labels };
+    if (id === 'chartResponsible') return { dimension:'responsible', values:labels };
+    if (id === 'chartVocativo') return { dimension:'vocativo', values:labels };
+    if (id === 'chartOccurrence') return { dimension:'occurrencePeriod', values:labels };
+    if (id === 'chartResolutionDate') return { dimension:'resolutionPeriod', values:labels };
+    return null;
+  }
+
+  function chartRgb(id, datasetLabel) {
+    if (datasetLabel === 'Em aberto' || id === 'chartOccurrence') return [59,130,246];
+    if (datasetLabel === 'Resolvido' || id === 'chartResolution' || id === 'chartResolutionDate') return [22,163,74];
+    if (datasetLabel === 'Sinistro') return [139,92,246];
+    if (id === 'chartResponsible') return [245,158,11];
+    return [100,116,139];
+  }
+
+  function applyChartSelectionStyles(id, config) {
+    const labels = config?.data?.labels || [];
+    const info = chartSelectionValues(id, labels);
+    if (!info) return;
+    const selected = state.chartFilters[info.dimension];
+    const selectedDisplay = new Set(
+      [...(selected || [])].map(v => ['occurrencePeriod','resolutionPeriod'].includes(info.dimension) ? bucketLabelFromKey(v) : v)
+    );
+    const statusSelected = state.chartFilters.status;
+
+    (config.data.datasets || []).forEach(ds => {
+      const rgb = chartRgb(id, ds.label);
+      const normal = [], hover = [], borders = [], widths = [];
+      labels.forEach((label, index) => {
+        let hasConstraint = false;
+        let matches = true;
+        if (selectedDisplay.size) {
+          hasConstraint = true;
+          matches = matches && selectedDisplay.has(label);
+        }
+        if (id === 'chartVocativo' && statusSelected.size) {
+          hasConstraint = true;
+          matches = matches && statusSelected.has(ds.label);
+        }
+        const alpha = !hasConstraint ? .46 : (matches ? .9 : .12);
+        normal.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
+        hover.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},.96)`);
+        borders.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${matches && hasConstraint ? 1 : .72})`);
+        widths.push(matches && hasConstraint ? 2 : 1);
+      });
+      ds.backgroundColor = normal;
+      ds.hoverBackgroundColor = hover;
+      ds.borderColor = borders;
+      ds.hoverBorderColor = borders.map(() => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+      ds.borderWidth = widths;
+      ds.hoverBorderWidth = widths.map(() => 2);
+    });
+  }
+
+  function makeChart(id, config) {
+    if (state.charts[id]) state.charts[id].destroy();
+    config.options = config.options || {};
+    config.options.animation = { duration:180 };
+    applyChartSelectionStyles(id, config);
+    state.charts[id] = new Chart($(id), config);
+  }
 
   const chartMoneyTooltip = { callbacks:{ label:ctx => {
     const raw=Number(ctx.raw||0), count=Number(ctx.dataset?._counts?.[ctx.dataIndex]||0);
@@ -1453,10 +1784,33 @@
     });
   });
 
+  $('btnViewOperation').addEventListener('click', () => setAppView('operation'));
+  $('btnViewDashboard').addEventListener('click', () => setAppView('dashboard'));
+  $('btnTheme').addEventListener('click', () => applyTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark'));
+
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) syncRealtime();
   });
   window.addEventListener('focus', syncRealtime);
+
+  applyTheme(localStorage.getItem('pendencia-theme') || 'light');
+  setAppView('operation');
+  if ($('occurrenceGranularity')) $('occurrenceGranularity').value = 'month';
+  if ($('resolutionGranularity')) $('resolutionGranularity').value = 'month';
+  // Mantém a barra de ações sempre imediatamente abaixo do cabeçalho fixo,
+  // mesmo quando o cabeçalho muda de altura em telas menores.
+  function syncStickyHeaderHeight() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+    document.documentElement.style.setProperty('--app-header-height', `${Math.ceil(header.getBoundingClientRect().height)}px`);
+  }
+  syncStickyHeaderHeight();
+  window.addEventListener('resize', syncStickyHeaderHeight);
+  if (window.ResizeObserver) {
+    const stickyHeaderObserver = new ResizeObserver(syncStickyHeaderHeight);
+    const stickyHeader = document.querySelector('.app-header');
+    if (stickyHeader) stickyHeaderObserver.observe(stickyHeader);
+  }
 
   connectApi();
   rebuildView();
