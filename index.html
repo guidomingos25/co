@@ -148,6 +148,7 @@
     .kpi .sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
     .kpi.open .value { color: var(--danger); }
     .kpi.resolved .value { color: var(--success); }
+    .kpi.treatment .value { color: #0284c7; }
     .kpi.alert .value { color: var(--warning); }
 
     .charts-grid {
@@ -317,13 +318,14 @@
     #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 20%; }
     #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 25%; }
 
-    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 9%; }
-    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 10%; }
-    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 12%; }
-    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 18%; }
-    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 24%; }
-    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 15%; }
+    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 7%; }
+    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 8%; }
+    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 11%; }
+    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 15%; }
+    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 22%; }
+    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 13%; }
     #panelTreatment th:nth-child(7), #panelTreatment td:nth-child(7) { width: 12%; }
+    #panelTreatment th:nth-child(8), #panelTreatment td:nth-child(8) { width: 12%; }
 
     #panelOpen td:nth-child(1), #panelOpen td:nth-child(2), #panelOpen td:nth-child(5), #panelOpen td:nth-child(8),
     #panelResolved td:nth-child(1), #panelResolved td:nth-child(2), #panelResolved td:nth-child(7), #panelResolved td:nth-child(8),
@@ -516,7 +518,7 @@
     .toolbar-label { padding:0 3px; color:var(--text-soft); font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
     .toolbar-group .btn { padding:6px 8px; font-size:9.5px; }
 
-    .kpis { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .kpis { grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
     .kpi { min-height:76px; padding:10px 12px; border-radius:12px; background:var(--surface); border-color:var(--border); box-shadow:var(--shadow-soft); }
     .kpi .label { font-size:9px; color:var(--text-soft); }
     .kpi .value { margin-top:5px; font-size:18px; }
@@ -708,6 +710,11 @@
 <div class="value" id="kpiOpen">R$ 0,00</div>
 <div class="sub" id="kpiOpenSub">0 registros</div>
 </article>
+<article class="kpi treatment">
+<div class="label">Valor em tratativa</div>
+<div class="value" id="kpiTreatment">R$ 0,00</div>
+<div class="sub" id="kpiTreatmentSub">0 registros</div>
+</article>
 <article class="kpi resolved">
 <div class="label">Valor resolvido</div>
 <div class="value" id="kpiResolved">R$ 0,00</div>
@@ -717,6 +724,11 @@
 <div class="label">Valor em sinistro</div>
 <div class="value" id="kpiClaim">R$ 0,00</div>
 <div class="sub" id="kpiClaimSub">0 registros</div>
+</article>
+<article class="kpi treatment">
+<div class="label">% em tratativa por valor</div>
+<div class="value" id="kpiTreatmentPct">0,00%</div>
+<div class="sub" id="kpiTreatmentPctSub">Tratativa ÷ total conciliado</div>
 </article>
 <article class="kpi">
 <div class="label">% resolvido por valor</div>
@@ -782,6 +794,7 @@
 <th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th>
 <th class="sortable" data-sort="motivo" title="Ordenar por Motivo">Motivo da tratativa</th>
 <th class="sortable" data-sort="responsavel" title="Ordenar por Responsável">Responsável pela falha</th>
+<th class="sortable" data-sort="quemEnviou" title="Ordenar por Quem enviou">Quem enviou</th>
 <th class="sortable" data-sort="dataTratativa" title="Ordenar por Data de entrada">Entrada na tratativa</th>
 </tr></thead>
 <tbody id="treatmentBody"></tbody>
@@ -850,24 +863,40 @@
 </div>
       <section class="charts-grid">
 <article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Aberto × resolvido × sinistro</h3><div class="chart-hint">Valor e percentual. Quantidade no hover.</div></div></div>
+<div class="chart-card-head"><div class="chart-card-title"><h3>Cenário geral por status</h3><div class="chart-hint">Em aberto × em tratativa × resolvido × sinistro. Valor e percentual; quantidade no hover.</div></div></div>
 <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
 </article>
 <article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo</h3><div class="chart-hint">Todos os casos resolvidos. Quantidade no hover.</div></div></div>
+<div class="chart-card-head"><div class="chart-card-title"><h3>Quantidade de casos por status</h3><div class="chart-hint">Todos os casos existentes, sem duplicar Nota + Coleta.</div></div></div>
+<div class="chart-wrap"><canvas id="chartStatusCount"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Cenário geral por motivo</h3><div class="chart-hint">Motivos de tratativa e resoluções, separados pelo status atual.</div></div></div>
+<div class="chart-wrap"><canvas id="chartReason"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo e quem resolveu</h3><div class="chart-hint">Cada cor representa quem resolveu. Quantidade no hover.</div></div></div>
 <div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
 </article>
 <article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Tratativas de vínculo à OF e coleta retirada da OF.</div></div></div>
+<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvidos por quem resolveu</h3><div class="chart-hint">Valor total resolvido por Italo e Bruna. Quantidade no hover.</div></div></div>
+<div class="chart-wrap"><canvas id="chartSolver"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Casos que passaram por tratativa, separados pelo status atual.</div></div></div>
 <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
 </article>
 <article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — aberto × resolvido × sinistro</h3><div class="chart-hint">Clique em um segmento para filtrar.</div></div></div>
+<div class="chart-card-head"><div class="chart-card-title"><h3>Tratativas por quem enviou</h3><div class="chart-hint">Italo/Bruna e situação atual dos registros enviados para tratativa.</div></div></div>
+<div class="chart-wrap"><canvas id="chartSender"></canvas></div>
+</article>
+<article class="chart-card">
+<div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — todos os status</h3><div class="chart-hint">Em aberto, em tratativa, resolvido e sinistro.</div></div></div>
 <div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
 </article>
 <article class="chart-card">
 <div class="chart-card-head">
-<div class="chart-card-title"><h3>Em aberto por Data Ocorrência</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
+<div class="chart-card-title"><h3>Casos por Data Ocorrência — por status</h3><div class="chart-hint">Valor por período separado em aberto, tratativa, resolvido e sinistro.</div></div>
 <select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
 <option value="day">Dia</option>
 <option value="week">Semana</option>
@@ -880,7 +909,7 @@
 </article>
 <article class="chart-card">
 <div class="chart-card-head">
-<div class="chart-card-title"><h3>Resolvido por Data de Resolução</h3><div class="chart-hint">Valor por período. Quantidade no hover.</div></div>
+<div class="chart-card-title"><h3>Resolvido por Data e quem resolveu</h3><div class="chart-hint">Valor resolvido por período, separado por Italo e Bruna.</div></div>
 <select aria-label="Agrupamento da Data de Resolução" class="chart-granularity" id="resolutionGranularity">
 <option value="day">Dia</option>
 <option value="week">Semana</option>
@@ -910,7 +939,7 @@
           <div class="form-group"><label for="fValor">Valor Nota</label><input id="fValor" inputmode="decimal" placeholder="0,00" required /></div>
           <div class="form-group"><label for="fVocativo">Vocativo</label><input id="fVocativo" required /></div>
           <div class="form-group full"><label for="fResolution">Resolução</label><select id="fResolution" required><option value="">Selecione...</option></select></div>
-          <div class="form-group full"><label for="fSolvedBy">Quem resolveu <span style="font-weight:400">(obrigatório)</span></label><select id="fSolvedBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint">Essa informação será gravada para todos os casos resolvidos.</div></div>
+          <div class="form-group full"><label for="fSolvedBy">Quem resolveu <span style="font-weight:400">(obrigatório)</span></label><select id="fSolvedBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint" id="solvedByHint">Essa informação será gravada para todos os casos resolvidos.</div></div>
           <div class="form-group full hidden" id="responsibleGroup">
             <label for="fResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label>
             <input id="fResponsible" placeholder="Digite livremente o nome da pessoa" />
@@ -941,7 +970,8 @@
           <div class="form-group"><label for="tValor">Valor Nota</label><input id="tValor" inputmode="decimal" placeholder="0,00" required /></div>
           <div class="form-group"><label for="tVocativo">Vocativo</label><input id="tVocativo" required /></div>
           <div class="form-group full"><label for="tReason">Motivo da tratativa</label><select id="tReason" required><option value="">Selecione...</option></select></div>
-          <div class="form-group full"><label for="tResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label><input id="tResponsible" placeholder="Digite livremente o nome da pessoa" /></div>
+          <div class="form-group"><label for="tSentBy">Quem está enviando <span style="font-weight:400">(obrigatório)</span></label><select id="tSentBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint">Esse usuário será usado automaticamente como “Quem resolveu” se a tratativa for concluída como resolvida.</div></div>
+          <div class="form-group"><label for="tResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label><input id="tResponsible" placeholder="Digite livremente o nome da pessoa" /></div>
         </div>
       </div>
       <div class="modal-actions">
@@ -1024,7 +1054,10 @@
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
+      reason: new Set(),
       responsible: new Set(),
+      solver: new Set(),
+      sender: new Set(),
       vocativo: new Set(),
       occurrencePeriod: new Set(),
       resolutionPeriod: new Set()
@@ -1224,7 +1257,7 @@
       const row = {
         nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
         motivo: cleanText(r.motivo), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
-        statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao),
+        statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao), quemEnviou: cleanText(r.quemEnviou),
         key: keyOf(r.nota, r.coleta)
       };
       if (row.nota && row.coleta) byKey.set(row.key, row);
@@ -1341,6 +1374,7 @@
     $('fSolvedBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('tReason').innerHTML = '<option value="">Selecione...</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('tSentBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('treatmentReason').innerHTML = '<option value="">Todos os motivos</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   }
 
@@ -1394,11 +1428,15 @@
     $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v=>`<option>${esc(v)}</option>`).join('');
   }
 
-  const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'claim' ? 'Sinistro' : 'Em aberto';
+  const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
+  const reasonLabel = r => cleanText(r.treatmentReason) || cleanText(r.resolucao) || (r.status === 'claim' ? 'Sinistro' : 'Sem motivo definido');
   const chartFilterDefs = {
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
+    reason: { label:'Motivo', getter:r => reasonLabel(r) },
     responsible: { label:'Responsável pela falha', getter:r => cleanText(r.treatmentResponsible || r.responsavel) || 'Não informado' },
+    solver: { label:'Quem resolveu', getter:r => cleanText(r.quemResolveu) || 'Não informado' },
+    sender: { label:'Quem enviou', getter:r => cleanText(r.treatmentSender) || 'Não informado' },
     vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
     occurrencePeriod: { label:'Data ocorrência', getter:r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
     resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
@@ -1410,7 +1448,8 @@
     const rows = [];
     for (const key of keys) {
       const report = reportMap.get(key), resolved = state.resolvedMap.get(key), claim = state.claimMap.get(key), treatment = state.treatmentMap.get(key);
-      const status = resolved ? 'resolved' : claim ? 'claim' : 'open';
+      const treatmentPending = !!treatment && !['concluída','concluida'].includes(cleanText(treatment.statusTratativa).toLowerCase()) && !resolved && !claim;
+      const status = resolved ? 'resolved' : claim ? 'claim' : treatmentPending ? 'treatment' : 'open';
       const source = report || resolved || claim || treatment || {};
       const value = report ? Number(report.__valor||0) : resolved ? Number(resolved.valorNota||0) : claim ? Number(claim.valorNota||0) : Number(treatment?.valorNota||0);
       const vocativo = report ? report.__vocativo : resolved ? cleanText(resolved.vocativo) : claim ? cleanText(claim.vocativo) : cleanText(treatment?.vocativo);
@@ -1422,7 +1461,7 @@
         __vocativo:vocativo, vocativo,
         status,
         resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
-        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa),
+        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa), treatmentSender:cleanText(treatment?.quemEnviou),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
         stillPending: !!report,
         inResolved: !!resolved,
@@ -1480,7 +1519,7 @@
   }
 
   function getOpenRows(applyFilters=true) {
-    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open' && !(r.inTreatment && cleanText(r.treatmentStatus).toLowerCase() !== 'concluída' && cleanText(r.treatmentStatus).toLowerCase() !== 'concluida')));
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open'));
     if (!applyFilters) return rows;
     const q = cleanText($('openSearch').value).toLowerCase(), client=$('openClient').value, range=$('openRange').value, priority=$('openPriority').value;
     return rows.filter(r => {
@@ -1507,9 +1546,9 @@
           __nota:report?report.__nota:t.nota, __coleta:report?report.__coleta:t.coleta,
           nota:report?report.__nota:t.nota, coleta:report?report.__coleta:t.coleta,
           __valor:value, valorNota:value, __vocativo:report?report.__vocativo:t.vocativo, vocativo:report?report.__vocativo:t.vocativo,
-          motivo:t.motivo, responsavel:t.responsavel, dataTratativa:t.dataTratativa,
-          status:'open', inTreatment:true, inClaim:!!claim, stillPending:!!report,
-          treatmentReason:t.motivo, treatmentResponsible:t.responsavel, treatmentStatus:t.statusTratativa, treatmentDate:t.dataTratativa,
+          motivo:t.motivo, responsavel:t.responsavel, quemEnviou:t.quemEnviou, dataTratativa:t.dataTratativa,
+          status:'treatment', inTreatment:true, inClaim:!!claim, stillPending:!!report,
+          treatmentReason:t.motivo, treatmentResponsible:t.responsavel, treatmentStatus:t.statusTratativa, treatmentDate:t.dataTratativa, treatmentSender:t.quemEnviou,
           crcPriority:state.crcMap.has(t.key), notLocated:state.notLocatedMap.has(t.key)
         };
       });
@@ -1518,7 +1557,7 @@
     const q=cleanText($('treatmentSearch').value).toLowerCase(), reason=$('treatmentReason').value;
     return rows.filter(r => {
       if (reason && r.motivo !== reason) return false;
-      if (q && ![r.nota,r.coleta,r.vocativo,r.motivo,r.responsavel].join(' ').toLowerCase().includes(q)) return false;
+      if (q && ![r.nota,r.coleta,r.vocativo,r.motivo,r.responsavel,r.quemEnviou].join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -1577,27 +1616,31 @@
 
   function renderKpis() {
     const master=applyChartFilters(uniqueRowsByKey(getMasterRows()));
-    const open=master.filter(r=>r.status==='open'), resolved=master.filter(r=>r.status==='resolved'), claims=master.filter(r=>r.status==='claim');
-    const total=master.reduce((s,r)=>s+r.__valor,0), openValue=open.reduce((s,r)=>s+r.__valor,0), resolvedValue=resolved.reduce((s,r)=>s+r.__valor,0), claimValue=claims.reduce((s,r)=>s+r.__valor,0);
+    const open=master.filter(r=>r.status==='open'), treatment=master.filter(r=>r.status==='treatment'), resolved=master.filter(r=>r.status==='resolved'), claims=master.filter(r=>r.status==='claim');
+    const total=master.reduce((s,r)=>s+r.__valor,0), openValue=open.reduce((s,r)=>s+r.__valor,0), treatmentValue=treatment.reduce((s,r)=>s+r.__valor,0), resolvedValue=resolved.reduce((s,r)=>s+r.__valor,0), claimValue=claims.reduce((s,r)=>s+r.__valor,0);
     const resolvedStill=resolved.filter(r=>r.stillPending).length, claimStill=claims.filter(r=>r.stillPending).length;
     $('kpiTotal').textContent=moneyFmt.format(total);
     $('kpiTotalSub').textContent=`${master.length.toLocaleString('pt-BR')} chaves únicas na união das bases`;
-    const treatmentPending = getTreatmentRows(false).length;
-    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros • ${treatmentPending.toLocaleString('pt-BR')} em tratativa`;
+    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros`;
+    $('kpiTreatment').textContent=moneyFmt.format(treatmentValue); $('kpiTreatmentSub').textContent=`${treatment.length.toLocaleString('pt-BR')} aguardando conclusão`;
     $('kpiResolved').textContent=moneyFmt.format(resolvedValue); $('kpiResolvedSub').textContent=`${resolved.length.toLocaleString('pt-BR')} registros • ${resolvedStill.toLocaleString('pt-BR')} ainda no Excel`;
     $('kpiClaim').textContent=moneyFmt.format(claimValue); $('kpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros • ${claimStill.toLocaleString('pt-BR')} ainda no Excel`;
+    $('kpiTreatmentPct').textContent=`${pctFmt.format(total ? treatmentValue/total*100 : 0)}%`; $('kpiTreatmentPctSub').textContent=`${moneyFmt.format(treatmentValue)} ÷ ${moneyFmt.format(total)}`;
     $('kpiResolvedPct').textContent=`${pctFmt.format(total ? resolvedValue/total*100 : 0)}%`; $('kpiResolvedPctSub').textContent=`${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)}`;
     $('kpiClaimPct').textContent=`${pctFmt.format(total ? claimValue/total*100 : 0)}%`; $('kpiClaimPctSub').textContent=`${moneyFmt.format(claimValue)} ÷ ${moneyFmt.format(total)}`;
-    $('openCount').textContent=getOpenRows(false).length.toLocaleString('pt-BR');
-    $('treatmentCount').textContent=treatmentPending.toLocaleString('pt-BR');
+    $('openCount').textContent=open.length.toLocaleString('pt-BR');
+    $('treatmentCount').textContent=treatment.length.toLocaleString('pt-BR');
     $('resolvedCount').textContent=resolved.length.toLocaleString('pt-BR');
-    $('claimCount').textContent=state.claimRows.length.toLocaleString('pt-BR');
+    $('claimCount').textContent=claims.length.toLocaleString('pt-BR');
   }
 
   function chartSelectionValues(id, labels) {
-    if (id === 'chartStatus') return { dimension:'status', values:labels };
+    if (id === 'chartStatus' || id === 'chartStatusCount') return { dimension:'status', values:labels };
+    if (id === 'chartReason') return { dimension:'reason', values:labels };
     if (id === 'chartResolution') return { dimension:'resolution', values:labels };
+    if (id === 'chartSolver') return { dimension:'solver', values:labels };
     if (id === 'chartResponsible') return { dimension:'responsible', values:labels };
+    if (id === 'chartSender') return { dimension:'sender', values:labels };
     if (id === 'chartVocativo') return { dimension:'vocativo', values:labels };
     if (id === 'chartOccurrence') return { dimension:'occurrencePeriod', values:labels };
     if (id === 'chartResolutionDate') return { dimension:'resolutionPeriod', values:labels };
@@ -1606,10 +1649,18 @@
 
   function chartRgb(id, datasetLabel, dataLabel='') {
     const label = dataLabel || datasetLabel || '';
-    if (label === 'Em aberto' || datasetLabel === 'Em aberto' || id === 'chartOccurrence') return [239,68,68];
-    if (label === 'Resolvido' || datasetLabel === 'Resolvido' || id === 'chartResolution' || id === 'chartResolutionDate') return [34,197,94];
+    if (label === 'Em aberto' || datasetLabel === 'Em aberto') return [239,68,68];
+    if (label === 'Em tratativa' || datasetLabel === 'Em tratativa') return [14,165,233];
+    if (label === 'Resolvido' || datasetLabel === 'Resolvido') return [34,197,94];
     if (label === 'Sinistro' || datasetLabel === 'Sinistro') return [168,85,247];
+    if (id === 'chartResolution' || id === 'chartResolutionDate') {
+      if (datasetLabel === 'Italo') return [34,197,94];
+      if (datasetLabel === 'Bruna') return [16,185,129];
+      return [132,204,22];
+    }
+    if (id === 'chartSolver') return [34,197,94];
     if (id === 'chartResponsible') return [249,115,22];
+    if (id === 'chartSender') return [14,165,233];
     return [100,116,139];
   }
 
@@ -1626,14 +1677,14 @@
     (config.data.datasets || []).forEach(ds => {
       const normal = [], hover = [], borders = [], widths = [];
       labels.forEach((label, index) => {
-        const rgb = chartRgb(id, ds.label, id === 'chartStatus' ? label : '');
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount'].includes(id) ? label : '');
         let hasConstraint = false;
         let matches = true;
         if (selectedDisplay.size) {
           hasConstraint = true;
           matches = matches && selectedDisplay.has(label);
         }
-        if (id === 'chartVocativo' && statusSelected.size) {
+        if (['chartVocativo','chartReason','chartResponsible','chartSender','chartOccurrence'].includes(id) && statusSelected.size) {
           hasConstraint = true;
           matches = matches && statusSelected.has(ds.label);
         }
@@ -1647,7 +1698,7 @@
       ds.hoverBackgroundColor = hover;
       ds.borderColor = borders;
       ds.hoverBorderColor = labels.map((label) => {
-        const rgb = chartRgb(id, ds.label, id === 'chartStatus' ? label : '');
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount'].includes(id) ? label : '');
         return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
       });
       ds.borderWidth = widths;
@@ -1670,6 +1721,7 @@
     const pct=total?raw/total*100:0, pctText=total?` (${pctFmt.format(pct)}%)`:'';
     return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
   }}};
+  const chartCountTooltip = { callbacks:{ label:ctx => `${ctx.dataset.label || ctx.label || ''}: ${Number(ctx.raw||0).toLocaleString('pt-BR')} ${Number(ctx.raw||0)===1?'registro':'registros'}` }};
   const horizontalBarDataLabels={
     anchor:'end',align:'right',offset:5,clamp:true,clip:false,
     formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
@@ -1689,45 +1741,95 @@
 
   function stackedPairs(rows,getter,limit=null){
     const map=new Map();
-    for(const r of rows){const label=cleanText(getter(r))||'Sem informação'; if(!map.has(label))map.set(label,{open:0,resolved:0,claim:0,openCount:0,resolvedCount:0,claimCount:0}); const g=map.get(label); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`] += 1;}
-    let pairs=[...map.entries()].sort((a,b)=>(b[1].open+b[1].resolved+b[1].claim)-(a[1].open+a[1].resolved+a[1].claim)); if(limit)pairs=pairs.slice(0,limit); return pairs;
+    for(const r of rows){const label=cleanText(getter(r))||'Sem informação'; if(!map.has(label))map.set(label,{open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0}); const g=map.get(label); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`] += 1;}
+    let pairs=[...map.entries()].sort((a,b)=>(b[1].open+b[1].treatment+b[1].resolved+b[1].claim)-(a[1].open+a[1].treatment+a[1].resolved+a[1].claim)); if(limit)pairs=pairs.slice(0,limit); return pairs;
   }
   function temporalPairs(rows,dateGetter,granularity){const map=new Map(); for(const r of rows){const info=bucketInfo(dateGetter(r),granularity); if(!map.has(info.key))map.set(info.key,{...info,value:0,count:0}); map.get(info.key).value+=Number(r.__valor||0); map.get(info.key).count+=1;} return [...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort);}
 
-  function renderTemporalChart({id,innerId,rows,dateGetter,granularity,dimension,datasetLabel,alsoStatus}){
-    const pairs=temporalPairs(rows,dateGetter,granularity), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key), data=pairs.map(x=>x.value), counts=pairs.map(x=>x.count);
-    sizeTemporalChart(innerId,pairs.length,granularity);
-    const isResolved=alsoStatus==='Resolvido';
-    makeChart(id,{type:'bar',data:{labels,datasets:[{label:datasetLabel,data,_counts:counts,backgroundColor:isResolved?'rgba(34,197,94,.82)':'rgba(239,68,68,.82)',hoverBackgroundColor:isResolved?'rgba(34,197,94,1)':'rgba(239,68,68,1)',borderColor:isResolved?'#16a34a':'#dc2626',hoverBorderColor:isResolved?'#15803d':'#b91c1c',borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const key=keys[els[0].index]; if(key)toggleChartFilter(dimension,key,alsoStatus);},scales:{x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],granularity)},grid:{display:false}},y:{beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',offset:3,clamp:false,clip:false,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569',backgroundColor:'rgba(255,255,255,.92)',borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}}}}});
+  function renderOccurrenceStatusChart(master){
+    const rows=applyChartFilters(master,'occurrencePeriod');
+    const map=new Map();
+    for(const r of rows){
+      const info=bucketInfo(r.__dataOcorrencia,state.occurrenceGranularity);
+      if(!map.has(info.key))map.set(info.key,{...info,open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0});
+      const g=map.get(info.key); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`]++;
+    }
+    const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
+    sizeTemporalChart('chartOccurrenceInner',pairs.length,state.occurrenceGranularity);
+    const defs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
+    makeChart('chartOccurrence',{type:'bar',data:{labels,datasets:defs.map(([label,key])=>({label,data:pairs.map(x=>x[key]),_counts:pairs.map(x=>x[`${key}Count`]),stack:'total'}))},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], status=defs[el.datasetIndex]?.[0]; if(key)toggleChartFilter('occurrencePeriod',key,status);},scales:{x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.occurrenceGranularity)},grid:{display:false}},y:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+  }
+
+  function renderResolutionDateBySolver(master){
+    const rows=applyChartFilters(master.filter(r=>r.status==='resolved'&&r.dataResolucao),'resolutionPeriod');
+    const solverLabels=[...new Set([...state.solvers, ...rows.map(r=>cleanText(r.quemResolveu)||'Não informado')])].filter(Boolean);
+    const map=new Map();
+    for(const r of rows){
+      const info=bucketInfo(r.dataResolucao,state.resolutionGranularity), solver=cleanText(r.quemResolveu)||'Não informado';
+      if(!map.has(info.key))map.set(info.key,{...info,bySolver:new Map()});
+      const bucket=map.get(info.key), cur=bucket.bySolver.get(solver)||{value:0,count:0}; cur.value+=Number(r.__valor||0); cur.count++; bucket.bySolver.set(solver,cur);
+    }
+    const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
+    sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
+    makeChart('chartResolutionDate',{type:'bar',data:{labels,datasets:solverLabels.map(solver=>({label:solver,data:pairs.map(x=>x.bySolver.get(solver)?.value||0),_counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),stack:'total'}))},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], solver=solverLabels[el.datasetIndex]; if(key){toggleChartFilter('resolutionPeriod',key); if(solver)toggleChartFilter('solver',solver,'Resolvido');}},scales:{x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},grid:{display:false}},y:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
   }
 
   function renderCharts(){
     const master=uniqueRowsByKey(getMasterRows());
     const statusBase=applyChartFilters(master,'status');
-    const opens=statusBase.filter(r=>r.status==='open'), resolved=statusBase.filter(r=>r.status==='resolved'), claims=statusBase.filter(r=>r.status==='claim');
-    const vals=[opens.reduce((s,r)=>s+r.__valor,0),resolved.reduce((s,r)=>s+r.__valor,0),claims.reduce((s,r)=>s+r.__valor,0)], counts=[opens.length,resolved.length,claims.length], statusLabels=['Em aberto','Resolvido','Sinistro'];
-    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts,backgroundColor:['rgba(239,68,68,.82)','rgba(34,197,94,.82)','rgba(168,85,247,.82)'],hoverBackgroundColor:['rgba(239,68,68,1)','rgba(34,197,94,1)','rgba(168,85,247,1)'],borderColor:['#dc2626','#16a34a','#9333ea'],hoverBorderColor:['#b91c1c','#15803d','#7e22ce'],borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
+    const statusDefs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
+    const statusGroups=statusDefs.map(([label,key])=>{const rows=statusBase.filter(r=>r.status===key); return {label,key,rows,value:rows.reduce((s,r)=>s+r.__valor,0),count:rows.length};});
+    const statusLabels=statusGroups.map(x=>x.label), vals=statusGroups.map(x=>x.value), counts=statusGroups.map(x=>x.count);
+    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
 
-    const resolutionBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'resolution'), resolutionMap=new Map();
-    for(const r of resolutionBase){const label=cleanText(r.resolucao)||'Sem resolução'; if(!resolutionMap.has(label))resolutionMap.set(label,{value:0,count:0}); const x=resolutionMap.get(label); x.value+=r.__valor; x.count++;}
-    const resolutionPairs=[...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
-    makeChart('chartResolution',{type:'bar',data:{labels:resolutionPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(34,197,94,.82)',hoverBackgroundColor:'rgba(34,197,94,1)',borderColor:'#16a34a',hoverBorderColor:'#15803d',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=resolutionPairs[els[0].index]?.[0]; if(label)toggleChartFilter('resolution',label,'Resolvido');},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
+    makeChart('chartStatusCount',{type:'bar',data:{labels:statusLabels,datasets:[{label:'Quantidade',data:counts}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{display:false},tooltip:chartCountTooltip,datalabels:{anchor:'end',align:'top',formatter:v=>Number(v)>0?Number(v).toLocaleString('pt-BR'):'',font:{size:10,weight:'800'},color:'#475569'}}}});
 
-    const treatmentReasonSet=new Set(state.treatmentReasons);
-    const responsibleBase=applyChartFilters(master.filter(r=>r.inTreatment&&treatmentReasonSet.has(cleanText(r.treatmentReason))),'responsible'), responsibleMap=new Map();
-    for(const r of responsibleBase){const label=cleanText(r.treatmentResponsible)||'Não informado'; if(!responsibleMap.has(label))responsibleMap.set(label,{value:0,count:0}); const x=responsibleMap.get(label); x.value+=r.__valor; x.count++;}
-    const responsiblePairs=[...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
-    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(249,115,22,.84)',hoverBackgroundColor:'rgba(249,115,22,1)',borderColor:'#ea580c',hoverBorderColor:'#c2410c',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label);},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
+    const reasonBase=applyChartFilters(master,'reason'), reasonPairs=stackedPairs(reasonBase,reasonLabel,12), reasonLabels=reasonPairs.map(x=>x[0]);
+    makeChart('chartReason',{type:'bar',data:{labels:reasonLabels,datasets:[
+      {label:'Em aberto',data:reasonPairs.map(x=>x[1].open),_counts:reasonPairs.map(x=>x[1].openCount),stack:'total'},
+      {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
+      {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
+      {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total'}
+    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=reasonLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('reason',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+
+    const resolutionBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'resolution');
+    const solverLabels=[...new Set([...state.solvers, ...resolutionBase.map(r=>cleanText(r.quemResolveu)||'Não informado')])].filter(Boolean);
+    const resolutionMap=new Map();
+    for(const r of resolutionBase){const label=cleanText(r.resolucao)||'Sem resolução', solver=cleanText(r.quemResolveu)||'Não informado'; if(!resolutionMap.has(label))resolutionMap.set(label,new Map()); const sm=resolutionMap.get(label), cur=sm.get(solver)||{value:0,count:0}; cur.value+=r.__valor; cur.count++; sm.set(solver,cur);}
+    const resolutionLabels=[...resolutionMap.keys()].sort((a,b)=>{const sum=x=>[...resolutionMap.get(x).values()].reduce((s,v)=>s+v.value,0); return sum(b)-sum(a);});
+    makeChart('chartResolution',{type:'bar',data:{labels:resolutionLabels,datasets:solverLabels.map(solver=>({label:solver,data:resolutionLabels.map(label=>resolutionMap.get(label)?.get(solver)?.value||0),_counts:resolutionLabels.map(label=>resolutionMap.get(label)?.get(solver)?.count||0),stack:'total'}))},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=resolutionLabels[el.index], solver=solverLabels[el.datasetIndex]; if(label)toggleChartFilter('resolution',label); if(solver)toggleChartFilter('solver',solver,'Resolvido');},layout:{padding:{right:58}},scales:{x:{stacked:true,beginAtZero:true,grace:'22%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+
+    const solverBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'solver'), solverMap=new Map();
+    for(const r of solverBase){const label=cleanText(r.quemResolveu)||'Não informado'; if(!solverMap.has(label))solverMap.set(label,{value:0,count:0}); const x=solverMap.get(label); x.value+=r.__valor; x.count++;}
+    const solverPairs=[...solverMap.entries()].sort((a,b)=>b[1].value-a[1].value);
+    makeChart('chartSolver',{type:'bar',data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count)}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=solverPairs[els[0].index]?.[0]; if(label)toggleChartFilter('solver',label,'Resolvido');},scales:{y:{beginAtZero:true,grace:'15%'}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569'}}}});
+
+    const responsibleBase=applyChartFilters(master.filter(r=>r.inTreatment),'responsible'), responsiblePairs=stackedPairs(responsibleBase,r=>r.treatmentResponsible,10), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    makeChart('chartResponsible',{type:'bar',data:{labels:responsibleLabels,datasets:[
+      {label:'Em aberto',data:responsiblePairs.map(x=>x[1].open),_counts:responsiblePairs.map(x=>x[1].openCount),stack:'total'},
+      {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
+      {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
+      {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total'}
+    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=responsibleLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('responsible',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'12%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+
+    const senderBase=applyChartFilters(master.filter(r=>r.inTreatment),'sender'), senderPairs=stackedPairs(senderBase,r=>cleanText(r.treatmentSender)||'Não informado'), senderLabels=senderPairs.map(x=>x[0]);
+    makeChart('chartSender',{type:'bar',data:{labels:senderLabels,datasets:[
+      {label:'Em aberto',data:senderPairs.map(x=>x[1].open),_counts:senderPairs.map(x=>x[1].openCount),stack:'total'},
+      {label:'Em tratativa',data:senderPairs.map(x=>x[1].treatment),_counts:senderPairs.map(x=>x[1].treatmentCount),stack:'total'},
+      {label:'Resolvido',data:senderPairs.map(x=>x[1].resolved),_counts:senderPairs.map(x=>x[1].resolvedCount),stack:'total'},
+      {label:'Sinistro',data:senderPairs.map(x=>x[1].claim),_counts:senderPairs.map(x=>x[1].claimCount),stack:'total'}
+    ]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=senderLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('sender',label,status);},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
 
     const vocBase=applyChartFilters(master,'vocativo'), vocPairs=stackedPairs(vocBase,r=>r.__vocativo,8), vocLabels=vocPairs.map(x=>x[0]);
     makeChart('chartVocativo',{type:'bar',data:{labels:vocLabels,datasets:[
-      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(239,68,68,.82)',hoverBackgroundColor:'rgba(239,68,68,1)',borderColor:'#dc2626',hoverBorderColor:'#b91c1c',borderWidth:1,hoverBorderWidth:1.5},
-      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(34,197,94,.82)',hoverBackgroundColor:'rgba(34,197,94,1)',borderColor:'#16a34a',hoverBorderColor:'#15803d',borderWidth:1,hoverBorderWidth:1.5},
-      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total',backgroundColor:'rgba(168,85,247,.82)',hoverBackgroundColor:'rgba(168,85,247,1)',borderColor:'#9333ea',hoverBorderColor:'#7e22ce',borderWidth:1,hoverBorderWidth:1.5}
-    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=['Em aberto','Resolvido','Sinistro'][el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total'},
+      {label:'Em tratativa',data:vocPairs.map(x=>x[1].treatment),_counts:vocPairs.map(x=>x[1].treatmentCount),stack:'total'},
+      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total'},
+      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total'}
+    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
 
-    renderTemporalChart({id:'chartOccurrence',innerId:'chartOccurrenceInner',rows:applyChartFilters(master.filter(r=>r.status==='open'),'occurrencePeriod'),dateGetter:r=>r.__dataOcorrencia,granularity:state.occurrenceGranularity,dimension:'occurrencePeriod',datasetLabel:'Em aberto',alsoStatus:'Em aberto'});
-    renderTemporalChart({id:'chartResolutionDate',innerId:'chartResolutionDateInner',rows:applyChartFilters(master.filter(r=>r.status==='resolved'),'resolutionPeriod'),dateGetter:r=>r.dataResolucao,granularity:state.resolutionGranularity,dimension:'resolutionPeriod',datasetLabel:'Resolvido',alsoStatus:'Resolvido'});
+    renderOccurrenceStatusChart(master);
+    renderResolutionDateBySolver(master);
   }
 
   function sortSignalText(row) {
@@ -1755,6 +1857,7 @@
       case 'prioridade': return cleanText(row['Prioridade']);
       case 'resolucao': return cleanText(row.resolucao);
       case 'responsavel': return cleanText(row.responsavel);
+      case 'quemEnviou': return cleanText(row.quemEnviou || row.treatmentSender);
       case 'dataResolucao': {
         const d = parseDateValue(row.dataResolucao);
         return d ? d.getTime() : null;
@@ -1845,7 +1948,7 @@
     $('treatmentEmpty').classList.toggle('hidden',rows.length>0);
     $('treatmentBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.key)}" class="${state.selectedSource==='treatment'&&state.selectedKey===r.key?'selected ':''}${r.crcPriority?'crc-priority':''}">
       <td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td>
-      <td>${esc(r.motivo)}</td><td>${esc(r.responsavel||'—')}</td>
+      <td>${esc(r.motivo)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.quemEnviou||'—')}</td>
       <td>${esc(r.dataTratativa&&parseDateValue(r.dataTratativa)?dateFmt.format(parseDateValue(r.dataTratativa)):'Sem data')}</td>
     </tr>`).join('');
     $('treatmentSummary').textContent=`${rows.length.toLocaleString('pt-BR')} aguardando conclusão • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
@@ -1877,16 +1980,18 @@
     $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
     const locked=mode==='report'||mode==='treatment'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
     $('fResolution').disabled=false;
+    $('fSolvedBy').disabled=false;
+    $('solvedByHint').textContent='Essa informação será gravada para todos os casos resolvidos.';
     $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':mode==='treatment'?'Concluir tratativa':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
   }
-  const closeModal=()=>{ $('fResolution').disabled=false; $('modalBackdrop').classList.add('hidden'); };
+  const closeModal=()=>{ $('fResolution').disabled=false; $('fSolvedBy').disabled=false; $('modalBackdrop').classList.add('hidden'); };
   function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
   function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
 
   function openTreatmentModal(data={},mode='manual'){
     state.treatmentModalMode=mode;
     $('tNota').value=data.nota??''; $('tColeta').value=data.coleta??''; $('tValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('tVocativo').value=data.vocativo??'';
-    $('tReason').value=data.motivo??''; $('tResponsible').value=data.responsavel??'';
+    $('tReason').value=data.motivo??''; $('tSentBy').value=data.quemEnviou??''; $('tResponsible').value=data.responsavel??'';
     const locked=mode==='report'; ['tNota','tColeta','tValor','tVocativo'].forEach(id=>$(id).readOnly=locked);
     $('treatmentModalTitle').textContent=mode==='report'?'Encaminhar registro para tratativa':'Tratativa (Manual)';
     $('treatmentModalBackdrop').classList.remove('hidden');
@@ -1896,9 +2001,17 @@
 
   function openTreatmentResolution(key){
     const t=state.treatmentMap.get(key); if(!t)return;
-    openModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo,resolucao:'Material localizado no cliente',responsavel:t.responsavel},'treatment');
+    openModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo,resolucao:'Material localizado no cliente',responsavel:t.responsavel,quemResolveu:t.quemEnviou||''},'treatment');
     $('fResolution').value='Material localizado no cliente';
     $('fResolution').disabled=true;
+    if(t.quemEnviou){
+      $('fSolvedBy').value=t.quemEnviou;
+      $('fSolvedBy').disabled=true;
+      $('solvedByHint').textContent=`Preenchido automaticamente com ${t.quemEnviou}, que enviou o registro para tratativa.`;
+    }else{
+      $('fSolvedBy').disabled=false;
+      $('solvedByHint').textContent='Registro antigo sem “Quem enviou”. Selecione Italo ou Bruna uma vez; o backend também preencherá o histórico da tratativa.';
+    }
     updateResponsibleVisibility();
   }
 
@@ -1992,7 +2105,8 @@
 
   $('treatmentForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload={action:'salvarTratativa',nota:cleanText($('tNota').value),coleta:cleanText($('tColeta').value),valorNota:parseMoney($('tValor').value),vocativo:cleanText($('tVocativo').value),motivo:$('tReason').value,responsavel:cleanText($('tResponsible').value)};
+    const payload={action:'salvarTratativa',nota:cleanText($('tNota').value),coleta:cleanText($('tColeta').value),valorNota:parseMoney($('tValor').value),vocativo:cleanText($('tVocativo').value),motivo:$('tReason').value,responsavel:cleanText($('tResponsible').value),quemEnviou:$('tSentBy').value};
+    if(!payload.quemEnviou){$('tSentBy').focus(); return setNotice('error','Selecione quem está enviando','Escolha Italo ou Bruna antes de encaminhar para tratativa.');}
     const key=keyOf(payload.nota,payload.coleta);
     if(state.treatmentMap.has(key)) return setNotice('warn','Tratativa já cadastrada',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe na base de Tratativas.`);
     if(state.resolvedMap.has(key)) return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já está em Resolvidos.`);
