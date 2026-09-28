@@ -643,8 +643,8 @@
       min-height:300px;
       margin:0;
     }
-    .dashboard-charts .chart-wrap { height:245px; }
-    .dashboard-charts .chart-scroll-inner { height:245px; }
+    .dashboard-charts .chart-wrap { height:270px; }
+    .dashboard-charts .chart-scroll-inner { height:270px; }
 
     @media (max-width:1200px) {
       .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -2021,12 +2021,11 @@
     if (label === 'Em tratativa' || datasetLabel === 'Em tratativa') return [14,165,233];
     if (label === 'Resolvido' || datasetLabel === 'Resolvido') return [34,197,94];
     if (label === 'Sinistro' || datasetLabel === 'Sinistro') return [168,85,247];
-    if (id === 'chartResolutionDate') {
-      if (datasetLabel === 'Italo') return [34,197,94];
-      if (datasetLabel === 'Bruna') return [16,185,129];
-      return [132,204,22];
+    if (id === 'chartResolutionDate' || id === 'chartSolver') {
+      if (label === 'Italo' || datasetLabel === 'Italo') return [37,99,235];   // azul
+      if (label === 'Bruna' || datasetLabel === 'Bruna') return [249,115,22];  // laranja
+      return [100,116,139];
     }
-    if (id === 'chartSolver') return [22,163,74];
     if (id === 'chartResponsible') return [249,115,22];
     if (id === 'chartSender') return [14,165,233];
     return [100,116,139];
@@ -2056,7 +2055,7 @@
       }
       const normal = [], hover = [], borders = [], widths = [];
       labels.forEach((label, index) => {
-        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount'].includes(id) ? label : '');
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount','chartSolver'].includes(id) ? label : '');
         let hasConstraint = false;
         let matches = true;
         if (selectedDisplay.size) {
@@ -2077,7 +2076,7 @@
       ds.hoverBackgroundColor = hover;
       ds.borderColor = borders;
       ds.hoverBorderColor = labels.map((label) => {
-        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount'].includes(id) ? label : '');
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount','chartSolver'].includes(id) ? label : '');
         return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
       });
       ds.borderWidth = widths;
@@ -2110,13 +2109,17 @@
     borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
   };
   const stackedBarDataLabels={
-    anchor:'center',align:'center',clamp:true,
-    display:ctx=>Math.abs(ctx.chart.getDatasetMeta(ctx.datasetIndex).data?.[ctx.dataIndex]?.width||0)>=54,
+    anchor:'center',align:'center',clamp:true,clip:false,
+    display:ctx=>Math.abs(ctx.chart.getDatasetMeta(ctx.datasetIndex).data?.[ctx.dataIndex]?.width||0)>=72,
     formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
-    font:{size:9,weight:'800'},textAlign:'center',color:'#ffffff'
+    font:{size:9,weight:'800'},textAlign:'center',
+    color:()=>document.body.dataset.theme==='dark'?'#f8fafc':'#0f172a',
+    backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.92)',
+    borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
   };
   function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
-  function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?64:granularity==='week'?86:76; inner.style.width=`${Math.max(520,Math.max(1,bucketCount)*per)}px`;}
+  function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?82:granularity==='week'?112:104; inner.style.width=`${Math.max(640,Math.max(1,bucketCount)*per)}px`;}
+  function sizeHorizontalBars(canvasId,labelCount){const canvas=$(canvasId); if(!canvas)return; const wrap=canvas.closest('.chart-wrap'); if(!wrap)return; wrap.style.height=`${Math.max(270, Math.min(520, 44 + labelCount*28))}px`;}
 
   function stackedPairs(rows,getter,limit=null){
     const map=new Map();
@@ -2152,31 +2155,51 @@
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
     makeChart('chartResolutionDate',{
-      type:'line',
+      type:'bar',
       data:{labels,datasets:solverLabels.map(solver=>({
         label:solver,
         data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
         _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
-        tension:.25,
-        fill:false
+        maxBarThickness:42,
+        categoryPercentage:.72,
+        barPercentage:.84
       }))},
       options:{
         maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        layout:{padding:{top:12,right:10,bottom:2,left:2}},
+        layout:{padding:{top:28,right:10,bottom:2,left:2}},
         onClick:(e,els)=>{
           if(!els.length)return;
           const el=els[0], key=keys[el.index], solver=solverLabels[el.datasetIndex];
           if(key){toggleChartFilter('resolutionPeriod',key); if(solver)toggleChartFilter('solver',solver,'Resolvido');}
         },
         scales:{
-          x:{offset:false,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},grid:{display:false}},
-          y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}
+          x:{
+            offset:true,
+            ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},
+            grid:{display:false}
+          },
+          y:{beginAtZero:true,grace:'18%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}
         },
         plugins:{
           legend:{position:'bottom'},
           tooltip:chartMoneyTooltip,
-          datalabels:{display:false}
+          datalabels:{
+            anchor:'end',
+            align:'top',
+            offset:2,
+            clamp:true,
+            clip:false,
+            formatter:(v,ctx)=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
+            font:{size:9,weight:'800'},
+            textAlign:'center',
+            color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155',
+            backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.82)':'rgba(255,255,255,.92)',
+            borderRadius:4,
+            padding:{top:2,right:4,bottom:2,left:4},
+            backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.82)':'rgba(255,255,255,.92)',
+            borderRadius:4,
+            padding:{top:2,right:4,bottom:2,left:4}
+          }
         }
       }
     });
@@ -2226,6 +2249,7 @@
       return label && label!=='Sem motivo definido' && label!=='Sinistro';
     });
     const reasonPairs=stackedPairs(reasonSource,reasonLabel,10), reasonLabels=reasonPairs.map(x=>x[0]);
+    sizeHorizontalBars('chartReason', reasonLabels.length);
     makeChart('chartReason',{
       type:'bar',
       data:{labels:reasonLabels,datasets:[
@@ -2253,6 +2277,7 @@
     // 4. Responsáveis pela falha
     const responsibleBase=applyDashboardFilters(master.filter(r=>r.inTreatment),'responsible');
     const responsiblePairs=stackedPairs(responsibleBase,r=>r.treatmentResponsible || r.responsavel,10), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
       type:'bar',
       data:{labels:responsibleLabels,datasets:[
@@ -2287,9 +2312,10 @@
     const solverPairs=[...solverMap.entries()].sort((a,b)=>b[1].value-a[1].value);
     makeChart('chartSolver',{
       type:'bar',
-      data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Prevenção de perdas',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count)}]},
+      data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Prevenção de perdas',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count),maxBarThickness:64,categoryPercentage:.72,barPercentage:.82}]},
       options:{
         maintainAspectRatio:false,
+        layout:{padding:{top:28,right:10,bottom:2,left:2}},
         onClick:(e,els)=>{if(!els.length)return; const label=solverPairs[els[0].index]?.[0]; if(label)toggleChartFilter('solver',label,'Resolvido');},
         scales:{y:{beginAtZero:true,grace:'15%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}},
         plugins:{
