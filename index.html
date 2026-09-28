@@ -549,6 +549,112 @@
     .chart-card h3 { color:var(--text-strong); }
     .chart-granularity { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
 
+    /* ===== Dashboard gerencial enxuto ===== */
+    .dashboard-kpis {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin:0 0 10px;
+    }
+    .dashboard-kpi {
+      min-height:84px;
+      padding:11px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      box-shadow:var(--shadow-soft);
+    }
+    .dashboard-kpi .label {
+      color:var(--text-soft);
+      font-size:8.5px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+    .dashboard-kpi .value {
+      margin-top:5px;
+      font-size:19px;
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-.02em;
+      color:var(--text-strong);
+    }
+    .dashboard-kpi .sub {
+      margin-top:5px;
+      color:var(--text-soft);
+      font-size:9px;
+      line-height:1.25;
+    }
+    .dashboard-kpi.exposure .value { color:#dc2626; }
+    .dashboard-kpi.open .value { color:#ef4444; }
+    .dashboard-kpi.treatment .value { color:#0284c7; }
+    .dashboard-kpi.prevention .value { color:#16a34a; }
+    .dashboard-kpi.claim .value { color:#9333ea; }
+    .dashboard-kpi.production .value { color:#059669; }
+    .dashboard-kpi.time .value { color:#0f766e; }
+
+    .dashboard-filter-panel {
+      display:flex;
+      align-items:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:0 0 10px;
+      padding:9px 10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      box-shadow:var(--shadow-soft);
+    }
+    .dashboard-filter-field {
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:145px;
+      flex:1 1 145px;
+    }
+    .dashboard-filter-field.period { min-width:165px; }
+    .dashboard-filter-field label {
+      color:var(--text-soft);
+      font-size:8px;
+      line-height:1;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .dashboard-filter-field select {
+      width:100%;
+      min-width:0;
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:7px 8px;
+      background:var(--surface);
+      color:var(--text-strong);
+      font-size:9.5px;
+      font-weight:700;
+    }
+    .dashboard-filter-actions { flex:0 0 auto; }
+    .dashboard-charts {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:18px;
+    }
+    .dashboard-charts .chart-card {
+      min-height:300px;
+      margin:0;
+    }
+    .dashboard-charts .chart-wrap { height:245px; }
+    .dashboard-charts .chart-scroll-inner { height:245px; }
+
+    @media (max-width:1200px) {
+      .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .dashboard-charts { grid-template-columns:1fr; }
+    }
+    @media (max-width:700px) {
+      .dashboard-kpis { grid-template-columns:1fr; }
+      .dashboard-filter-field { min-width:100%; }
+    }
+
     .btn { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
     .btn-soft { background:var(--primary-soft); color:#3b82f6; }
 
@@ -849,78 +955,179 @@
     <section id="dashboardView" class="app-view hidden">
       <div class="dashboard-heading">
         <div>
-          <span class="toolbar-eyebrow">ANÁLISE</span>
+          <span class="toolbar-eyebrow">ANÁLISE GERENCIAL</span>
           <h2>Dashboard</h2>
-          <p>Selecione uma barra ou fatia para destacar a seleção e cruzar os demais gráficos.</p>
+          <p>Exposição financeira, causa raiz, falhas operacionais, produtividade da equipe e prevenção de perdas.</p>
         </div>
       </div>
+
+      <section class="dashboard-kpis">
+        <article class="dashboard-kpi exposure">
+          <div class="label">Exposição ativa</div>
+          <div class="value" id="dKpiExposure">R$ 0,00</div>
+          <div class="sub" id="dKpiExposureSub">Em aberto + em tratativa</div>
+        </article>
+        <article class="dashboard-kpi open">
+          <div class="label">Em aberto</div>
+          <div class="value" id="dKpiOpen">R$ 0,00</div>
+          <div class="sub" id="dKpiOpenSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi treatment">
+          <div class="label">Em tratativa</div>
+          <div class="value" id="dKpiTreatment">R$ 0,00</div>
+          <div class="sub" id="dKpiTreatmentSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi prevention">
+          <div class="label">Prevenção de perdas</div>
+          <div class="value" id="dKpiPrevention">R$ 0,00</div>
+          <div class="sub" id="dKpiPreventionSub">Valor resolvido no período</div>
+        </article>
+        <article class="dashboard-kpi claim">
+          <div class="label">Sinistro</div>
+          <div class="value" id="dKpiClaim">R$ 0,00</div>
+          <div class="sub" id="dKpiClaimSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi">
+          <div class="label">Taxa de solução</div>
+          <div class="value" id="dKpiSolveRate">0,00%</div>
+          <div class="sub" id="dKpiSolveRateSub">Resolvidos ÷ cenário analisado</div>
+        </article>
+        <article class="dashboard-kpi production">
+          <div class="label">Produção da equipe</div>
+          <div class="value" id="dKpiProduction">0</div>
+          <div class="sub" id="dKpiProductionSub">Casos resolvidos no período</div>
+        </article>
+        <article class="dashboard-kpi time">
+          <div class="label">Tempo médio de tratativa</div>
+          <div class="value" id="dKpiAvgTreatment">—</div>
+          <div class="sub" id="dKpiAvgTreatmentSub">Tratativas concluídas</div>
+        </article>
+      </section>
+
+      <section class="dashboard-filter-panel" aria-label="Filtros do dashboard">
+        <div class="dashboard-filter-field period">
+          <label for="dashPeriod">Período da produção</label>
+          <select id="dashPeriod"><option value="">Todo o histórico</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashClient">Cliente</label>
+          <select id="dashClient"><option value="">Todos os clientes</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashVocativo">Vocativo</label>
+          <select id="dashVocativo"><option value="">Todos os vocativos</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashStatus">Status</label>
+          <select id="dashStatus">
+            <option value="">Todos os status</option>
+            <option>Em aberto</option>
+            <option>Em tratativa</option>
+            <option>Resolvido</option>
+            <option>Sinistro</option>
+          </select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashReason">Causa / motivo</label>
+          <select id="dashReason"><option value="">Todas as causas</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashResponsible">Responsável pela falha</label>
+          <select id="dashResponsible"><option value="">Todos os responsáveis</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashSolver">Quem resolveu</label>
+          <select id="dashSolver"><option value="">Toda a equipe</option></select>
+        </div>
+        <div class="dashboard-filter-actions">
+          <button class="btn" id="btnClearDashboardFilters" type="button">Limpar filtros</button>
+        </div>
+      </section>
+
       <div class="chart-filter-bar">
-<div class="chart-filter-info">
-<strong>Seleções dos gráficos:</strong>
-<span class="chart-filter-empty" id="chartFilterChips">Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.</span>
-</div>
-<button class="btn" disabled="" id="btnClearChartFilters">Limpar seleções</button>
-</div>
-      <section class="charts-grid">
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Cenário geral por status</h3><div class="chart-hint">Em aberto × em tratativa × resolvido × sinistro. Valor e percentual; quantidade no hover.</div></div></div>
-<div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Quantidade de casos por status</h3><div class="chart-hint">Todos os casos existentes, sem duplicar Nota + Coleta.</div></div></div>
-<div class="chart-wrap"><canvas id="chartStatusCount"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Cenário geral por motivo</h3><div class="chart-hint">Motivos de tratativa e resoluções, separados pelo status atual.</div></div></div>
-<div class="chart-wrap"><canvas id="chartReason"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvido por tipo e quem resolveu</h3><div class="chart-hint">Cada cor representa quem resolveu. Quantidade no hover.</div></div></div>
-<div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Resolvidos por quem resolveu</h3><div class="chart-hint">Valor total resolvido por Italo e Bruna. Quantidade no hover.</div></div></div>
-<div class="chart-wrap"><canvas id="chartSolver"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Casos que passaram por tratativa, separados pelo status atual.</div></div></div>
-<div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Tratativas por quem enviou</h3><div class="chart-hint">Italo/Bruna e situação atual dos registros enviados para tratativa.</div></div></div>
-<div class="chart-wrap"><canvas id="chartSender"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Top vocativos — todos os status</h3><div class="chart-hint">Em aberto, em tratativa, resolvido e sinistro.</div></div></div>
-<div class="chart-wrap"><canvas id="chartVocativo"></canvas></div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head">
-<div class="chart-card-title"><h3>Casos por Data Ocorrência — por status</h3><div class="chart-hint">Valor por período separado em aberto, tratativa, resolvido e sinistro.</div></div>
-<select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
-<option value="day">Dia</option>
-<option value="week">Semana</option>
-<option selected="" value="month">Mês</option>
-</select>
-</div>
-<div class="chart-scroll">
-<div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
-</div>
-</article>
-<article class="chart-card">
-<div class="chart-card-head">
-<div class="chart-card-title"><h3>Resolvido por Data e quem resolveu</h3><div class="chart-hint">Valor resolvido por período, separado por Italo e Bruna.</div></div>
-<select aria-label="Agrupamento da Data de Resolução" class="chart-granularity" id="resolutionGranularity">
-<option value="day">Dia</option>
-<option value="week">Semana</option>
-<option selected="" value="month">Mês</option>
-</select>
-</div>
-<div class="chart-scroll">
-<div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
-</div>
-</article>
-</section>
+        <div class="chart-filter-info">
+          <strong>Seleções dos gráficos:</strong>
+          <span class="chart-filter-empty" id="chartFilterChips">Nenhum filtro selecionado. Clique em uma barra ou fatia para cruzar os demais gráficos.</span>
+        </div>
+        <button class="btn" disabled id="btnClearChartFilters">Limpar seleções</button>
+      </div>
+
+      <section class="dashboard-charts">
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Cenário atual por status</h3>
+              <div class="chart-hint">Valor atual em aberto, em tratativa, resolvido e sinistro. Quantidade e percentual no hover.</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Evolução operacional</h3>
+              <div class="chart-hint">Exposição por Data Ocorrência, separada pelo status atual.</div>
+            </div>
+            <select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
+              <option value="day">Dia</option>
+              <option value="week">Semana</option>
+              <option selected value="month">Mês</option>
+            </select>
+          </div>
+          <div class="chart-scroll">
+            <div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Causa raiz — impacto financeiro</h3>
+              <div class="chart-hint">Motivos operacionais que mais concentram valor, separados pelo status atual.</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartReason"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Impacto por responsável pela falha</h3>
+              <div class="chart-hint">Valor associado às falhas de pessoas e situação atual dos casos.</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Produção da equipe</h3>
+              <div class="chart-hint">Valor resolvido por pessoa. Quantidade de casos no hover.</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartSolver"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Prevenção de perdas ao longo do tempo</h3>
+              <div class="chart-hint">Valor dos casos resolvidos por período e por quem resolveu.</div>
+            </div>
+            <select aria-label="Agrupamento da prevenção de perdas" class="chart-granularity" id="resolutionGranularity">
+              <option value="day">Dia</option>
+              <option value="week">Semana</option>
+              <option selected value="month">Mês</option>
+            </select>
+          </div>
+          <div class="chart-scroll">
+            <div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
+          </div>
+        </article>
+      </section>
+    </section>
     </section>
   </main>
 </div>
@@ -1051,6 +1258,15 @@
     claimModalMode: 'manual',
     claimEditKey: null,
     treatmentModalMode: 'manual',
+    dashboardFilters: {
+      period: '',
+      client: '',
+      vocativo: '',
+      status: '',
+      reason: '',
+      responsible: '',
+      solver: ''
+    },
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
@@ -1091,6 +1307,24 @@
     if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
     const d = new Date(text);
     return Number.isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function parseDateTimeValue(value) {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return new Date(value.getTime());
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + value * 86400000);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const text = cleanText(value);
+    if (!text) return null;
+    let m = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+    m = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+    const d = new Date(text);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
 
   function isoDateLocal(date) {
@@ -1191,7 +1425,7 @@
     if (window.Chart) {
       Chart.defaults.color = dark ? '#cbd5e1' : '#475569';
       Chart.defaults.borderColor = dark ? 'rgba(148,163,184,.18)' : 'rgba(100,116,139,.16)';
-      if (!$('dashboardView')?.classList.contains('hidden')) requestAnimationFrame(() => renderCharts());
+      if (!$('dashboardView')?.classList.contains('hidden')) requestAnimationFrame(() => { rebuildDashboardFilters(); renderDashboardKpis(); renderCharts(); });
     }
   }
 
@@ -1303,6 +1537,7 @@
     state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
     state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
     fillResolutionSelectors();
+    rebuildDashboardFilters();
     if (render) rebuildView();
   }
 
@@ -1413,6 +1648,7 @@
       state.selectedKey = null;
       state.openPage = 1;
       rebuildFilters();
+      rebuildDashboardFilters();
       rebuildView();
       const detail = `${rows.length.toLocaleString('pt-BR')} linhas lidas; ${state.reportRows.length.toLocaleString('pt-BR')} registros únicos Nota + Coleta. Duplicidades são desconsideradas nas quantidades e valores` + (valueConflicts ? `; ${valueConflicts} divergências de valor consolidadas em um único registro.` : '.');
       setNotice(state.apiReady ? 'ok' : 'warn', 'Relatório carregado', detail);
@@ -1442,6 +1678,89 @@
     resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
   };
 
+
+  function dashboardPeriodKey(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function dashboardPeriodLabel(key) {
+    if (!key) return 'Todo o histórico';
+    const m = String(key).match(/^(\d{4})-(\d{2})$/);
+    if (!m) return key;
+    return monthFmt.format(new Date(Number(m[1]), Number(m[2])-1, 1));
+  }
+
+  function dashboardGlobalValue(row, field) {
+    if (field === 'client') return cleanText(row['Cliente']) || 'Sem informação';
+    if (field === 'vocativo') return cleanText(row.__vocativo) || 'Sem informação';
+    if (field === 'status') return statusLabel(row.status);
+    if (field === 'reason') return reasonLabel(row);
+    if (field === 'responsible') return cleanText(row.treatmentResponsible || row.responsavel) || 'Não informado';
+    if (field === 'solver') return cleanText(row.quemResolveu) || 'Não informado';
+    return '';
+  }
+
+  function applyDashboardFilters(rows, excludeChartDimension=null, useProductionPeriod=false) {
+    let filtered = applyChartFilters(rows, excludeChartDimension);
+    const f = state.dashboardFilters;
+    filtered = filtered.filter(r => {
+      for (const field of ['client','vocativo','status','reason','responsible','solver']) {
+        const selected = cleanText(f[field]);
+        if (selected && dashboardGlobalValue(r, field) !== selected) return false;
+      }
+      if (useProductionPeriod && f.period) {
+        if (dashboardPeriodKey(r.dataResolucao || r.treatmentConclusion) !== f.period) return false;
+      }
+      return true;
+    });
+    return filtered;
+  }
+
+  function setDashboardSelectOptions(id, values, firstLabel, formatter=null) {
+    const el = $(id);
+    if (!el) return;
+    const current = el.value;
+    const unique = [...new Set((values || []).filter(Boolean))];
+    el.innerHTML = `<option value="">${esc(firstLabel)}</option>` + unique.map(v => `<option value="${esc(v)}">${esc(formatter ? formatter(v) : v)}</option>`).join('');
+    if ([...el.options].some(o => o.value === current)) el.value = current;
+  }
+
+  function rebuildDashboardFilters() {
+    const master = uniqueRowsByKey(getMasterRows());
+    const collator = (a,b)=>String(a).localeCompare(String(b),'pt-BR');
+    const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
+    const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
+    const reasons = master.map(reasonLabel).filter(v=>v && v!=='Sem motivo definido' && v!=='Sinistro').sort(collator);
+    const responsibles = master.map(r=>cleanText(r.treatmentResponsible || r.responsavel)).filter(Boolean).sort(collator);
+    const solvers = master.map(r=>cleanText(r.quemResolveu)).filter(Boolean).sort(collator);
+    const periods = master.filter(r=>r.status==='resolved' && r.dataResolucao).map(r=>dashboardPeriodKey(r.dataResolucao)).filter(Boolean).sort();
+
+    setDashboardSelectOptions('dashPeriod', periods, 'Todo o histórico', dashboardPeriodLabel);
+    setDashboardSelectOptions('dashClient', clients, 'Todos os clientes');
+    setDashboardSelectOptions('dashVocativo', vocativos, 'Todos os vocativos');
+    setDashboardSelectOptions('dashReason', reasons, 'Todas as causas');
+    setDashboardSelectOptions('dashResponsible', responsibles, 'Todos os responsáveis');
+    setDashboardSelectOptions('dashSolver', solvers, 'Toda a equipe');
+
+    for (const [field,id] of Object.entries({
+      period:'dashPeriod', client:'dashClient', vocativo:'dashVocativo', status:'dashStatus',
+      reason:'dashReason', responsible:'dashResponsible', solver:'dashSolver'
+    })) {
+      if ($(id)) $(id).value = state.dashboardFilters[field] || '';
+    }
+  }
+
+  function clearDashboardFilters() {
+    for (const key of Object.keys(state.dashboardFilters)) state.dashboardFilters[key] = '';
+    rebuildDashboardFilters();
+    if (!$('dashboardView')?.classList.contains('hidden')) {
+      renderDashboardKpis();
+      renderCharts();
+    }
+  }
+
   function getMasterRows() {
     const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
     const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys(), ...state.claimMap.keys(), ...state.treatmentMap.keys()]);
@@ -1461,7 +1780,7 @@
         __vocativo:vocativo, vocativo,
         status,
         resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
-        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa), treatmentSender:cleanText(treatment?.quemEnviou),
+        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa), treatmentConclusion:cleanText(treatment?.dataConclusao), treatmentSender:cleanText(treatment?.quemEnviou),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
         stillPending: !!report,
         inResolved: !!resolved,
@@ -1514,7 +1833,7 @@
       }
     }
     holder.className = chips.length ? '' : 'chart-filter-empty';
-    holder.innerHTML = chips.length ? chips.join('') : 'Nenhum filtro selecionado. Clique em uma barra ou fatia para filtrar todo o painel.';
+    holder.innerHTML = chips.length ? chips.join('') : 'Nenhuma seleção nos gráficos. Use os filtros acima ou clique em uma barra/fatia para cruzar o painel.';
     $('btnClearChartFilters').disabled = !chips.length;
   }
 
@@ -1606,6 +1925,7 @@
   function rebuildView() {
     renderChartFilterChips();
     renderKpis();
+    renderDashboardKpis();
     if (!$('dashboardView')?.classList.contains('hidden')) renderCharts();
     renderOpenTable();
     renderTreatmentTable();
@@ -1634,14 +1954,62 @@
     $('claimCount').textContent=claims.length.toLocaleString('pt-BR');
   }
 
+  function renderDashboardKpis() {
+    if (!$('dKpiExposure')) return;
+    const master = uniqueRowsByKey(getMasterRows());
+    const current = applyDashboardFilters(master);
+    const open = current.filter(r=>r.status==='open');
+    const treatment = current.filter(r=>r.status==='treatment');
+    const claims = current.filter(r=>r.status==='claim');
+    const resolvedCurrent = current.filter(r=>r.status==='resolved');
+
+    const productionRows = applyDashboardFilters(master.filter(r=>r.status==='resolved'), null, true);
+    const exposureValue = [...open,...treatment].reduce((s,r)=>s+Number(r.__valor||0),0);
+    const openValue = open.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const treatmentValue = treatment.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const preventionValue = productionRows.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const claimValue = claims.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const scenarioCount = open.length + treatment.length + resolvedCurrent.length + claims.length;
+    const solveRate = scenarioCount ? (resolvedCurrent.length / scenarioCount * 100) : 0;
+    const avgResolvedValue = productionRows.length ? preventionValue / productionRows.length : 0;
+
+    const concludedTreatments = applyDashboardFilters(
+      master.filter(r=>r.inTreatment && r.treatmentDate && r.treatmentConclusion),
+      null,
+      false
+    ).filter(r => !state.dashboardFilters.period || dashboardPeriodKey(r.treatmentConclusion) === state.dashboardFilters.period);
+
+    const durations = concludedTreatments.map(r=>{
+      const a=parseDateTimeValue(r.treatmentDate), b=parseDateTimeValue(r.treatmentConclusion);
+      return a && b && b>=a ? (b-a)/3600000 : null;
+    }).filter(v=>v!=null && Number.isFinite(v));
+    const avgHours = durations.length ? durations.reduce((s,v)=>s+v,0)/durations.length : null;
+    const avgTimeText = avgHours == null ? '—' : avgHours < 48 ? `${pctFmt.format(avgHours)} h` : `${pctFmt.format(avgHours/24)} dias`;
+    const periodText = state.dashboardFilters.period ? dashboardPeriodLabel(state.dashboardFilters.period) : 'todo o histórico';
+
+    $('dKpiExposure').textContent=moneyFmt.format(exposureValue);
+    $('dKpiExposureSub').textContent=`${(open.length+treatment.length).toLocaleString('pt-BR')} casos ativos`;
+    $('dKpiOpen').textContent=moneyFmt.format(openValue);
+    $('dKpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros sem tratativa`;
+    $('dKpiTreatment').textContent=moneyFmt.format(treatmentValue);
+    $('dKpiTreatmentSub').textContent=`${treatment.length.toLocaleString('pt-BR')} registros em tratamento`;
+    $('dKpiPrevention').textContent=moneyFmt.format(preventionValue);
+    $('dKpiPreventionSub').textContent=`${productionRows.length.toLocaleString('pt-BR')} resolvidos • ${periodText}`;
+    $('dKpiClaim').textContent=moneyFmt.format(claimValue);
+    $('dKpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros em sinistro`;
+    $('dKpiSolveRate').textContent=`${pctFmt.format(solveRate)}%`;
+    $('dKpiSolveRateSub').textContent=`${resolvedCurrent.length.toLocaleString('pt-BR')} resolvidos de ${scenarioCount.toLocaleString('pt-BR')} casos`;
+    $('dKpiProduction').textContent=productionRows.length.toLocaleString('pt-BR');
+    $('dKpiProductionSub').textContent=productionRows.length ? `Média ${moneyFmt.format(avgResolvedValue)} por caso • ${periodText}` : `Nenhum caso resolvido • ${periodText}`;
+    $('dKpiAvgTreatment').textContent=avgTimeText;
+    $('dKpiAvgTreatmentSub').textContent=`${durations.length.toLocaleString('pt-BR')} tratativas concluídas • ${periodText}`;
+  }
+
   function chartSelectionValues(id, labels) {
-    if (id === 'chartStatus' || id === 'chartStatusCount') return { dimension:'status', values:labels };
+    if (id === 'chartStatus') return { dimension:'status', values:labels };
     if (id === 'chartReason') return { dimension:'reason', values:labels };
-    if (id === 'chartResolution') return { dimension:'resolution', values:labels };
     if (id === 'chartSolver') return { dimension:'solver', values:labels };
     if (id === 'chartResponsible') return { dimension:'responsible', values:labels };
-    if (id === 'chartSender') return { dimension:'sender', values:labels };
-    if (id === 'chartVocativo') return { dimension:'vocativo', values:labels };
     if (id === 'chartOccurrence') return { dimension:'occurrencePeriod', values:labels };
     if (id === 'chartResolutionDate') return { dimension:'resolutionPeriod', values:labels };
     return null;
@@ -1653,12 +2021,12 @@
     if (label === 'Em tratativa' || datasetLabel === 'Em tratativa') return [14,165,233];
     if (label === 'Resolvido' || datasetLabel === 'Resolvido') return [34,197,94];
     if (label === 'Sinistro' || datasetLabel === 'Sinistro') return [168,85,247];
-    if (id === 'chartResolution' || id === 'chartResolutionDate') {
+    if (id === 'chartResolutionDate') {
       if (datasetLabel === 'Italo') return [34,197,94];
       if (datasetLabel === 'Bruna') return [16,185,129];
       return [132,204,22];
     }
-    if (id === 'chartSolver') return [34,197,94];
+    if (id === 'chartSolver') return [22,163,74];
     if (id === 'chartResponsible') return [249,115,22];
     if (id === 'chartSender') return [14,165,233];
     return [100,116,139];
@@ -1675,6 +2043,17 @@
     const statusSelected = state.chartFilters.status;
 
     (config.data.datasets || []).forEach(ds => {
+      if (id === 'chartResolutionDate' && config.type === 'line') {
+        const rgb = chartRgb(id, ds.label);
+        ds.borderColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
+        ds.backgroundColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},.12)`;
+        ds.pointBackgroundColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
+        ds.pointBorderColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
+        ds.borderWidth = 2.2;
+        ds.pointRadius = 3;
+        ds.pointHoverRadius = 5;
+        return;
+      }
       const normal = [], hover = [], borders = [], widths = [];
       labels.forEach((label, index) => {
         const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount'].includes(id) ? label : '');
@@ -1684,7 +2063,7 @@
           hasConstraint = true;
           matches = matches && selectedDisplay.has(label);
         }
-        if (['chartVocativo','chartReason','chartResponsible','chartSender','chartOccurrence'].includes(id) && statusSelected.size) {
+        if (['chartReason','chartResponsible','chartOccurrence'].includes(id) && statusSelected.size) {
           hasConstraint = true;
           matches = matches && statusSelected.has(ds.label);
         }
@@ -1747,7 +2126,7 @@
   function temporalPairs(rows,dateGetter,granularity){const map=new Map(); for(const r of rows){const info=bucketInfo(dateGetter(r),granularity); if(!map.has(info.key))map.set(info.key,{...info,value:0,count:0}); map.get(info.key).value+=Number(r.__valor||0); map.get(info.key).count+=1;} return [...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort);}
 
   function renderOccurrenceStatusChart(master){
-    const rows=applyChartFilters(master,'occurrencePeriod');
+    const rows=applyDashboardFilters(master,'occurrencePeriod');
     const map=new Map();
     for(const r of rows){
       const info=bucketInfo(r.__dataOcorrencia,state.occurrenceGranularity);
@@ -1761,74 +2140,176 @@
   }
 
   function renderResolutionDateBySolver(master){
-    const rows=applyChartFilters(master.filter(r=>r.status==='resolved'&&r.dataResolucao),'resolutionPeriod');
+    const rows=applyDashboardFilters(master.filter(r=>r.status==='resolved'&&r.dataResolucao),'resolutionPeriod',true);
     const solverLabels=[...new Set([...state.solvers, ...rows.map(r=>cleanText(r.quemResolveu)||'Não informado')])].filter(Boolean);
     const map=new Map();
     for(const r of rows){
       const info=bucketInfo(r.dataResolucao,state.resolutionGranularity), solver=cleanText(r.quemResolveu)||'Não informado';
       if(!map.has(info.key))map.set(info.key,{...info,bySolver:new Map()});
-      const bucket=map.get(info.key), cur=bucket.bySolver.get(solver)||{value:0,count:0}; cur.value+=Number(r.__valor||0); cur.count++; bucket.bySolver.set(solver,cur);
+      const bucket=map.get(info.key), cur=bucket.bySolver.get(solver)||{value:0,count:0};
+      cur.value+=Number(r.__valor||0); cur.count++; bucket.bySolver.set(solver,cur);
     }
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
-    makeChart('chartResolutionDate',{type:'bar',data:{labels,datasets:solverLabels.map(solver=>({label:solver,data:pairs.map(x=>x.bySolver.get(solver)?.value||0),_counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),stack:'total'}))},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], solver=solverLabels[el.datasetIndex]; if(key){toggleChartFilter('resolutionPeriod',key); if(solver)toggleChartFilter('solver',solver,'Resolvido');}},scales:{x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},grid:{display:false}},y:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+    makeChart('chartResolutionDate',{
+      type:'line',
+      data:{labels,datasets:solverLabels.map(solver=>({
+        label:solver,
+        data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
+        _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
+        tension:.25,
+        fill:false
+      }))},
+      options:{
+        maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        layout:{padding:{top:12,right:10,bottom:2,left:2}},
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], key=keys[el.index], solver=solverLabels[el.datasetIndex];
+          if(key){toggleChartFilter('resolutionPeriod',key); if(solver)toggleChartFilter('solver',solver,'Resolvido');}
+        },
+        scales:{
+          x:{offset:false,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},grid:{display:false}},
+          y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}
+        },
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:chartMoneyTooltip,
+          datalabels:{display:false}
+        }
+      }
+    });
   }
 
   function renderCharts(){
+    if (!$('chartStatus')) return;
     const master=uniqueRowsByKey(getMasterRows());
-    const statusBase=applyChartFilters(master,'status');
+    rebuildDashboardFilters();
+
+    // 1. Cenário atual por status
+    const statusBase=applyDashboardFilters(master,'status');
     const statusDefs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
-    const statusGroups=statusDefs.map(([label,key])=>{const rows=statusBase.filter(r=>r.status===key); return {label,key,rows,value:rows.reduce((s,r)=>s+r.__valor,0),count:rows.length};});
+    const statusGroups=statusDefs.map(([label,key])=>{
+      const rows=statusBase.filter(r=>r.status===key);
+      return {label,key,rows,value:rows.reduce((s,r)=>s+Number(r.__valor||0),0),count:rows.length};
+    });
     const statusLabels=statusGroups.map(x=>x.label), vals=statusGroups.map(x=>x.value), counts=statusGroups.map(x=>x.count);
-    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
+    makeChart('chartStatus',{
+      type:'doughnut',
+      data:{labels:statusLabels,datasets:[{data:vals,_counts:counts}]},
+      options:{
+        maintainAspectRatio:false,
+        cutout:'58%',
+        onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:chartMoneyTooltip,
+          datalabels:{
+            formatter:(v,ctx)=>{
+              const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0), pct=total?Number(v)/total*100:0;
+              return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';
+            },
+            font:{size:10,weight:'800'},
+            textAlign:'center'
+          }
+        }
+      }
+    });
 
-    makeChart('chartStatusCount',{type:'bar',data:{labels:statusLabels,datasets:[{label:'Quantidade',data:counts}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{display:false},tooltip:chartCountTooltip,datalabels:{anchor:'end',align:'top',formatter:v=>Number(v)>0?Number(v).toLocaleString('pt-BR'):'',font:{size:10,weight:'800'},color:'#475569'}}}});
-
-    const reasonBase=applyChartFilters(master,'reason'), reasonPairs=stackedPairs(reasonBase,reasonLabel,12), reasonLabels=reasonPairs.map(x=>x[0]);
-    makeChart('chartReason',{type:'bar',data:{labels:reasonLabels,datasets:[
-      {label:'Em aberto',data:reasonPairs.map(x=>x[1].open),_counts:reasonPairs.map(x=>x[1].openCount),stack:'total'},
-      {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
-      {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
-      {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total'}
-    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=reasonLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('reason',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
-
-    const resolutionBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'resolution');
-    const solverLabels=[...new Set([...state.solvers, ...resolutionBase.map(r=>cleanText(r.quemResolveu)||'Não informado')])].filter(Boolean);
-    const resolutionMap=new Map();
-    for(const r of resolutionBase){const label=cleanText(r.resolucao)||'Sem resolução', solver=cleanText(r.quemResolveu)||'Não informado'; if(!resolutionMap.has(label))resolutionMap.set(label,new Map()); const sm=resolutionMap.get(label), cur=sm.get(solver)||{value:0,count:0}; cur.value+=r.__valor; cur.count++; sm.set(solver,cur);}
-    const resolutionLabels=[...resolutionMap.keys()].sort((a,b)=>{const sum=x=>[...resolutionMap.get(x).values()].reduce((s,v)=>s+v.value,0); return sum(b)-sum(a);});
-    makeChart('chartResolution',{type:'bar',data:{labels:resolutionLabels,datasets:solverLabels.map(solver=>({label:solver,data:resolutionLabels.map(label=>resolutionMap.get(label)?.get(solver)?.value||0),_counts:resolutionLabels.map(label=>resolutionMap.get(label)?.get(solver)?.count||0),stack:'total'}))},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=resolutionLabels[el.index], solver=solverLabels[el.datasetIndex]; if(label)toggleChartFilter('resolution',label); if(solver)toggleChartFilter('solver',solver,'Resolvido');},layout:{padding:{right:58}},scales:{x:{stacked:true,beginAtZero:true,grace:'22%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
-
-    const solverBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'solver'), solverMap=new Map();
-    for(const r of solverBase){const label=cleanText(r.quemResolveu)||'Não informado'; if(!solverMap.has(label))solverMap.set(label,{value:0,count:0}); const x=solverMap.get(label); x.value+=r.__valor; x.count++;}
-    const solverPairs=[...solverMap.entries()].sort((a,b)=>b[1].value-a[1].value);
-    makeChart('chartSolver',{type:'bar',data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count)}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=solverPairs[els[0].index]?.[0]; if(label)toggleChartFilter('solver',label,'Resolvido');},scales:{y:{beginAtZero:true,grace:'15%'}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569'}}}});
-
-    const responsibleBase=applyChartFilters(master.filter(r=>r.inTreatment),'responsible'), responsiblePairs=stackedPairs(responsibleBase,r=>r.treatmentResponsible,10), responsibleLabels=responsiblePairs.map(x=>x[0]);
-    makeChart('chartResponsible',{type:'bar',data:{labels:responsibleLabels,datasets:[
-      {label:'Em aberto',data:responsiblePairs.map(x=>x[1].open),_counts:responsiblePairs.map(x=>x[1].openCount),stack:'total'},
-      {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
-      {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
-      {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total'}
-    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=responsibleLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('responsible',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'12%'},y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
-
-    const senderBase=applyChartFilters(master.filter(r=>r.inTreatment),'sender'), senderPairs=stackedPairs(senderBase,r=>cleanText(r.treatmentSender)||'Não informado'), senderLabels=senderPairs.map(x=>x[0]);
-    makeChart('chartSender',{type:'bar',data:{labels:senderLabels,datasets:[
-      {label:'Em aberto',data:senderPairs.map(x=>x[1].open),_counts:senderPairs.map(x=>x[1].openCount),stack:'total'},
-      {label:'Em tratativa',data:senderPairs.map(x=>x[1].treatment),_counts:senderPairs.map(x=>x[1].treatmentCount),stack:'total'},
-      {label:'Resolvido',data:senderPairs.map(x=>x[1].resolved),_counts:senderPairs.map(x=>x[1].resolvedCount),stack:'total'},
-      {label:'Sinistro',data:senderPairs.map(x=>x[1].claim),_counts:senderPairs.map(x=>x[1].claimCount),stack:'total'}
-    ]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=senderLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('sender',label,status);},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
-
-    const vocBase=applyChartFilters(master,'vocativo'), vocPairs=stackedPairs(vocBase,r=>r.__vocativo,8), vocLabels=vocPairs.map(x=>x[0]);
-    makeChart('chartVocativo',{type:'bar',data:{labels:vocLabels,datasets:[
-      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total'},
-      {label:'Em tratativa',data:vocPairs.map(x=>x[1].treatment),_counts:vocPairs.map(x=>x[1].treatmentCount),stack:'total'},
-      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total'},
-      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total'}
-    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=statusLabels[el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
-
+    // 2. Evolução operacional por Data Ocorrência
     renderOccurrenceStatusChart(master);
+
+    // 3. Causa raiz / motivo operacional
+    const reasonSource=applyDashboardFilters(master,'reason').filter(r=>{
+      const label=reasonLabel(r);
+      return label && label!=='Sem motivo definido' && label!=='Sinistro';
+    });
+    const reasonPairs=stackedPairs(reasonSource,reasonLabel,10), reasonLabels=reasonPairs.map(x=>x[0]);
+    makeChart('chartReason',{
+      type:'bar',
+      data:{labels:reasonLabels,datasets:[
+        {label:'Em aberto',data:reasonPairs.map(x=>x[1].open),_counts:reasonPairs.map(x=>x[1].openCount),stack:'total'},
+        {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
+        {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
+        {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total'}
+      ]},
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], label=reasonLabels[el.index], status=statusLabels[el.datasetIndex];
+          toggleChartFilter('reason',label,status);
+        },
+        scales:{
+          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
+        },
+        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}
+      }
+    });
+
+    // 4. Responsáveis pela falha
+    const responsibleBase=applyDashboardFilters(master.filter(r=>r.inTreatment),'responsible');
+    const responsiblePairs=stackedPairs(responsibleBase,r=>r.treatmentResponsible || r.responsavel,10), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    makeChart('chartResponsible',{
+      type:'bar',
+      data:{labels:responsibleLabels,datasets:[
+        {label:'Em aberto',data:responsiblePairs.map(x=>x[1].open),_counts:responsiblePairs.map(x=>x[1].openCount),stack:'total'},
+        {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
+        {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
+        {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total'}
+      ]},
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], label=responsibleLabels[el.index], status=statusLabels[el.datasetIndex];
+          toggleChartFilter('responsible',label,status);
+        },
+        scales:{
+          x:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
+        },
+        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}
+      }
+    });
+
+    // 5. Produção da equipe
+    const solverBase=applyDashboardFilters(master.filter(r=>r.status==='resolved'),'solver',true), solverMap=new Map();
+    for(const r of solverBase){
+      const label=cleanText(r.quemResolveu)||'Não informado';
+      if(!solverMap.has(label))solverMap.set(label,{value:0,count:0});
+      const x=solverMap.get(label); x.value+=Number(r.__valor||0); x.count++;
+    }
+    const solverPairs=[...solverMap.entries()].sort((a,b)=>b[1].value-a[1].value);
+    makeChart('chartSolver',{
+      type:'bar',
+      data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Prevenção de perdas',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count)}]},
+      options:{
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{if(!els.length)return; const label=solverPairs[els[0].index]?.[0]; if(label)toggleChartFilter('solver',label,'Resolvido');},
+        scales:{y:{beginAtZero:true,grace:'15%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}},
+        plugins:{
+          legend:{display:false},
+          tooltip:chartMoneyTooltip,
+          datalabels:{
+            anchor:'end',align:'top',
+            formatter:(v,ctx)=>{
+              const count=Number(ctx.dataset?._counts?.[ctx.dataIndex]||0);
+              return Number(v)>0?`${compactMoneyFmt.format(Number(v))}\n${count} ${count===1?'caso':'casos'}`:'';
+            },
+            font:{size:9,weight:'800'},
+            textAlign:'center',
+            color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155'
+          }
+        }
+      }
+    });
+
+    // 6. Prevenção de perdas no tempo
     renderResolutionDateBySolver(master);
   }
 
@@ -2167,6 +2648,24 @@
     renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
   }));
   $('btnClearChartFilters').addEventListener('click',clearChartFilters);
+  const dashboardFilterBindings = {
+    dashPeriod:'period',
+    dashClient:'client',
+    dashVocativo:'vocativo',
+    dashStatus:'status',
+    dashReason:'reason',
+    dashResponsible:'responsible',
+    dashSolver:'solver'
+  };
+  for (const [id,field] of Object.entries(dashboardFilterBindings)) {
+    $(id)?.addEventListener('change',()=>{
+      state.dashboardFilters[field] = $(id).value;
+      renderDashboardKpis();
+      renderCharts();
+    });
+  }
+  $('btnClearDashboardFilters')?.addEventListener('click',clearDashboardFilters);
+
   $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
   $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
   $('chartFilterChips').addEventListener('click',e=>{const chip=e.target.closest('.filter-chip'); if(!chip)return; const dim=chip.dataset.dim,value=chip.dataset.value; if(state.chartFilters[dim]){state.chartFilters[dim].delete(value); rebuildView();}});
