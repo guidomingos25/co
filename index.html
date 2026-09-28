@@ -317,6 +317,15 @@
     #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 20%; }
     #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 25%; }
 
+    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 8%; }
+    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 9%; }
+    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 11%; }
+    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 16%; }
+    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 22%; }
+    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 14%; }
+    #panelTreatment th:nth-child(7), #panelTreatment td:nth-child(7) { width: 10%; }
+    #panelTreatment th:nth-child(8), #panelTreatment td:nth-child(8) { width: 10%; }
+
     #panelOpen td:nth-child(1), #panelOpen td:nth-child(2), #panelOpen td:nth-child(5), #panelOpen td:nth-child(8),
     #panelResolved td:nth-child(1), #panelResolved td:nth-child(2), #panelResolved td:nth-child(7), #panelResolved td:nth-child(8),
     #panelClaims td:nth-child(1), #panelClaims td:nth-child(2) { white-space: nowrap; }
@@ -401,6 +410,7 @@
     .kpis { grid-template-columns: repeat(6, minmax(160px,1fr)); }
     .kpi.claim .value { color: #7c3aed; }
     .btn-claim { background:#f3e8ff; color:#6d28d9; border-color:#ddd6fe; }
+    .btn-treatment { background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; }
     .btn-crc { background:#fff7d6; color:#92400e; border-color:#fcd34d; }
     .btn-lost { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
     .btn-active { box-shadow: inset 0 0 0 2px rgba(15,23,42,.08); }
@@ -413,6 +423,7 @@
     .badge.crc { background:#fff1b8; color:#92400e; border:1px solid #f6d365; }
     .badge.lost { background:#eef2f7; color:#475569; border:1px solid #d8dee8; }
     .badge.claim { background:#f3e8ff; color:#6d28d9; border:1px solid #ddd6fe; }
+    .badge.treatment { background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; }
     @media (max-width: 1450px) { .kpis { grid-template-columns: repeat(3, minmax(170px,1fr)); } }
     @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); } }
     @media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
@@ -550,6 +561,8 @@
       background:#f3e8ff; color:#6d28d9; border-color:#c4b5fd;
     }
     body[data-theme="light"] .btn-claim:hover { background:#e9d5ff; border-color:#a78bfa; }
+    body[data-theme="light"] .btn-treatment { background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; }
+    body[data-theme="light"] .btn-treatment:hover { background:#bae6fd; border-color:#38bdf8; }
     body[data-theme="light"] .btn-crc {
       background:#fff7d6; color:#92400e; border-color:#fbbf24;
     }
@@ -561,6 +574,7 @@
 
     body[data-theme="dark"] .btn-primary { background:#2563eb; color:white; border-color:#2563eb; }
     body[data-theme="dark"] .btn-claim { background:#2a1743; color:#c4b5fd; border-color:#5b3a83; }
+    body[data-theme="dark"] .btn-treatment { background:#0c2a3a; color:#7dd3fc; border-color:#075985; }
     body[data-theme="dark"] .btn-crc { background:#3a2e0f; color:#fcd34d; border-color:#6b5513; }
     body[data-theme="dark"] .btn-lost { background:#1e293b; color:#cbd5e1; border-color:#334155; }
     body[data-theme="dark"] .tab { background:var(--surface); border-color:var(--border); color:var(--text-soft); }
@@ -658,6 +672,11 @@
             <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
             <button class="btn btn-soft" id="btnManual">Resolver (Manual)</button>
           </div>
+          <div class="toolbar-group treatment-group">
+            <span class="toolbar-label">Tratativa cliente</span>
+            <button class="btn btn-treatment" id="btnTreatmentSelected" disabled>Enviar para tratativa</button>
+            <button class="btn btn-treatment" id="btnManualTreatment">Tratativa (Manual)</button>
+          </div>
           <div class="toolbar-group claim-group">
             <span class="toolbar-label">Sinistro</span>
             <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
@@ -714,6 +733,7 @@
         </div>
         <nav class="tabs">
 <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
+<button class="tab" data-tab="treatment">Em tratativa <span id="treatmentCount">0</span></button>
 <button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
 <button class="tab" data-tab="claims">Sinistros <span id="claimCount">0</span></button>
 </nav>
@@ -737,6 +757,32 @@
 <div class="empty" id="openEmpty">Carregue um relatório para visualizar as pendências.</div>
 </div>
 <div class="pager"><button class="btn" id="openPrev">Anterior</button><span id="openPageLabel">Página 1</span><button class="btn" id="openNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelTreatment">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="treatmentSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..."/>
+<select class="field" id="treatmentReason"><option value="">Todos os motivos</option></select>
+</div>
+<small id="treatmentSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="treatment">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th>
+<th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th>
+<th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th>
+<th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th>
+<th class="sortable" data-sort="motivo" title="Ordenar por Motivo">Motivo da tratativa</th>
+<th class="sortable" data-sort="responsavel" title="Ordenar por Responsável">Responsável pela falha</th>
+<th class="sortable" data-sort="dataTratativa" title="Ordenar por Data de entrada">Entrada na tratativa</th>
+<th>Ação</th>
+</tr></thead>
+<tbody id="treatmentBody"></tbody>
+</table>
+<div class="empty" id="treatmentEmpty">Nenhum registro aguardando a segunda etapa de tratativa.</div>
+</div>
+<div class="pager"><button class="btn" id="treatmentPrev">Anterior</button><span id="treatmentPageLabel">Página 1</span><button class="btn" id="treatmentNext">Próxima</button></div>
 </section>
         <section class="panel hidden" id="panelResolved">
 <div class="panel-head">
@@ -806,7 +852,7 @@
 <div class="chart-wrap"><canvas id="chartResolution"></canvas></div>
 </article>
 <article class="chart-card">
-<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Somente “Conferente não vinculou o material a OF”.</div></div></div>
+<div class="chart-card-head"><div class="chart-card-title"><h3>Responsáveis pela falha</h3><div class="chart-hint">Tratativas de vínculo à OF e coleta retirada da OF.</div></div></div>
 <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
 </article>
 <article class="chart-card">
@@ -862,7 +908,7 @@
           <div class="form-group full hidden" id="responsibleGroup">
             <label for="fResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label>
             <input id="fResponsible" placeholder="Digite livremente o nome da pessoa" />
-            <div class="hint">Este campo aparece somente para “Conferente não vinculou o material a OF” e “Coleta retirada de OF”.</div>
+            <div class="hint">O responsável pela falha agora é informado na etapa de Tratativa Cliente.</div>
           </div>
         </div>
       </div>
@@ -874,6 +920,31 @@
   </div>
 </div>
 
+
+<div class="modal-backdrop hidden" id="treatmentModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="treatmentModalTitle">
+    <div class="modal-head">
+      <div><h2 id="treatmentModalTitle">Encaminhar para tratativa</h2><div class="hint">Esta é a primeira etapa. O registro só poderá ser finalizado depois como “Material localizado no cliente”.</div></div>
+      <button class="close-x" id="treatmentModalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="treatmentForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="tNota">Nota</label><input id="tNota" required /></div>
+          <div class="form-group"><label for="tColeta">Coleta</label><input id="tColeta" required /></div>
+          <div class="form-group"><label for="tValor">Valor Nota</label><input id="tValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="tVocativo">Vocativo</label><input id="tVocativo" required /></div>
+          <div class="form-group full"><label for="tReason">Motivo da tratativa</label><select id="tReason" required><option value="">Selecione...</option></select></div>
+          <div class="form-group full"><label for="tResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label><input id="tResponsible" placeholder="Digite livremente o nome da pessoa" /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="treatmentModalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-treatment" id="btnSaveTreatment">Enviar para tratativa</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="modal-backdrop hidden" id="claimModalBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="claimModalTitle">
@@ -913,14 +984,18 @@
     resolvedMap: new Map(),
     claimRows: [],
     claimMap: new Map(),
+    treatmentRows: [],
+    treatmentMap: new Map(),
     crcMap: new Map(),
     notLocatedMap: new Map(),
     resolutions: [],
     responsibleResolutions: [],
+    treatmentReasons: [],
     solvers: [],
     selectedKey: null,
     openPage: 1,
     resolvedPage: 1,
+    treatmentPage: 1,
     claimPage: 1,
     realtimeTimer: null,
     realtimeSyncInFlight: false,
@@ -928,6 +1003,7 @@
     tableSort: {
       open: { key: null, dir: 'asc' },
       resolved: { key: null, dir: 'asc' },
+      treatment: { key: null, dir: 'asc' },
       claim: { key: null, dir: 'asc' }
     },
     charts: {},
@@ -937,6 +1013,7 @@
     resolutionEditKey: null,
     claimModalMode: 'manual',
     claimEditKey: null,
+    treatmentModalMode: 'manual',
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
@@ -1134,6 +1211,20 @@
     return [...byKey.values()];
   }
 
+  function normalizeTreatmentRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = {
+        nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
+        motivo: cleanText(r.motivo), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
+        statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao),
+        key: keyOf(r.nota, r.coleta)
+      };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
+    }
+    return [...byKey.values()];
+  }
+
   function normalizeKeyMap(rows) {
     const map = new Map();
     for (const r of rows || []) {
@@ -1147,10 +1238,12 @@
     return JSON.stringify({
       resolvidos: payload?.resolvidos || [],
       sinistros: payload?.sinistros || [],
+      tratativas: payload?.tratativas || [],
       prioridadeCrc: payload?.prioridadeCrc || [],
       naoLocalizado: payload?.naoLocalizado || [],
       resolutions: payload?.resolutions || [],
       responsibleResolutions: payload?.responsibleResolutions || [],
+      treatmentReasons: payload?.treatmentReasons || [],
       solvers: payload?.solvers || []
     });
   }
@@ -1159,11 +1252,14 @@
     state.remoteSignature = getRemoteSignature(payload);
     state.resolutions = payload.resolutions || [];
     state.responsibleResolutions = payload.responsibleResolutions || [];
+    state.treatmentReasons = payload.treatmentReasons || [];
     state.solvers = payload.solvers || [];
     state.resolvedRows = normalizeResolvedRows(payload.resolvidos || []);
     state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
     state.claimRows = normalizeClaimRows(payload.sinistros || []);
     state.claimMap = new Map(state.claimRows.map(r => [r.key, r]));
+    state.treatmentRows = normalizeTreatmentRows(payload.tratativas || []);
+    state.treatmentMap = new Map(state.treatmentRows.map(r => [r.key, r]));
     state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
     state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
     fillResolutionSelectors();
@@ -1208,7 +1304,7 @@
       rebuildView();
       startRealtimeSync();
       setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
-      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
+      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Tratativas, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
     } catch (err) {
       state.apiReady = false;
       setApiIndicator('error', 'Não foi possível conectar ao Google Planilhas');
@@ -1233,9 +1329,12 @@
 
   function fillResolutionSelectors() {
     $('fResolution').innerHTML = '<option value="">Selecione...</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-    $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    const historicalResolutions = [...new Set([...state.resolutions, ...state.resolvedRows.map(r=>cleanText(r.resolucao)).filter(Boolean)])];
+    $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + historicalResolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('fSolvedBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('tReason').innerHTML = '<option value="">Selecione...</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('treatmentReason').innerHTML = '<option value="">Todos os motivos</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   }
 
   $('fileInput').addEventListener('change', async event => {
@@ -1292,7 +1391,7 @@
   const chartFilterDefs = {
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
-    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.responsavel) || 'Não informado' },
+    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.treatmentResponsible || r.responsavel) || 'Não informado' },
     vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
     occurrencePeriod: { label:'Data ocorrência', getter:r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
     resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
@@ -1300,14 +1399,14 @@
 
   function getMasterRows() {
     const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
-    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys(), ...state.claimMap.keys()]);
+    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys(), ...state.claimMap.keys(), ...state.treatmentMap.keys()]);
     const rows = [];
     for (const key of keys) {
-      const report = reportMap.get(key), resolved = state.resolvedMap.get(key), claim = state.claimMap.get(key);
+      const report = reportMap.get(key), resolved = state.resolvedMap.get(key), claim = state.claimMap.get(key), treatment = state.treatmentMap.get(key);
       const status = resolved ? 'resolved' : claim ? 'claim' : 'open';
-      const source = report || resolved || claim || {};
-      const value = report ? Number(report.__valor||0) : resolved ? Number(resolved.valorNota||0) : Number(claim?.valorNota||0);
-      const vocativo = report ? report.__vocativo : resolved ? cleanText(resolved.vocativo) : cleanText(claim?.vocativo);
+      const source = report || resolved || claim || treatment || {};
+      const value = report ? Number(report.__valor||0) : resolved ? Number(resolved.valorNota||0) : claim ? Number(claim.valorNota||0) : Number(treatment?.valorNota||0);
+      const vocativo = report ? report.__vocativo : resolved ? cleanText(resolved.vocativo) : claim ? cleanText(claim.vocativo) : cleanText(treatment?.vocativo);
       rows.push({
         ...(report || {}), __key:key, key,
         __nota: report ? report.__nota : cleanText(source.nota),
@@ -1315,11 +1414,13 @@
         __valor:value, valorNota:value,
         __vocativo:vocativo, vocativo,
         status,
-        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
+        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
+        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
         stillPending: !!report,
         inResolved: !!resolved,
         inClaim: !!claim,
+        inTreatment: !!treatment,
         crcPriority: state.crcMap.has(key),
         notLocated: state.notLocatedMap.has(key),
         nota: report ? report.__nota : cleanText(source.nota),
@@ -1353,10 +1454,10 @@
     const selected = state.chartFilters[dimension];
     if (selected.has(value)) selected.delete(value); else selected.add(value);
     if (alsoStatus) { const s = state.chartFilters.status; if (!s.has(alsoStatus)) s.add(alsoStatus); }
-    state.openPage = state.resolvedPage = state.claimPage = 1;
+    state.openPage = state.resolvedPage = state.treatmentPage = state.claimPage = 1;
     rebuildView();
   }
-  function clearChartFilters() { Object.values(state.chartFilters).forEach(set=>set.clear()); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView(); }
+  function clearChartFilters() { Object.values(state.chartFilters).forEach(set=>set.clear()); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView(); }
 
   function renderChartFilterChips() {
     const holder = $('chartFilterChips'), chips=[];
@@ -1372,7 +1473,7 @@
   }
 
   function getOpenRows(applyFilters=true) {
-    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open'));
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open' && !(r.inTreatment && cleanText(r.treatmentStatus).toLowerCase() !== 'concluída' && cleanText(r.treatmentStatus).toLowerCase() !== 'concluida')));
     if (!applyFilters) return rows;
     const q = cleanText($('openSearch').value).toLowerCase(), client=$('openClient').value, range=$('openRange').value, priority=$('openPriority').value;
     return rows.filter(r => {
@@ -1383,6 +1484,34 @@
         const hay = [r.__nota,r.__coleta,r.__vocativo,r['Cliente'],r['Destino'],r['UF Destino'],r['Range de Dias'],r['Prioridade']].map(cleanText).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
+      return true;
+    });
+  }
+
+  function getTreatmentRows(applyFilters=true) {
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    let rows = state.treatmentRows
+      .filter(t => !['concluída','concluida'].includes(cleanText(t.statusTratativa).toLowerCase()) && !state.resolvedMap.has(t.key))
+      .map(t => {
+        const report = reportMap.get(t.key), claim = state.claimMap.get(t.key);
+        const value = report ? Number(report.__valor||0) : Number(t.valorNota||0);
+        return {
+          ...(report||{}), __key:t.key, key:t.key,
+          __nota:report?report.__nota:t.nota, __coleta:report?report.__coleta:t.coleta,
+          nota:report?report.__nota:t.nota, coleta:report?report.__coleta:t.coleta,
+          __valor:value, valorNota:value, __vocativo:report?report.__vocativo:t.vocativo, vocativo:report?report.__vocativo:t.vocativo,
+          motivo:t.motivo, responsavel:t.responsavel, dataTratativa:t.dataTratativa,
+          status:'open', inTreatment:true, inClaim:!!claim, stillPending:!!report,
+          treatmentReason:t.motivo, treatmentResponsible:t.responsavel, treatmentStatus:t.statusTratativa, treatmentDate:t.dataTratativa,
+          crcPriority:state.crcMap.has(t.key), notLocated:state.notLocatedMap.has(t.key)
+        };
+      });
+    rows = applyChartFilters(rows);
+    if (!applyFilters) return rows;
+    const q=cleanText($('treatmentSearch').value).toLowerCase(), reason=$('treatmentReason').value;
+    return rows.filter(r => {
+      if (reason && r.motivo !== reason) return false;
+      if (q && ![r.nota,r.coleta,r.vocativo,r.motivo,r.responsavel].join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -1433,6 +1562,7 @@
     renderKpis();
     if (!$('dashboardView')?.classList.contains('hidden')) renderCharts();
     renderOpenTable();
+    renderTreatmentTable();
     renderResolvedTable();
     renderClaimTable();
     updateSelectedActions();
@@ -1445,12 +1575,14 @@
     const resolvedStill=resolved.filter(r=>r.stillPending).length, claimStill=claims.filter(r=>r.stillPending).length;
     $('kpiTotal').textContent=moneyFmt.format(total);
     $('kpiTotalSub').textContent=`${master.length.toLocaleString('pt-BR')} chaves únicas na união das bases`;
-    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros`;
+    const treatmentPending = getTreatmentRows(false).length;
+    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros • ${treatmentPending.toLocaleString('pt-BR')} em tratativa`;
     $('kpiResolved').textContent=moneyFmt.format(resolvedValue); $('kpiResolvedSub').textContent=`${resolved.length.toLocaleString('pt-BR')} registros • ${resolvedStill.toLocaleString('pt-BR')} ainda no Excel`;
     $('kpiClaim').textContent=moneyFmt.format(claimValue); $('kpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros • ${claimStill.toLocaleString('pt-BR')} ainda no Excel`;
     $('kpiResolvedPct').textContent=`${pctFmt.format(total ? resolvedValue/total*100 : 0)}%`; $('kpiResolvedPctSub').textContent=`${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)}`;
     $('kpiClaimPct').textContent=`${pctFmt.format(total ? claimValue/total*100 : 0)}%`; $('kpiClaimPctSub').textContent=`${moneyFmt.format(claimValue)} ÷ ${moneyFmt.format(total)}`;
-    $('openCount').textContent=open.length.toLocaleString('pt-BR');
+    $('openCount').textContent=getOpenRows(false).length.toLocaleString('pt-BR');
+    $('treatmentCount').textContent=treatmentPending.toLocaleString('pt-BR');
     $('resolvedCount').textContent=resolved.length.toLocaleString('pt-BR');
     $('claimCount').textContent=state.claimRows.length.toLocaleString('pt-BR');
   }
@@ -1574,10 +1706,11 @@
     const resolutionPairs=[...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
     makeChart('chartResolution',{type:'bar',data:{labels:resolutionPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(34,197,94,.82)',hoverBackgroundColor:'rgba(34,197,94,1)',borderColor:'#16a34a',hoverBorderColor:'#15803d',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=resolutionPairs[els[0].index]?.[0]; if(label)toggleChartFilter('resolution',label,'Resolvido');},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
 
-    const responsibleBase=applyChartFilters(master.filter(r=>r.status==='resolved'&&cleanText(r.resolucao)==='Conferente não vinculou o material a OF'),'responsible'), responsibleMap=new Map();
-    for(const r of responsibleBase){const label=cleanText(r.responsavel)||'Não informado'; if(!responsibleMap.has(label))responsibleMap.set(label,{value:0,count:0}); const x=responsibleMap.get(label); x.value+=r.__valor; x.count++;}
+    const treatmentReasonSet=new Set(state.treatmentReasons);
+    const responsibleBase=applyChartFilters(master.filter(r=>r.inTreatment&&treatmentReasonSet.has(cleanText(r.treatmentReason))),'responsible'), responsibleMap=new Map();
+    for(const r of responsibleBase){const label=cleanText(r.treatmentResponsible)||'Não informado'; if(!responsibleMap.has(label))responsibleMap.set(label,{value:0,count:0}); const x=responsibleMap.get(label); x.value+=r.__valor; x.count++;}
     const responsiblePairs=[...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
-    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(249,115,22,.84)',hoverBackgroundColor:'rgba(249,115,22,1)',borderColor:'#ea580c',hoverBorderColor:'#c2410c',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label,'Resolvido');},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
+    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(249,115,22,.84)',hoverBackgroundColor:'rgba(249,115,22,1)',borderColor:'#ea580c',hoverBorderColor:'#c2410c',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label);},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
 
     const vocBase=applyChartFilters(master,'vocativo'), vocPairs=stackedPairs(vocBase,r=>r.__vocativo,8), vocLabels=vocPairs.map(x=>x[0]);
     makeChart('chartVocativo',{type:'bar',data:{labels:vocLabels,datasets:[
@@ -1620,6 +1753,11 @@
         return d ? d.getTime() : null;
       }
       case 'quemResolveu': return cleanText(row.quemResolveu);
+      case 'motivo': return cleanText(row.motivo || row.treatmentReason);
+      case 'dataTratativa': {
+        const d = parseDateValue(row.dataTratativa || row.treatmentDate);
+        return d ? d.getTime() : null;
+      }
       case 'sinalizacoes': return sortSignalText(row);
       case 'statusAtual': {
         const parts = [row.stillPending ? 'Ainda consta na pendência' : 'Fora da pendência atual'];
@@ -1671,6 +1809,7 @@
     else { cfg.key = key; cfg.dir = 'asc'; }
     if (table === 'open') { state.openPage = 1; renderOpenTable(); }
     else if (table === 'resolved') { state.resolvedPage = 1; renderResolvedTable(); }
+    else if (table === 'treatment') { state.treatmentPage = 1; renderTreatmentTable(); }
     else if (table === 'claim') { state.claimPage = 1; renderClaimTable(); }
   }
 
@@ -1692,12 +1831,28 @@
     $('openSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.__valor,0))}`; $('openPageLabel').textContent=`Página ${state.openPage} de ${totalPages}`; $('openPrev').disabled=state.openPage<=1; $('openNext').disabled=state.openPage>=totalPages;
   }
 
+  function renderTreatmentTable(){
+    const rows=applyTableSort(getTreatmentRows(true), 'treatment'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('treatment');
+    if(state.treatmentPage>totalPages)state.treatmentPage=totalPages; const start=(state.treatmentPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('treatmentEmpty').classList.toggle('hidden',rows.length>0);
+    $('treatmentBody').innerHTML=pageRows.map(r=>`<tr>
+      <td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td>
+      <td>${esc(r.motivo)}</td><td>${esc(r.responsavel||'—')}</td>
+      <td>${esc(r.dataTratativa&&parseDateValue(r.dataTratativa)?dateFmt.format(parseDateValue(r.dataTratativa)):'Sem data')}</td>
+      <td><button class="row-btn resolve-treatment" data-key="${esc(r.key)}">Marcar resolvido</button></td>
+    </tr>`).join('');
+    $('treatmentSummary').textContent=`${rows.length.toLocaleString('pt-BR')} aguardando conclusão • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
+    $('treatmentPageLabel').textContent=`Página ${state.treatmentPage} de ${totalPages}`;
+    $('treatmentPrev').disabled=state.treatmentPage<=1; $('treatmentNext').disabled=state.treatmentPage>=totalPages;
+  }
+
   function renderResolvedTable(){
     const rows=applyTableSort(getResolvedRows(true), 'resolved'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
     updateSortIndicators('resolved');
     if(state.resolvedPage>totalPages)state.resolvedPage=totalPages; const start=(state.resolvedPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
     $('resolvedEmpty').classList.toggle('hidden',rows.length>0);
-    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
+    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inTreatment?' <span class="badge treatment">Passou por tratativa</span>':''}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
     $('resolvedSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('resolvedPageLabel').textContent=`Página ${state.resolvedPage} de ${totalPages}`; $('resolvedPrev').disabled=state.resolvedPage<=1; $('resolvedNext').disabled=state.resolvedPage>=totalPages;
   }
 
@@ -1714,12 +1869,32 @@
     state.resolutionModalMode=mode;
     state.resolutionEditKey=mode==='edit'?keyOf(data.nota,data.coleta):null;
     $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
-    const locked=mode==='report'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
-    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
+    const locked=mode==='report'||mode==='treatment'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('fResolution').disabled=false;
+    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':mode==='treatment'?'Concluir tratativa':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
   }
-  const closeModal=()=>$('modalBackdrop').classList.add('hidden');
+  const closeModal=()=>{ $('fResolution').disabled=false; $('modalBackdrop').classList.add('hidden'); };
   function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
   function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentModal(data={},mode='manual'){
+    state.treatmentModalMode=mode;
+    $('tNota').value=data.nota??''; $('tColeta').value=data.coleta??''; $('tValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('tVocativo').value=data.vocativo??'';
+    $('tReason').value=data.motivo??''; $('tResponsible').value=data.responsavel??'';
+    const locked=mode==='report'; ['tNota','tColeta','tValor','tVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('treatmentModalTitle').textContent=mode==='report'?'Encaminhar registro para tratativa':'Tratativa (Manual)';
+    $('treatmentModalBackdrop').classList.remove('hidden');
+  }
+  const closeTreatmentModal=()=>$('treatmentModalBackdrop').classList.add('hidden');
+  function openReportTreatment(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openTreatmentModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentResolution(key){
+    const t=state.treatmentMap.get(key); if(!t)return;
+    openModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo,resolucao:'Material localizado no cliente',responsavel:t.responsavel},'treatment');
+    $('fResolution').value='Material localizado no cliente';
+    $('fResolution').disabled=true;
+    updateResponsibleVisibility();
+  }
 
   function openClaimModal(data={},mode='manual'){
     state.claimModalMode=mode;
@@ -1733,7 +1908,7 @@
 
   function updateSelectedActions(){
     const row=state.selectedKey?state.reportRows.find(r=>r.__key===state.selectedKey):null, enabled=!!row&&state.apiReady;
-    $('btnResolveSelected').disabled=!enabled; $('btnClaimSelected').disabled=!enabled; $('btnToggleCrc').disabled=!enabled; $('btnToggleLost').disabled=!enabled;
+    $('btnResolveSelected').disabled=!enabled; $('btnTreatmentSelected').disabled=!enabled; $('btnClaimSelected').disabled=!enabled; $('btnToggleCrc').disabled=!enabled; $('btnToggleLost').disabled=!enabled;
     const isCrc=!!row&&state.crcMap.has(row.__key), isLost=!!row&&state.notLocatedMap.has(row.__key);
     $('btnToggleCrc').textContent=isCrc?'Remover Prioridade CRC':'Marcar Prioridade CRC'; $('btnToggleCrc').classList.toggle('btn-active',isCrc);
     $('btnToggleLost').textContent=isLost?'Remover Não localizado':'Marcar Não localizado'; $('btnToggleLost').classList.toggle('btn-active',isLost);
@@ -1745,6 +1920,7 @@
     const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedKey=tr.dataset.key; renderOpenTable(); updateSelectedActions();}
   });
   $('openBody').addEventListener('dblclick',e=>{const tr=e.target.closest('tr[data-key]'); if(tr)openReportResolution(tr.dataset.key);});
+  $('treatmentBody').addEventListener('click',e=>{const btn=e.target.closest('.resolve-treatment'); if(!btn)return; openTreatmentResolution(btn.dataset.key);});
   $('resolvedBody').addEventListener('click',e=>{const btn=e.target.closest('.edit-resolved'); if(!btn)return; const r=state.resolvedRows.find(x=>x.key===btn.dataset.key); if(r)openModal(r,'edit');});
   $('claimBody').addEventListener('click',async e=>{
     const edit=e.target.closest('.edit-claim'); if(edit){const r=state.claimRows.find(x=>x.key===edit.dataset.key); if(r)openClaimModal(r,'edit'); return;}
@@ -1756,9 +1932,14 @@
 
   $('resolutionForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload={action:'salvarResolvido',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText($('fResponsible').value),quemResolveu:$('fSolvedBy').value};
+    const treatmentForKey=state.treatmentMap.get(keyOf($('fNota').value,$('fColeta').value));
+    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
     if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
     const key=keyOf(payload.nota,payload.coleta);
+    if(payload.resolucao==='Material localizado no cliente' && !state.treatmentMap.has(key)){
+      $('fResolution').focus();
+      return setNotice('warn','Tratativa obrigatória','Para usar “Material localizado no cliente”, a Nota + Coleta precisa primeiro existir na aba Em tratativa.');
+    }
     const duplicateResolved=state.resolvedMap.has(key) && !(state.resolutionModalMode==='edit' && state.resolutionEditKey===key);
     if(duplicateResolved){
       $('fNota').focus();
@@ -1768,9 +1949,19 @@
     try{await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
+  $('treatmentForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload={action:'salvarTratativa',nota:cleanText($('tNota').value),coleta:cleanText($('tColeta').value),valorNota:parseMoney($('tValor').value),vocativo:cleanText($('tVocativo').value),motivo:$('tReason').value,responsavel:cleanText($('tResponsible').value)};
+    const key=keyOf(payload.nota,payload.coleta);
+    if(state.treatmentMap.has(key)) return setNotice('warn','Tratativa já cadastrada',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe na base de Tratativas.`);
+    if(state.resolvedMap.has(key)) return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já está em Resolvidos.`);
+    const btn=$('btnSaveTreatment'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{await postAndConfirm(payload,()=>state.treatmentMap.has(key),'Não foi possível confirmar a entrada na tratativa.'); state.selectedKey=null; closeTreatmentModal(); setNotice('ok','Tratativa criada',`Nota ${payload.nota} / Coleta ${payload.coleta} foi enviada para a segunda etapa.`);}catch(err){setNotice('error','Falha ao criar tratativa',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+  });
+
   $('claimForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload={action:'salvarSinistro',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
     const key=keyOf(payload.nota,payload.coleta);
     const duplicateClaim=state.claimMap.has(key) && !(state.claimModalMode==='edit' && state.claimEditKey===key);
     if(duplicateClaim){
@@ -1790,27 +1981,32 @@
   $('btnApiTest').addEventListener('click',()=>{try{window.open(`${getAppsScriptBase()}?action=health&_=${Date.now()}`,'_blank','noopener');}catch(err){setNotice('error','URL do Apps Script inválida',err.message);}});
   $('btnRefresh').addEventListener('click',()=>connectApi());
   $('btnManual').addEventListener('click',()=>openModal({},'manual'));
+  $('btnManualTreatment').addEventListener('click',()=>openTreatmentModal({},'manual'));
   $('btnManualClaim').addEventListener('click',()=>openClaimModal({},'manual'));
   $('btnResolveSelected').addEventListener('click',()=>{if(state.selectedKey)openReportResolution(state.selectedKey);});
+  $('btnTreatmentSelected').addEventListener('click',()=>{if(state.selectedKey)openReportTreatment(state.selectedKey);});
   $('btnClaimSelected').addEventListener('click',()=>{if(state.selectedKey)openReportClaim(state.selectedKey);});
   $('btnToggleCrc').addEventListener('click',()=>toggleMarker('crc'));
   $('btnToggleLost').addEventListener('click',()=>toggleMarker('lost'));
   $('modalClose').addEventListener('click',closeModal); $('modalCancel').addEventListener('click',closeModal); $('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();}); $('fResolution').addEventListener('change',updateResponsibleVisibility);
+  $('treatmentModalClose').addEventListener('click',closeTreatmentModal); $('treatmentModalCancel').addEventListener('click',closeTreatmentModal); $('treatmentModalBackdrop').addEventListener('click',e=>{if(e.target===$('treatmentModalBackdrop'))closeTreatmentModal();});
   $('claimModalClose').addEventListener('click',closeClaimModal); $('claimModalCancel').addEventListener('click',closeClaimModal); $('claimModalBackdrop').addEventListener('click',e=>{if(e.target===$('claimModalBackdrop'))closeClaimModal();});
 
   document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===tab));
     const target=tab.dataset.tab;
-    $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
+    $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelTreatment').classList.toggle('hidden',target!=='treatment'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
   }));
   $('btnClearChartFilters').addEventListener('click',clearChartFilters);
-  $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView();});
-  $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.claimPage=1; rebuildView();});
+  $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
+  $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
   $('chartFilterChips').addEventListener('click',e=>{const chip=e.target.closest('.filter-chip'); if(!chip)return; const dim=chip.dataset.dim,value=chip.dataset.value; if(state.chartFilters[dim]){state.chartFilters[dim].delete(value); rebuildView();}});
   ['openSearch','openClient','openRange','openPriority'].forEach(id=>$(id).addEventListener(id==='openSearch'?'input':'change',()=>{state.openPage=1;renderOpenTable();}));
+  ['treatmentSearch','treatmentReason'].forEach(id=>$(id).addEventListener(id==='treatmentSearch'?'input':'change',()=>{state.treatmentPage=1;renderTreatmentTable();}));
   ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id=>$(id).addEventListener(id==='resolvedSearch'?'input':'change',()=>{state.resolvedPage=1;renderResolvedTable();}));
   ['claimSearch','claimPresence'].forEach(id=>$(id).addEventListener(id==='claimSearch'?'input':'change',()=>{state.claimPage=1;renderClaimTable();}));
   $('openPrev').addEventListener('click',()=>{if(state.openPage>1){state.openPage--;renderOpenTable();}}); $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
+  $('treatmentPrev').addEventListener('click',()=>{if(state.treatmentPage>1){state.treatmentPage--;renderTreatmentTable();}}); $('treatmentNext').addEventListener('click',()=>{state.treatmentPage++;renderTreatmentTable();});
   $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}}); $('resolvedNext').addEventListener('click',()=>{state.resolvedPage++;renderResolvedTable();});
   $('claimPrev').addEventListener('click',()=>{if(state.claimPage>1){state.claimPage--;renderClaimTable();}}); $('claimNext').addEventListener('click',()=>{state.claimPage++;renderClaimTable();});
 
