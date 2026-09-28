@@ -317,14 +317,13 @@
     #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 20%; }
     #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 25%; }
 
-    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 8%; }
-    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 9%; }
-    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 11%; }
-    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 16%; }
-    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 22%; }
-    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 14%; }
-    #panelTreatment th:nth-child(7), #panelTreatment td:nth-child(7) { width: 10%; }
-    #panelTreatment th:nth-child(8), #panelTreatment td:nth-child(8) { width: 10%; }
+    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 9%; }
+    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 10%; }
+    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 12%; }
+    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 18%; }
+    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 24%; }
+    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 15%; }
+    #panelTreatment th:nth-child(7), #panelTreatment td:nth-child(7) { width: 12%; }
 
     #panelOpen td:nth-child(1), #panelOpen td:nth-child(2), #panelOpen td:nth-child(5), #panelOpen td:nth-child(8),
     #panelResolved td:nth-child(1), #panelResolved td:nth-child(2), #panelResolved td:nth-child(7), #panelResolved td:nth-child(8),
@@ -492,7 +491,11 @@
     main { padding: 12px 16px 20px; }
     .app-view.hidden { display:none !important; }
     .work-toolbar {
-      display:flex; align-items:stretch; justify-content:space-between; gap:10px; margin-bottom:10px;
+      display:grid;
+      grid-template-columns:minmax(280px, 330px) minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      margin-bottom:10px;
       position: sticky;
       top: var(--app-header-height, 58px);
       z-index: 49;
@@ -502,13 +505,13 @@
       border-bottom: 1px solid var(--border);
       box-shadow: 0 7px 16px rgba(15,23,42,.045);
     }
-    .compact-upload { min-width:245px; display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); }
+    .compact-upload { min-width:0; width:100%; display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); }
     .compact-upload-copy { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
     .toolbar-eyebrow { color:var(--text-soft); font-size:8px; line-height:1; font-weight:900; letter-spacing:.1em; }
     .file-name { max-width:180px; color:var(--text-strong); font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .upload-btn { flex:0 0 auto; }
     .visually-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
-    .toolbar-actions { flex:1 1 auto; display:flex; justify-content:flex-end; gap:8px; min-width:0; }
+    .toolbar-actions { min-width:0; display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start; gap:8px; }
     .toolbar-group { display:flex; align-items:center; gap:5px; padding:5px 6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); white-space:nowrap; }
     .toolbar-label { padding:0 3px; color:var(--text-soft); font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
     .toolbar-group .btn { padding:6px 8px; font-size:9.5px; }
@@ -591,19 +594,23 @@
     .toast-actions { display:flex; align-items:center; gap:6px; }
     #apiStatus { display:none; }
 
-    @media (max-width:1450px) {
-      .app-header { grid-template-columns:minmax(190px,.8fr) auto minmax(170px,.8fr); }
+    @media (max-width:1600px) {
+      .work-toolbar { grid-template-columns:minmax(260px, 300px) minmax(0,1fr); }
       .toolbar-actions { gap:5px; }
       .toolbar-group { gap:3px; padding:4px; }
       .toolbar-group .btn { padding:5px 6px; font-size:8.8px; }
       .toolbar-label { display:none; }
+    }
+
+    @media (max-width:1450px) {
+      .app-header { grid-template-columns:minmax(190px,.8fr) auto minmax(170px,.8fr); }
       .kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
     @media (max-width:1050px) {
       .app-header { grid-template-columns:1fr auto; height:auto; }
       .view-switch { grid-row:2; grid-column:1 / -1; justify-self:start; }
       .header-tools { grid-column:2; grid-row:1; }
-      .work-toolbar { flex-direction:column; }
+      .work-toolbar { grid-template-columns:1fr; }
       .compact-upload { width:100%; }
       .toolbar-actions { justify-content:flex-start; flex-wrap:wrap; }
       .table-scroll { max-height:calc(100vh - 390px); }
@@ -729,7 +736,7 @@
             <span class="toolbar-eyebrow">RELATÓRIO OPERACIONAL</span>
             <h2>Registros</h2>
           </div>
-          <span class="workspace-help">Selecione uma linha para habilitar as ações acima.</span>
+          <span class="workspace-help">Selecione uma linha em Em aberto ou Em tratativa para habilitar as ações acima.</span>
         </div>
         <nav class="tabs">
 <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
@@ -776,7 +783,6 @@
 <th class="sortable" data-sort="motivo" title="Ordenar por Motivo">Motivo da tratativa</th>
 <th class="sortable" data-sort="responsavel" title="Ordenar por Responsável">Responsável pela falha</th>
 <th class="sortable" data-sort="dataTratativa" title="Ordenar por Data de entrada">Entrada na tratativa</th>
-<th>Ação</th>
 </tr></thead>
 <tbody id="treatmentBody"></tbody>
 </table>
@@ -993,6 +999,7 @@
     treatmentReasons: [],
     solvers: [],
     selectedKey: null,
+    selectedSource: null,
     openPage: 1,
     resolvedPage: 1,
     treatmentPage: 1,
@@ -1836,11 +1843,10 @@
     updateSortIndicators('treatment');
     if(state.treatmentPage>totalPages)state.treatmentPage=totalPages; const start=(state.treatmentPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
     $('treatmentEmpty').classList.toggle('hidden',rows.length>0);
-    $('treatmentBody').innerHTML=pageRows.map(r=>`<tr>
+    $('treatmentBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.key)}" class="${state.selectedSource==='treatment'&&state.selectedKey===r.key?'selected ':''}${r.crcPriority?'crc-priority':''}">
       <td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td>
       <td>${esc(r.motivo)}</td><td>${esc(r.responsavel||'—')}</td>
       <td>${esc(r.dataTratativa&&parseDateValue(r.dataTratativa)?dateFmt.format(parseDateValue(r.dataTratativa)):'Sem data')}</td>
-      <td><button class="row-btn resolve-treatment" data-key="${esc(r.key)}">Marcar resolvido</button></td>
     </tr>`).join('');
     $('treatmentSummary').textContent=`${rows.length.toLocaleString('pt-BR')} aguardando conclusão • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
     $('treatmentPageLabel').textContent=`Página ${state.treatmentPage} de ${totalPages}`;
@@ -1875,7 +1881,7 @@
   }
   const closeModal=()=>{ $('fResolution').disabled=false; $('modalBackdrop').classList.add('hidden'); };
   function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
-  function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+  function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
 
   function openTreatmentModal(data={},mode='manual'){
     state.treatmentModalMode=mode;
@@ -1886,7 +1892,7 @@
     $('treatmentModalBackdrop').classList.remove('hidden');
   }
   const closeTreatmentModal=()=>$('treatmentModalBackdrop').classList.add('hidden');
-  function openReportTreatment(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openTreatmentModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+  function openReportTreatment(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openTreatmentModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
 
   function openTreatmentResolution(key){
     const t=state.treatmentMap.get(key); if(!t)return;
@@ -1904,12 +1910,35 @@
     $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Encaminhar sinistro (Manual)'; $('claimModalBackdrop').classList.remove('hidden');
   }
   const closeClaimModal=()=>$('claimModalBackdrop').classList.add('hidden');
-  function openReportClaim(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openClaimModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+  function openReportClaim(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openClaimModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentClaim(key){
+    const t=state.treatmentMap.get(key); if(!t)return;
+    state.selectedKey=key; state.selectedSource='treatment';
+    renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
+    openClaimModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo},'report');
+  }
+
+  function getSelectedActionRow(){
+    if(!state.selectedKey)return null;
+    if(state.selectedSource==='treatment'){
+      const t=state.treatmentMap.get(state.selectedKey);
+      if(!t)return null;
+      return {key:t.key, nota:t.nota, coleta:t.coleta, valorNota:t.valorNota, vocativo:t.vocativo, source:'treatment'};
+    }
+    const r=state.reportRows.find(x=>x.__key===state.selectedKey);
+    if(!r)return null;
+    return {key:r.__key, nota:r.__nota, coleta:r.__coleta, valorNota:r.__valor, vocativo:r.__vocativo, source:'open'};
+  }
 
   function updateSelectedActions(){
-    const row=state.selectedKey?state.reportRows.find(r=>r.__key===state.selectedKey):null, enabled=!!row&&state.apiReady;
-    $('btnResolveSelected').disabled=!enabled; $('btnTreatmentSelected').disabled=!enabled; $('btnClaimSelected').disabled=!enabled; $('btnToggleCrc').disabled=!enabled; $('btnToggleLost').disabled=!enabled;
-    const isCrc=!!row&&state.crcMap.has(row.__key), isLost=!!row&&state.notLocatedMap.has(row.__key);
+    const row=getSelectedActionRow(), enabled=!!row&&state.apiReady;
+    $('btnResolveSelected').disabled=!enabled;
+    $('btnClaimSelected').disabled=!enabled;
+    $('btnTreatmentSelected').disabled=!enabled || row?.source==='treatment';
+    $('btnToggleCrc').disabled=!enabled;
+    $('btnToggleLost').disabled=!enabled;
+    const isCrc=!!row&&state.crcMap.has(row.key), isLost=!!row&&state.notLocatedMap.has(row.key);
     $('btnToggleCrc').textContent=isCrc?'Remover Prioridade CRC':'Marcar Prioridade CRC'; $('btnToggleCrc').classList.toggle('btn-active',isCrc);
     $('btnToggleLost').textContent=isLost?'Remover Não localizado':'Marcar Não localizado'; $('btnToggleLost').classList.toggle('btn-active',isLost);
   }
@@ -1917,10 +1946,22 @@
   $('openBody').addEventListener('click',e=>{
     const resolveBtn=e.target.closest('.resolve-row'); if(resolveBtn){e.stopPropagation(); openReportResolution(resolveBtn.dataset.key); return;}
     const claimBtn=e.target.closest('.claim-row'); if(claimBtn){e.stopPropagation(); openReportClaim(claimBtn.dataset.key); return;}
-    const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedKey=tr.dataset.key; renderOpenTable(); updateSelectedActions();}
+    const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedKey=tr.dataset.key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions();}
   });
-  $('openBody').addEventListener('dblclick',e=>{const tr=e.target.closest('tr[data-key]'); if(tr)openReportResolution(tr.dataset.key);});
-  $('treatmentBody').addEventListener('click',e=>{const btn=e.target.closest('.resolve-treatment'); if(!btn)return; openTreatmentResolution(btn.dataset.key);});
+  $('openBody').addEventListener('dblclick',e=>{const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedSource='open'; openReportResolution(tr.dataset.key);}});
+  $('treatmentBody').addEventListener('click',e=>{
+    const tr=e.target.closest('tr[data-key]');
+    if(!tr)return;
+    state.selectedKey=tr.dataset.key;
+    state.selectedSource='treatment';
+    renderOpenTable();
+    renderTreatmentTable();
+    updateSelectedActions();
+  });
+  $('treatmentBody').addEventListener('dblclick',e=>{
+    const tr=e.target.closest('tr[data-key]');
+    if(tr){state.selectedKey=tr.dataset.key; state.selectedSource='treatment'; openTreatmentResolution(tr.dataset.key);}
+  });
   $('resolvedBody').addEventListener('click',e=>{const btn=e.target.closest('.edit-resolved'); if(!btn)return; const r=state.resolvedRows.find(x=>x.key===btn.dataset.key); if(r)openModal(r,'edit');});
   $('claimBody').addEventListener('click',async e=>{
     const edit=e.target.closest('.edit-claim'); if(edit){const r=state.claimRows.find(x=>x.key===edit.dataset.key); if(r)openClaimModal(r,'edit'); return;}
@@ -1946,7 +1987,7 @@
       return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Resolvidos. O sistema não permite cadastro duplicado.`);
     }
     const btn=$('btnSave'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
-    try{await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+    try{await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; state.selectedSource=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
   $('treatmentForm').addEventListener('submit',async e=>{
@@ -1956,7 +1997,7 @@
     if(state.treatmentMap.has(key)) return setNotice('warn','Tratativa já cadastrada',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe na base de Tratativas.`);
     if(state.resolvedMap.has(key)) return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já está em Resolvidos.`);
     const btn=$('btnSaveTreatment'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
-    try{await postAndConfirm(payload,()=>state.treatmentMap.has(key),'Não foi possível confirmar a entrada na tratativa.'); state.selectedKey=null; closeTreatmentModal(); setNotice('ok','Tratativa criada',`Nota ${payload.nota} / Coleta ${payload.coleta} foi enviada para a segunda etapa.`);}catch(err){setNotice('error','Falha ao criar tratativa',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+    try{await postAndConfirm(payload,()=>state.treatmentMap.has(key),'Não foi possível confirmar a entrada na tratativa.'); state.selectedKey=null; state.selectedSource=null; closeTreatmentModal(); setNotice('ok','Tratativa criada',`Nota ${payload.nota} / Coleta ${payload.coleta} foi enviada para a segunda etapa.`);}catch(err){setNotice('error','Falha ao criar tratativa',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
   $('claimForm').addEventListener('submit',async e=>{
@@ -1969,13 +2010,14 @@
       return setNotice('warn','Sinistro já cadastrado',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Sinistros. O sistema não permite cadastro duplicado.`);
     }
     const btn=$('btnSaveClaim'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
-    try{await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+    try{await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; state.selectedSource=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
   async function toggleMarker(type){
-    if(!state.selectedKey||!state.apiReady)return; const r=state.reportRows.find(x=>x.__key===state.selectedKey); if(!r)return;
-    const isCrc=type==='crc', map=isCrc?state.crcMap:state.notLocatedMap, action=isCrc?'setPrioridadeCrc':'setNaoLocalizado', ativo=!map.has(r.__key), label=isCrc?'Prioridade CRC':'Não localizado no cliente';
-    try{await postAndConfirm({action,nota:r.__nota,coleta:r.__coleta,ativo},()=>((isCrc?state.crcMap:state.notLocatedMap).has(r.__key)===ativo),`Não foi possível confirmar ${label}.`); setNotice('ok',ativo?`${label} marcado`:`${label} removido`,`Nota ${r.__nota} / Coleta ${r.__coleta}.`);}catch(err){setNotice('error','Falha ao atualizar',err.message);}
+    if(!state.apiReady)return;
+    const r=getSelectedActionRow(); if(!r)return;
+    const isCrc=type==='crc', map=isCrc?state.crcMap:state.notLocatedMap, action=isCrc?'setPrioridadeCrc':'setNaoLocalizado', ativo=!map.has(r.key), label=isCrc?'Prioridade CRC':'Não localizado no cliente';
+    try{await postAndConfirm({action,nota:r.nota,coleta:r.coleta,ativo},()=>((isCrc?state.crcMap:state.notLocatedMap).has(r.key)===ativo),`Não foi possível confirmar ${label}.`); setNotice('ok',ativo?`${label} marcado`:`${label} removido`,`Nota ${r.nota} / Coleta ${r.coleta}.`);}catch(err){setNotice('error','Falha ao atualizar',err.message);}
   }
 
   $('btnApiTest').addEventListener('click',()=>{try{window.open(`${getAppsScriptBase()}?action=health&_=${Date.now()}`,'_blank','noopener');}catch(err){setNotice('error','URL do Apps Script inválida',err.message);}});
@@ -1983,9 +2025,19 @@
   $('btnManual').addEventListener('click',()=>openModal({},'manual'));
   $('btnManualTreatment').addEventListener('click',()=>openTreatmentModal({},'manual'));
   $('btnManualClaim').addEventListener('click',()=>openClaimModal({},'manual'));
-  $('btnResolveSelected').addEventListener('click',()=>{if(state.selectedKey)openReportResolution(state.selectedKey);});
-  $('btnTreatmentSelected').addEventListener('click',()=>{if(state.selectedKey)openReportTreatment(state.selectedKey);});
-  $('btnClaimSelected').addEventListener('click',()=>{if(state.selectedKey)openReportClaim(state.selectedKey);});
+  $('btnResolveSelected').addEventListener('click',()=>{
+    if(!state.selectedKey)return;
+    if(state.selectedSource==='treatment') openTreatmentResolution(state.selectedKey);
+    else openReportResolution(state.selectedKey);
+  });
+  $('btnTreatmentSelected').addEventListener('click',()=>{
+    if(state.selectedKey && state.selectedSource!=='treatment') openReportTreatment(state.selectedKey);
+  });
+  $('btnClaimSelected').addEventListener('click',()=>{
+    if(!state.selectedKey)return;
+    if(state.selectedSource==='treatment') openTreatmentClaim(state.selectedKey);
+    else openReportClaim(state.selectedKey);
+  });
   $('btnToggleCrc').addEventListener('click',()=>toggleMarker('crc'));
   $('btnToggleLost').addEventListener('click',()=>toggleMarker('lost'));
   $('modalClose').addEventListener('click',closeModal); $('modalCancel').addEventListener('click',closeModal); $('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();}); $('fResolution').addEventListener('change',updateResponsibleVisibility);
@@ -1995,7 +2047,10 @@
   document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===tab));
     const target=tab.dataset.tab;
+    state.selectedKey=null;
+    state.selectedSource=null;
     $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelTreatment').classList.toggle('hidden',target!=='treatment'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
+    renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
   }));
   $('btnClearChartFilters').addEventListener('click',clearChartFilters);
   $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
