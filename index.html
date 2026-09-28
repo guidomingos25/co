@@ -933,6 +933,10 @@
     charts: {},
     occurrenceGranularity: 'month',
     resolutionGranularity: 'month',
+    resolutionModalMode: 'manual',
+    resolutionEditKey: null,
+    claimModalMode: 'manual',
+    claimEditKey: null,
     chartFilters: {
       status: new Set(),
       resolution: new Set(),
@@ -1461,11 +1465,12 @@
     return null;
   }
 
-  function chartRgb(id, datasetLabel) {
-    if (datasetLabel === 'Em aberto' || id === 'chartOccurrence') return [59,130,246];
-    if (datasetLabel === 'Resolvido' || id === 'chartResolution' || id === 'chartResolutionDate') return [22,163,74];
-    if (datasetLabel === 'Sinistro') return [139,92,246];
-    if (id === 'chartResponsible') return [245,158,11];
+  function chartRgb(id, datasetLabel, dataLabel='') {
+    const label = dataLabel || datasetLabel || '';
+    if (label === 'Em aberto' || datasetLabel === 'Em aberto' || id === 'chartOccurrence') return [239,68,68];
+    if (label === 'Resolvido' || datasetLabel === 'Resolvido' || id === 'chartResolution' || id === 'chartResolutionDate') return [34,197,94];
+    if (label === 'Sinistro' || datasetLabel === 'Sinistro') return [168,85,247];
+    if (id === 'chartResponsible') return [249,115,22];
     return [100,116,139];
   }
 
@@ -1480,9 +1485,9 @@
     const statusSelected = state.chartFilters.status;
 
     (config.data.datasets || []).forEach(ds => {
-      const rgb = chartRgb(id, ds.label);
       const normal = [], hover = [], borders = [], widths = [];
       labels.forEach((label, index) => {
+        const rgb = chartRgb(id, ds.label, id === 'chartStatus' ? label : '');
         let hasConstraint = false;
         let matches = true;
         if (selectedDisplay.size) {
@@ -1493,16 +1498,19 @@
           hasConstraint = true;
           matches = matches && statusSelected.has(ds.label);
         }
-        const alpha = !hasConstraint ? .46 : (matches ? .9 : .12);
+        const alpha = !hasConstraint ? .82 : (matches ? .96 : .16);
         normal.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
-        hover.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},.96)`);
-        borders.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${matches && hasConstraint ? 1 : .72})`);
-        widths.push(matches && hasConstraint ? 2 : 1);
+        hover.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+        borders.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${matches && hasConstraint ? 1 : .9})`);
+        widths.push(matches && hasConstraint ? 2.5 : 1.4);
       });
       ds.backgroundColor = normal;
       ds.hoverBackgroundColor = hover;
       ds.borderColor = borders;
-      ds.hoverBorderColor = borders.map(() => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+      ds.hoverBorderColor = labels.map((label) => {
+        const rgb = chartRgb(id, ds.label, id === 'chartStatus' ? label : '');
+        return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
+      });
       ds.borderWidth = widths;
       ds.hoverBorderWidth = widths.map(() => 2);
     });
@@ -1523,7 +1531,20 @@
     const pct=total?raw/total*100:0, pctText=total?` (${pctFmt.format(pct)}%)`:'';
     return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
   }}};
-  const barDataLabels={anchor:'center',align:'center',clamp:true,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},textAlign:'center'};
+  const horizontalBarDataLabels={
+    anchor:'end',align:'right',offset:5,clamp:true,clip:false,
+    formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
+    font:{size:9,weight:'800'},textAlign:'left',
+    color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155',
+    backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(17,24,39,.94)':'rgba(255,255,255,.94)',
+    borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
+  };
+  const stackedBarDataLabels={
+    anchor:'center',align:'center',clamp:true,
+    display:ctx=>Math.abs(ctx.chart.getDatasetMeta(ctx.datasetIndex).data?.[ctx.dataIndex]?.width||0)>=54,
+    formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
+    font:{size:9,weight:'800'},textAlign:'center',color:'#ffffff'
+  };
   function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
   function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?64:granularity==='week'?86:76; inner.style.width=`${Math.max(520,Math.max(1,bucketCount)*per)}px`;}
 
@@ -1538,7 +1559,7 @@
     const pairs=temporalPairs(rows,dateGetter,granularity), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key), data=pairs.map(x=>x.value), counts=pairs.map(x=>x.count);
     sizeTemporalChart(innerId,pairs.length,granularity);
     const isResolved=alsoStatus==='Resolvido';
-    makeChart(id,{type:'bar',data:{labels,datasets:[{label:datasetLabel,data,_counts:counts,backgroundColor:isResolved?'rgba(22,163,74,.46)':'rgba(59,130,246,.46)',hoverBackgroundColor:isResolved?'rgba(22,163,74,.88)':'rgba(59,130,246,.88)',borderColor:isResolved?'#15803d':'#2563eb',hoverBorderColor:isResolved?'#166534':'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const key=keys[els[0].index]; if(key)toggleChartFilter(dimension,key,alsoStatus);},scales:{x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],granularity)},grid:{display:false}},y:{beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',offset:3,clamp:false,clip:false,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569',backgroundColor:'rgba(255,255,255,.92)',borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}}}}});
+    makeChart(id,{type:'bar',data:{labels,datasets:[{label:datasetLabel,data,_counts:counts,backgroundColor:isResolved?'rgba(34,197,94,.82)':'rgba(239,68,68,.82)',hoverBackgroundColor:isResolved?'rgba(34,197,94,1)':'rgba(239,68,68,1)',borderColor:isResolved?'#16a34a':'#dc2626',hoverBorderColor:isResolved?'#15803d':'#b91c1c',borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const key=keys[els[0].index]; if(key)toggleChartFilter(dimension,key,alsoStatus);},scales:{x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],granularity)},grid:{display:false}},y:{beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:{anchor:'end',align:'top',offset:3,clamp:false,clip:false,formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',font:{size:9,weight:'800'},color:'#475569',backgroundColor:'rgba(255,255,255,.92)',borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}}}}});
   }
 
   function renderCharts(){
@@ -1546,24 +1567,24 @@
     const statusBase=applyChartFilters(master,'status');
     const opens=statusBase.filter(r=>r.status==='open'), resolved=statusBase.filter(r=>r.status==='resolved'), claims=statusBase.filter(r=>r.status==='claim');
     const vals=[opens.reduce((s,r)=>s+r.__valor,0),resolved.reduce((s,r)=>s+r.__valor,0),claims.reduce((s,r)=>s+r.__valor,0)], counts=[opens.length,resolved.length,claims.length], statusLabels=['Em aberto','Resolvido','Sinistro'];
-    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts,backgroundColor:['rgba(59,130,246,.46)','rgba(22,163,74,.46)','rgba(139,92,246,.46)'],hoverBackgroundColor:['rgba(59,130,246,.88)','rgba(22,163,74,.88)','rgba(139,92,246,.88)'],borderColor:['#2563eb','#15803d','#7c3aed'],hoverBorderColor:['#1d4ed8','#166534','#6d28d9'],borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
+    makeChart('chartStatus',{type:'doughnut',data:{labels:statusLabels,datasets:[{data:vals,_counts:counts,backgroundColor:['rgba(239,68,68,.82)','rgba(34,197,94,.82)','rgba(168,85,247,.82)'],hoverBackgroundColor:['rgba(239,68,68,1)','rgba(34,197,94,1)','rgba(168,85,247,1)'],borderColor:['#dc2626','#16a34a','#9333ea'],hoverBorderColor:['#b91c1c','#15803d','#7e22ce'],borderWidth:1,hoverBorderWidth:1.5}]},options:{maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0),pct=total?Number(v)/total*100:0; return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';},font:{size:10,weight:'800'},textAlign:'center'}}}});
 
     const resolutionBase=applyChartFilters(master.filter(r=>r.status==='resolved'),'resolution'), resolutionMap=new Map();
     for(const r of resolutionBase){const label=cleanText(r.resolucao)||'Sem resolução'; if(!resolutionMap.has(label))resolutionMap.set(label,{value:0,count:0}); const x=resolutionMap.get(label); x.value+=r.__valor; x.count++;}
     const resolutionPairs=[...resolutionMap.entries()].sort((a,b)=>b[1].value-a[1].value);
-    makeChart('chartResolution',{type:'bar',data:{labels:resolutionPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=resolutionPairs[els[0].index]?.[0]; if(label)toggleChartFilter('resolution',label,'Resolvido');},scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+    makeChart('chartResolution',{type:'bar',data:{labels:resolutionPairs.map(x=>x[0]),datasets:[{label:'Resolvido',data:resolutionPairs.map(x=>x[1].value),_counts:resolutionPairs.map(x=>x[1].count),backgroundColor:'rgba(34,197,94,.82)',hoverBackgroundColor:'rgba(34,197,94,1)',borderColor:'#16a34a',hoverBorderColor:'#15803d',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=resolutionPairs[els[0].index]?.[0]; if(label)toggleChartFilter('resolution',label,'Resolvido');},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
 
     const responsibleBase=applyChartFilters(master.filter(r=>r.status==='resolved'&&cleanText(r.resolucao)==='Conferente não vinculou o material a OF'),'responsible'), responsibleMap=new Map();
     for(const r of responsibleBase){const label=cleanText(r.responsavel)||'Não informado'; if(!responsibleMap.has(label))responsibleMap.set(label,{value:0,count:0}); const x=responsibleMap.get(label); x.value+=r.__valor; x.count++;}
     const responsiblePairs=[...responsibleMap.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,10);
-    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(245,158,11,.48)',hoverBackgroundColor:'rgba(245,158,11,.90)',borderColor:'#d97706',hoverBorderColor:'#b45309',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label,'Resolvido');},scales:{x:{beginAtZero:true,grace:'10%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+    makeChart('chartResponsible',{type:'bar',data:{labels:responsiblePairs.map(x=>x[0]),datasets:[{label:'Valor',data:responsiblePairs.map(x=>x[1].value),_counts:responsiblePairs.map(x=>x[1].count),backgroundColor:'rgba(249,115,22,.84)',hoverBackgroundColor:'rgba(249,115,22,1)',borderColor:'#ea580c',hoverBorderColor:'#c2410c',borderWidth:1,hoverBorderWidth:1.5}]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const label=responsiblePairs[els[0].index]?.[0]; if(label)toggleChartFilter('responsible',label,'Resolvido');},layout:{padding:{right:58}},scales:{x:{beginAtZero:true,grace:'22%'},y:{ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{display:false},tooltip:chartMoneyTooltip,datalabels:horizontalBarDataLabels}}});
 
     const vocBase=applyChartFilters(master,'vocativo'), vocPairs=stackedPairs(vocBase,r=>r.__vocativo,8), vocLabels=vocPairs.map(x=>x[0]);
     makeChart('chartVocativo',{type:'bar',data:{labels:vocLabels,datasets:[
-      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(59,130,246,.46)',hoverBackgroundColor:'rgba(59,130,246,.88)',borderColor:'#2563eb',hoverBorderColor:'#1d4ed8',borderWidth:1,hoverBorderWidth:1.5},
-      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(22,163,74,.46)',hoverBackgroundColor:'rgba(22,163,74,.88)',borderColor:'#15803d',hoverBorderColor:'#166534',borderWidth:1,hoverBorderWidth:1.5},
-      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total',backgroundColor:'rgba(139,92,246,.46)',hoverBackgroundColor:'rgba(139,92,246,.88)',borderColor:'#7c3aed',hoverBorderColor:'#6d28d9',borderWidth:1,hoverBorderWidth:1.5}
-    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=['Em aberto','Resolvido','Sinistro'][el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:barDataLabels}}});
+      {label:'Em aberto',data:vocPairs.map(x=>x[1].open),_counts:vocPairs.map(x=>x[1].openCount),stack:'total',backgroundColor:'rgba(239,68,68,.82)',hoverBackgroundColor:'rgba(239,68,68,1)',borderColor:'#dc2626',hoverBorderColor:'#b91c1c',borderWidth:1,hoverBorderWidth:1.5},
+      {label:'Resolvido',data:vocPairs.map(x=>x[1].resolved),_counts:vocPairs.map(x=>x[1].resolvedCount),stack:'total',backgroundColor:'rgba(34,197,94,.82)',hoverBackgroundColor:'rgba(34,197,94,1)',borderColor:'#16a34a',hoverBorderColor:'#15803d',borderWidth:1,hoverBorderWidth:1.5},
+      {label:'Sinistro',data:vocPairs.map(x=>x[1].claim),_counts:vocPairs.map(x=>x[1].claimCount),stack:'total',backgroundColor:'rgba(168,85,247,.82)',hoverBackgroundColor:'rgba(168,85,247,1)',borderColor:'#9333ea',hoverBorderColor:'#7e22ce',borderWidth:1,hoverBorderWidth:1.5}
+    ]},options:{indexAxis:'y',maintainAspectRatio:false,onClick:(e,els)=>{if(!els.length)return; const el=els[0], label=vocLabels[el.index], status=['Em aberto','Resolvido','Sinistro'][el.datasetIndex]; toggleChartFilter('vocativo',label,status);},scales:{x:{stacked:true,beginAtZero:true,grace:'8%'},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9,weight:'700'}}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
 
     renderTemporalChart({id:'chartOccurrence',innerId:'chartOccurrenceInner',rows:applyChartFilters(master.filter(r=>r.status==='open'),'occurrencePeriod'),dateGetter:r=>r.__dataOcorrencia,granularity:state.occurrenceGranularity,dimension:'occurrencePeriod',datasetLabel:'Em aberto',alsoStatus:'Em aberto'});
     renderTemporalChart({id:'chartResolutionDate',innerId:'chartResolutionDateInner',rows:applyChartFilters(master.filter(r=>r.status==='resolved'),'resolutionPeriod'),dateGetter:r=>r.dataResolucao,granularity:state.resolutionGranularity,dimension:'resolutionPeriod',datasetLabel:'Resolvido',alsoStatus:'Resolvido'});
@@ -1690,6 +1711,8 @@
   }
 
   function openModal(data={},mode='manual'){
+    state.resolutionModalMode=mode;
+    state.resolutionEditKey=mode==='edit'?keyOf(data.nota,data.coleta):null;
     $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
     const locked=mode==='report'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
     $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
@@ -1699,6 +1722,8 @@
   function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; renderOpenTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
 
   function openClaimModal(data={},mode='manual'){
+    state.claimModalMode=mode;
+    state.claimEditKey=mode==='edit'?keyOf(data.nota,data.coleta):null;
     $('sNota').value=data.nota??''; $('sColeta').value=data.coleta??''; $('sValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('sVocativo').value=data.vocativo??'';
     const locked=mode==='report'; ['sNota','sColeta','sValor','sVocativo'].forEach(id=>$(id).readOnly=locked);
     $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Encaminhar sinistro (Manual)'; $('claimModalBackdrop').classList.remove('hidden');
@@ -1733,15 +1758,27 @@
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
     const payload={action:'salvarResolvido',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText($('fResponsible').value),quemResolveu:$('fSolvedBy').value};
     if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
+    const key=keyOf(payload.nota,payload.coleta);
+    const duplicateResolved=state.resolvedMap.has(key) && !(state.resolutionModalMode==='edit' && state.resolutionEditKey===key);
+    if(duplicateResolved){
+      $('fNota').focus();
+      return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Resolvidos. O sistema não permite cadastro duplicado.`);
+    }
     const btn=$('btnSave'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
-    try{const key=keyOf(payload.nota,payload.coleta); await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+    try{await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
   $('claimForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
     const payload={action:'salvarSinistro',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const key=keyOf(payload.nota,payload.coleta);
+    const duplicateClaim=state.claimMap.has(key) && !(state.claimModalMode==='edit' && state.claimEditKey===key);
+    if(duplicateClaim){
+      $('sNota').focus();
+      return setNotice('warn','Sinistro já cadastrado',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Sinistros. O sistema não permite cadastro duplicado.`);
+    }
     const btn=$('btnSaveClaim'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
-    try{const key=keyOf(payload.nota,payload.coleta); await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+    try{await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
   });
 
   async function toggleMarker(type){
