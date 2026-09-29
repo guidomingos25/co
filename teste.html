@@ -2505,8 +2505,15 @@
     if(!text) return false;
     const el=ctx.chart.getDatasetMeta(ctx.datasetIndex)?.data?.[ctx.dataIndex];
     if(!el) return false;
-    const width=Math.abs(Number(el.width||0));
-    const height=Math.abs(Number(el.height||0));
+
+    // Usa as dimensões FINAIS da barra, mesmo durante a animação inicial.
+    // Assim o rótulo já nasce visível quando houver espaço, sem depender do hover.
+    const finalProps = typeof el.getProps === 'function'
+      ? el.getProps(['width','height'], true)
+      : el;
+
+    const width=Math.abs(Number(finalProps.width||0));
+    const height=Math.abs(Number(finalProps.height||0));
     const textWidth=ctx.chart.ctx.measureText(text).width;
     return width >= (textWidth + padX*2) && height >= minHeight;
   }
