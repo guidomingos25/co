@@ -1,0 +1,3293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pendência Temporária</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #6d778a;
+      --line: #dfe5ee;
+      --primary: #2563eb;
+      --primary-soft: #eaf1ff;
+      --success: #15803d;
+      --success-soft: #eaf7ef;
+      --warning: #b45309;
+      --warning-soft: #fff7e8;
+      --danger: #b91c1c;
+      --danger-soft: #feecec;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    .app-shell { min-height: 100vh; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 18px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .brand { flex: 0 0 auto; min-width: 245px; }
+    .brand h1 { margin: 0; font-size: 18px; line-height: 1.15; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 10px; line-height: 1.2; }
+    .header-actions {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+    }
+    .header-actions .btn { white-space: nowrap; }
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex: 0 0 auto;
+    }
+    .action-group + .action-group {
+      margin-left: 3px;
+      padding-left: 6px;
+      border-left: 1px solid #e2e8f0;
+    }
+    .header-actions .btn {
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 7px 9px;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 700;
+      transition: .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(15,23,42,.08); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-soft { background: var(--primary-soft); color: #174ea6; border-color: #cfddff; }
+
+    main { padding: 16px 18px; width: 100%; max-width: none; margin: 0 auto; }
+    .notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .notice.ok { border-color: #b7e4c7; background: #f2fbf5; }
+    .notice.warn { border-color: #fed7aa; background: #fff9ed; }
+    .notice.error { border-color: #fecaca; background: #fff1f2; }
+    .notice small { color: var(--muted); }
+
+    .upload-card {
+      background: var(--panel);
+      border: 1px dashed #a9b7cc;
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    .upload-card h2 { margin: 0 0 6px; font-size: 18px; }
+    .upload-card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .file-input { max-width: 420px; width: 100%; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(170px,1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(15,23,42,.05);
+      min-height: 112px;
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .kpi .value { margin-top: 9px; font-size: 25px; font-weight: 900; letter-spacing: -.02em; }
+    .kpi .sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .kpi.open .value { color: var(--danger); }
+    .kpi.resolved .value { color: var(--success); }
+    .kpi.treatment .value { color: #0284c7; }
+    .kpi.alert .value { color: var(--warning); }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .chart-card {
+      min-height: 270px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 5px 16px rgba(15,23,42,.045);
+      overflow: hidden;
+    }
+    .chart-card h3 { margin: 0; font-size: 13px; line-height: 1.25; }
+    .chart-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .chart-card-title { min-width:0; }
+    .chart-card .chart-hint { color: var(--muted); font-size: 10px; line-height: 1.25; margin-top: 3px; }
+    .chart-granularity {
+      border:1px solid var(--line);
+      border-radius:9px;
+      background:#fff;
+      padding:7px 9px;
+      font-size:11px;
+      font-weight:800;
+      color:#334155;
+      flex:0 0 auto;
+    }
+    .chart-wrap { height: 215px; position: relative; }
+    .chart-wrap canvas { cursor: pointer; }
+    .chart-card.chart-wide { grid-column: auto; }
+    .chart-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 2px 10px;
+      scrollbar-gutter: stable;
+    }
+    .chart-scroll-inner {
+      position: relative;
+      height: 220px;
+      min-width: 100%;
+    }
+    .chart-scroll::-webkit-scrollbar { height: 8px; }
+    .chart-scroll::-webkit-scrollbar-track { background: #eef2f7; border-radius: 999px; }
+    .chart-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .chart-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .chart-filter-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      margin: 0 0 14px; padding: 11px 13px; border: 1px solid #c7d7ff; border-radius: 12px;
+      background: #f5f8ff;
+    }
+    .chart-filter-info { display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-width:0; }
+    .chart-filter-info > strong { font-size: 12px; color:#334155; }
+    .filter-chip {
+      border: 1px solid #bfd0ff; background:#fff; color:#1d4ed8; border-radius:999px;
+      padding:5px 9px; font-size:11px; font-weight:800; cursor:pointer;
+    }
+    .filter-chip:hover { background:#eaf1ff; }
+    .chart-filter-empty { color:var(--muted); font-size:11px; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 4px 0 12px;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+    .tab.active { color: var(--primary); background: var(--primary-soft); border-color: #c7d7ff; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      max-width: 100%;
+      margin-bottom: 22px;
+    }
+    .panel-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .field {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 9px 10px;
+      background: #fff;
+      min-width: 170px;
+    }
+    .table-scroll { overflow-x: hidden; overflow-y: auto; max-height: 590px; width: 100%; }
+    table { width: 100%; max-width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 0; }
+    th, td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #edf1f6;
+      text-align: left;
+      font-size: 10px;
+      line-height: 1.18;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      vertical-align: middle;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 9px;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+    th.sortable { cursor: pointer; user-select: none; transition: background .12s ease, color .12s ease; }
+    th.sortable:hover { background: #eef4ff; color: #1d4ed8; }
+    th.sortable::after { content: '↕'; display: inline-block; margin-left: 4px; font-size: 8px; opacity: .34; vertical-align: 1px; }
+    th.sortable.sort-asc::after { content: '▲'; opacity: .9; color: #2563eb; }
+    th.sortable.sort-desc::after { content: '▼'; opacity: .9; color: #2563eb; }
+    td.money { white-space: nowrap; font-size: 10px; }
+
+    /* Larguras proporcionais para manter todas as colunas dentro da tela */
+    #panelOpen th:nth-child(1), #panelOpen td:nth-child(1) { width: 5%; }
+    #panelOpen th:nth-child(2), #panelOpen td:nth-child(2) { width: 6%; }
+    #panelOpen th:nth-child(3), #panelOpen td:nth-child(3) { width: 8%; }
+    #panelOpen th:nth-child(4), #panelOpen td:nth-child(4) { width: 13%; }
+    #panelOpen th:nth-child(5), #panelOpen td:nth-child(5) { width: 8%; }
+    #panelOpen th:nth-child(6), #panelOpen td:nth-child(6) { width: 16%; }
+    #panelOpen th:nth-child(7), #panelOpen td:nth-child(7) { width: 10%; }
+    #panelOpen th:nth-child(8), #panelOpen td:nth-child(8) { width: 4%; }
+    #panelOpen th:nth-child(9), #panelOpen td:nth-child(9) { width: 8%; }
+    #panelOpen th:nth-child(10), #panelOpen td:nth-child(10) { width: 7%; }
+    #panelOpen th:nth-child(11), #panelOpen td:nth-child(11) { width: 15%; }
+
+    #panelResolved th:nth-child(1), #panelResolved td:nth-child(1) { width: 5%; }
+    #panelResolved th:nth-child(2), #panelResolved td:nth-child(2) { width: 6%; }
+    #panelResolved th:nth-child(3), #panelResolved td:nth-child(3) { width: 8%; }
+    #panelResolved th:nth-child(4), #panelResolved td:nth-child(4) { width: 13%; }
+    #panelResolved th:nth-child(5), #panelResolved td:nth-child(5) { width: 16%; }
+    #panelResolved th:nth-child(6), #panelResolved td:nth-child(6) { width: 11%; }
+    #panelResolved th:nth-child(7), #panelResolved td:nth-child(7) { width: 8%; }
+    #panelResolved th:nth-child(8), #panelResolved td:nth-child(8) { width: 6%; }
+    #panelResolved th:nth-child(9), #panelResolved td:nth-child(9) { width: 16%; }
+    #panelResolved th:nth-child(10), #panelResolved td:nth-child(10) { width: 11%; }
+
+    #panelClaims th:nth-child(1), #panelClaims td:nth-child(1) { width: 8%; }
+    #panelClaims th:nth-child(2), #panelClaims td:nth-child(2) { width: 9%; }
+    #panelClaims th:nth-child(3), #panelClaims td:nth-child(3) { width: 12%; }
+    #panelClaims th:nth-child(4), #panelClaims td:nth-child(4) { width: 21%; }
+    #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 12%; }
+    #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 16%; }
+    #panelClaims th:nth-child(7), #panelClaims td:nth-child(7) { width: 22%; }
+
+    #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 7%; }
+    #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 8%; }
+    #panelTreatment th:nth-child(3), #panelTreatment td:nth-child(3) { width: 11%; }
+    #panelTreatment th:nth-child(4), #panelTreatment td:nth-child(4) { width: 15%; }
+    #panelTreatment th:nth-child(5), #panelTreatment td:nth-child(5) { width: 22%; }
+    #panelTreatment th:nth-child(6), #panelTreatment td:nth-child(6) { width: 13%; }
+    #panelTreatment th:nth-child(7), #panelTreatment td:nth-child(7) { width: 12%; }
+    #panelTreatment th:nth-child(8), #panelTreatment td:nth-child(8) { width: 12%; }
+
+    #panelOpen td:nth-child(1), #panelOpen td:nth-child(2), #panelOpen td:nth-child(5), #panelOpen td:nth-child(8),
+    #panelResolved td:nth-child(1), #panelResolved td:nth-child(2), #panelResolved td:nth-child(7), #panelResolved td:nth-child(8),
+    #panelClaims td:nth-child(1), #panelClaims td:nth-child(2) { white-space: nowrap; }
+    tbody tr { transition: background .12s ease; }
+    tbody tr:hover { background: #f8fbff; }
+    tbody tr.selected { background: #dbeafe !important; outline: 1px solid #93c5fd; outline-offset: -1px; }
+    .money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .badge { display: inline-flex; align-items: center; padding: 3px 6px; border-radius: 999px; font-size: 9px; line-height: 1.1; font-weight: 800; max-width: 100%; white-space: normal; }
+    .badge.ok { background: var(--success-soft); color: var(--success); }
+    .badge.warn { background: var(--warning-soft); color: var(--warning); }
+    .badge.neutral { background: #eef2f7; color: #475569; }
+    .badge.info { background: var(--primary-soft); color: #1d4ed8; }
+    .row-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 6px; font-weight: 800; font-size: 9px; line-height: 1.05; white-space: nowrap; }
+
+    .pager { display: flex; gap: 6px; align-items: center; justify-content: flex-end; padding: 8px 10px; color: var(--muted); font-size: 11px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(15,23,42,.48);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .modal {
+      width: min(640px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(15,23,42,.28);
+      border: 1px solid #e2e8f0;
+    }
+    .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 18px 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 12px; font-weight: 800; color: #475569; }
+    .form-group input, .form-group select { border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; width: 100%; }
+    .hint { font-size: 11px; color: var(--muted); }
+    .modal-actions { padding: 15px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+    .close-x { border: 0; background: transparent; font-size: 24px; line-height: 1; color: #64748b; }
+
+    .empty { padding: 35px 18px; text-align: center; color: var(--muted); }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1180px) {
+      .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); }
+      .charts-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 1180px) {
+      header { gap: 8px; padding: 8px 10px; }
+      .brand { min-width: 185px; }
+      .brand h1 { font-size: 16px; }
+      .brand p { font-size: 9px; }
+      .header-actions { gap: 4px; }
+      .header-actions .btn { padding: 6px 7px; font-size: 9.5px; }
+      main { padding: 12px 10px; }
+      th, td { padding: 6px 4px; font-size: 9px; }
+      th { font-size: 8px; }
+      .badge, .row-btn { font-size: 8px; }
+    }
+    @media (max-width: 760px) {
+      header { padding: 8px; align-items: stretch; flex-direction: column; }
+      .brand { min-width: 0; }
+      .header-actions { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
+      .header-actions .btn { flex: 0 0 auto; }
+      main { padding: 8px; }
+      .upload-card { align-items: stretch; flex-direction: column; }
+      .kpis { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: auto; }
+      th, td { font-size: 8px; padding: 5px 3px; }
+      th { font-size: 7.5px; }
+    }
+  
+
+    /* --- Sinalizações persistentes e Sinistros --- */
+    .kpis { grid-template-columns: repeat(6, minmax(160px,1fr)); }
+    .kpi.claim .value { color: #7c3aed; }
+    .btn-claim { background:#f3e8ff; color:#6d28d9; border-color:#ddd6fe; }
+    .btn-treatment { background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; }
+    .btn-crc { background:#fff7d6; color:#92400e; border-color:#fcd34d; }
+    .btn-lost { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+    .btn-active { box-shadow: inset 0 0 0 2px rgba(15,23,42,.08); }
+    .row-actions { display:flex; gap:3px; align-items:center; justify-content:flex-start; flex-wrap:wrap; }
+    .signal-stack { display:flex; gap:4px; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
+    .signal-stack .badge { flex:0 0 auto; white-space:nowrap; overflow-wrap:normal; word-break:normal; }
+    tr.crc-priority { background:#fff9df; box-shadow: inset 4px 0 0 #f59e0b; }
+    tr.crc-priority:hover { background:#fff4c2; }
+    tr.crc-priority.selected { background:#dbeafe !important; box-shadow: inset 4px 0 0 #f59e0b; }
+    .badge.crc { background:#fff1b8; color:#92400e; border:1px solid #f6d365; }
+    .badge.lost { background:#eef2f7; color:#475569; border:1px solid #d8dee8; }
+    .badge.claim { background:#f3e8ff; color:#6d28d9; border:1px solid #ddd6fe; }
+    .badge.treatment { background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; }
+    @media (max-width: 1450px) { .kpis { grid-template-columns: repeat(3, minmax(170px,1fr)); } }
+    @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, minmax(170px,1fr)); } }
+    @media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+
+  
+
+    /* ===== Layout profissional: operação + dashboard ===== */
+    :root {
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #eef2f7;
+      --text-strong: #0f172a;
+      --text-soft: #64748b;
+      --border: #e2e8f0;
+      --header-bg: rgba(255,255,255,.94);
+      --table-head: #f8fafc;
+      --row-hover: #f8fbff;
+      --selected-row: #dbeafe;
+      --shadow-soft: 0 8px 24px rgba(15,23,42,.06);
+    }
+    body[data-theme="dark"] {
+      --bg: #0b1120;
+      --panel: #111827;
+      --surface: #111827;
+      --surface-2: #162033;
+      --surface-3: #1e293b;
+      --text: #e5e7eb;
+      --text-strong: #f8fafc;
+      --text-soft: #94a3b8;
+      --muted: #94a3b8;
+      --line: #263449;
+      --border: #263449;
+      --header-bg: rgba(11,17,32,.94);
+      --table-head: #162033;
+      --row-hover: #17243a;
+      --selected-row: #17335f;
+      --primary-soft: #172554;
+      --success-soft: #123524;
+      --warning-soft: #3b2b0e;
+      --danger-soft: #3f1d24;
+      --shadow-soft: 0 10px 30px rgba(0,0,0,.22);
+      color-scheme: dark;
+    }
+    body { background: var(--bg); color: var(--text-strong); transition: background .18s ease, color .18s ease; }
+    .app-header {
+      position: sticky; top: 0; z-index: 50;
+      height: 58px; padding: 8px 18px;
+      display: grid; grid-template-columns: minmax(220px,1fr) auto minmax(220px,1fr);
+      align-items: center; gap: 16px;
+      background: var(--header-bg); border-bottom: 1px solid var(--border); backdrop-filter: blur(14px);
+    }
+    .app-header .brand { min-width:0; }
+    .app-header .brand h1 { margin:0; font-size:17px; color:var(--text-strong); }
+    .app-header .brand p { margin:2px 0 0; font-size:9.5px; color:var(--text-soft); }
+    .view-switch { display:flex; align-items:center; gap:4px; padding:3px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); }
+    .view-btn { border:0; border-radius:7px; padding:7px 16px; background:transparent; color:var(--text-soft); font-size:11px; font-weight:800; }
+    .view-btn.active { background:var(--surface); color:var(--primary); box-shadow:0 1px 4px rgba(15,23,42,.08); }
+    .header-tools { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
+    .icon-text-btn { border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-strong); padding:7px 10px; font-size:10px; font-weight:800; }
+    .icon-text-btn:hover { background:var(--surface-2); }
+    .api-dot { width:10px; height:10px; border-radius:999px; display:inline-block; flex:0 0 auto; box-shadow:0 0 0 4px rgba(148,163,184,.12); background:#94a3b8; }
+    .api-dot.ok { background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.13); }
+    .api-dot.error { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.13); }
+    .api-dot.connecting { background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,.13); }
+
+    main { padding: 12px 16px 20px; }
+    .app-view.hidden { display:none !important; }
+    .work-toolbar {
+      display:grid;
+      grid-template-columns:minmax(280px, 330px) minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      margin-bottom:10px;
+      position: sticky;
+      top: var(--app-header-height, 58px);
+      z-index: 49;
+      background: var(--bg);
+      padding: 8px 0 7px;
+      margin-top: -4px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 7px 16px rgba(15,23,42,.045);
+    }
+    .compact-upload { min-width:0; width:100%; display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); }
+    .compact-upload-copy { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
+    .toolbar-eyebrow { color:var(--text-soft); font-size:8px; line-height:1; font-weight:900; letter-spacing:.1em; }
+    .file-name { max-width:180px; color:var(--text-strong); font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .upload-btn { flex:0 0 auto; }
+    .visually-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+    .toolbar-actions { min-width:0; display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start; gap:8px; }
+    .toolbar-group { display:flex; align-items:center; gap:5px; padding:5px 6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-soft); white-space:nowrap; }
+    .toolbar-label { padding:0 3px; color:var(--text-soft); font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .toolbar-group .btn { padding:6px 8px; font-size:9.5px; }
+
+    .kpis { grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .kpi { min-height:76px; padding:10px 12px; border-radius:12px; background:var(--surface); border-color:var(--border); box-shadow:var(--shadow-soft); }
+    .kpi .label { font-size:9px; color:var(--text-soft); }
+    .kpi .value { margin-top:5px; font-size:18px; }
+    .kpi .sub { margin-top:3px; font-size:9px; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .report-workspace { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-soft); overflow:hidden; }
+    .workspace-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; padding:10px 12px 0; }
+    .workspace-heading h2, .dashboard-heading h2 { margin:2px 0 0; font-size:16px; color:var(--text-strong); }
+    .workspace-help { color:var(--text-soft); font-size:9px; }
+    .report-workspace .tabs { margin:6px 10px 8px; }
+    .report-workspace .panel { border:0; border-top:1px solid var(--border); border-radius:0; box-shadow:none; margin:0; background:var(--surface); }
+    .panel-head { padding:9px 10px; border-color:var(--border); }
+    .field { background:var(--surface); color:var(--text-strong); border-color:var(--border); padding:7px 8px; font-size:10px; min-width:150px; }
+    .table-scroll { max-height: calc(100vh - 315px); min-height:320px; background:var(--surface); }
+    th { background:var(--table-head); color:var(--text-soft); border-color:var(--border); }
+    th, td { border-bottom-color:var(--border); }
+    tbody tr:hover { background:var(--row-hover); }
+    tbody tr.selected { background:var(--selected-row) !important; }
+    .pager { border-top:1px solid var(--border); background:var(--surface-2); }
+
+    .dashboard-heading { display:flex; align-items:flex-end; justify-content:space-between; margin:2px 0 10px; }
+    .dashboard-heading p { margin:3px 0 0; color:var(--text-soft); font-size:10px; }
+    .chart-filter-bar { border-color:var(--border); background:var(--surface); box-shadow:var(--shadow-soft); }
+    .chart-filter-info > strong, .chart-filter-empty { color:var(--text-soft); }
+    .filter-chip { background:var(--surface-2); border-color:var(--border); }
+    .charts-grid { gap:10px; }
+    .chart-card { min-height:260px; background:var(--surface); border-color:var(--border); box-shadow:var(--shadow-soft); }
+    .chart-card h3 { color:var(--text-strong); }
+    .chart-granularity { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
+
+    /* ===== Dashboard gerencial enxuto ===== */
+    .dashboard-kpis {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin:0 0 10px;
+    }
+    .dashboard-kpi {
+      min-height:84px;
+      padding:11px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      box-shadow:var(--shadow-soft);
+    }
+    .dashboard-kpi .label {
+      color:var(--text-soft);
+      font-size:8.5px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+    .dashboard-kpi .value {
+      margin-top:5px;
+      font-size:19px;
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-.02em;
+      color:var(--text-strong);
+    }
+    .dashboard-kpi .sub {
+      margin-top:5px;
+      color:var(--text-soft);
+      font-size:9px;
+      line-height:1.25;
+    }
+    .dashboard-kpi.exposure .value { color:#dc2626; }
+    .dashboard-kpi.open .value { color:#ef4444; }
+    .dashboard-kpi.treatment .value { color:#0284c7; }
+    .dashboard-kpi.prevention .value { color:#16a34a; }
+    .dashboard-kpi.claim .value { color:#9333ea; }
+    .dashboard-kpi.production .value { color:#059669; }
+    .dashboard-kpi.time .value { color:#0f766e; }
+
+    .dashboard-filter-panel {
+      display:flex;
+      align-items:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:0 0 10px;
+      padding:9px 10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      box-shadow:var(--shadow-soft);
+    }
+    .dashboard-filter-field {
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:145px;
+      flex:1 1 145px;
+    }
+    .dashboard-filter-field.period { min-width:165px; }
+    .dashboard-filter-field label {
+      color:var(--text-soft);
+      font-size:8px;
+      line-height:1;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .dashboard-filter-field select {
+      width:100%;
+      min-width:0;
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:7px 8px;
+      background:var(--surface);
+      color:var(--text-strong);
+      font-size:9.5px;
+      font-weight:700;
+    }
+    .dashboard-filter-actions { flex:0 0 auto; }
+    .dashboard-charts {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:18px;
+    }
+    .dashboard-charts .chart-card {
+      min-height:300px;
+      margin:0;
+    }
+    .dashboard-charts .chart-wrap { height:270px; }
+    .dashboard-charts .chart-scroll-inner { height:270px; }
+
+    .chart-scroll-y {
+      width:100%;
+      max-height:340px;
+      overflow-y:auto;
+      overflow-x:hidden;
+      padding-right:4px;
+      scrollbar-gutter:stable;
+    }
+    .chart-scroll-y-inner {
+      position:relative;
+      width:100%;
+      min-height:270px;
+      height:270px;
+    }
+    .chart-scroll-y::-webkit-scrollbar { width:8px; }
+    .chart-scroll-y::-webkit-scrollbar-track { background:var(--surface-2); border-radius:999px; }
+    .chart-scroll-y::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+    .chart-scroll-y::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+    .chart-general-total {
+      flex:0 0 auto;
+      align-self:flex-start;
+      margin-left:auto;
+      padding:6px 9px;
+      border:1px solid var(--border);
+      border-radius:9px;
+      background:var(--surface-2);
+      color:var(--text-strong);
+      font-size:9px;
+      line-height:1.25;
+      font-weight:900;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .chart-general-total small {
+      display:block;
+      margin-bottom:2px;
+      color:var(--text-soft);
+      font-size:7.5px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .chart-head-actions {
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-end;
+      gap:7px;
+      flex-wrap:wrap;
+      margin-left:auto;
+    }
+
+    /* ===== Visual executivo dos gráficos ===== */
+    .dashboard-charts .chart-card {
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .dashboard-charts .chart-card-head {
+      padding-bottom:6px;
+    }
+    .dashboard-charts .chart-card-title h3 {
+      font-size:13px;
+      letter-spacing:-.01em;
+    }
+    .dashboard-charts .chart-hint {
+      max-width:760px;
+      line-height:1.35;
+    }
+    .status-chart-wrap {
+      height:210px !important;
+      display:flex;
+      align-items:center;
+    }
+    .status-chart-wrap canvas { max-height:185px; }
+
+    .team-production-panel {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      padding:8px 2px 2px;
+    }
+    .team-member-card {
+      position:relative;
+      min-height:148px;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+      cursor:pointer;
+      transition:transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+      overflow:hidden;
+    }
+    .team-member-card:hover {
+      transform:translateY(-1px);
+      border-color:#94a3b8;
+      box-shadow:0 8px 20px rgba(15,23,42,.08);
+    }
+    .team-member-card.active {
+      outline:2px solid rgba(37,99,235,.18);
+      border-color:#60a5fa;
+    }
+    .team-member-name {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:var(--text-strong);
+    }
+    .team-member-dot {
+      width:9px;height:9px;border-radius:999px;flex:0 0 auto;
+    }
+    .team-member-value {
+      margin-top:13px;
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:-.035em;
+      color:var(--text-strong);
+    }
+    .team-member-caption {
+      margin-top:3px;
+      font-size:9px;
+      color:var(--text-soft);
+      font-weight:700;
+    }
+    .team-member-stats {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:13px;
+    }
+    .team-member-stat {
+      padding:7px 8px;
+      border-radius:8px;
+      background:var(--surface);
+      border:1px solid var(--border);
+    }
+    .team-member-stat small {
+      display:block;
+      color:var(--text-soft);
+      font-size:7px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .team-member-stat strong {
+      display:block;
+      margin-top:2px;
+      color:var(--text-strong);
+      font-size:11px;
+    }
+    .team-member-bar {
+      height:5px;
+      margin-top:12px;
+      border-radius:999px;
+      background:var(--border);
+      overflow:hidden;
+    }
+    .team-member-bar > span {
+      display:block;
+      height:100%;
+      border-radius:999px;
+    }
+    .team-production-empty {
+      grid-column:1/-1;
+      padding:34px 12px;
+      text-align:center;
+      color:var(--text-soft);
+      border:1px dashed var(--border);
+      border-radius:12px;
+    }
+    @media (max-width:760px) {
+      .team-production-panel { grid-template-columns:1fr; }
+    }
+
+    @media (max-width:1200px) {
+      .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .dashboard-charts { grid-template-columns:1fr; }
+    }
+    @media (max-width:700px) {
+      .dashboard-kpis { grid-template-columns:1fr; }
+      .dashboard-filter-field { min-width:100%; }
+    }
+
+    .btn { background:var(--surface); color:var(--text-strong); border-color:var(--border); }
+    .btn-soft { background:var(--primary-soft); color:#3b82f6; }
+
+    /* Mais destaque para as ações somente no tema claro, sem alterar tamanhos */
+    body[data-theme="light"] .btn-primary {
+      background:#2563eb; color:#fff; border-color:#2563eb;
+      box-shadow:0 2px 7px rgba(37,99,235,.16);
+    }
+    body[data-theme="light"] .btn-primary:hover { background:#1d4ed8; border-color:#1d4ed8; }
+    body[data-theme="light"] .btn-soft {
+      background:#dbeafe; color:#1d4ed8; border-color:#93c5fd;
+    }
+    body[data-theme="light"] .btn-soft:hover { background:#bfdbfe; border-color:#60a5fa; }
+    body[data-theme="light"] .btn-claim {
+      background:#f3e8ff; color:#6d28d9; border-color:#c4b5fd;
+    }
+    body[data-theme="light"] .btn-claim:hover { background:#e9d5ff; border-color:#a78bfa; }
+    body[data-theme="light"] .btn-treatment { background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; }
+    body[data-theme="light"] .btn-treatment:hover { background:#bae6fd; border-color:#38bdf8; }
+    body[data-theme="light"] .btn-crc {
+      background:#fff7d6; color:#92400e; border-color:#fbbf24;
+    }
+    body[data-theme="light"] .btn-crc:hover { background:#fef3c7; border-color:#f59e0b; }
+    body[data-theme="light"] .btn-lost {
+      background:#f1f5f9; color:#334155; border-color:#94a3b8;
+    }
+    body[data-theme="light"] .btn-lost:hover { background:#e2e8f0; border-color:#64748b; }
+
+    body[data-theme="dark"] .btn-primary { background:#2563eb; color:white; border-color:#2563eb; }
+    body[data-theme="dark"] .btn-claim { background:#2a1743; color:#c4b5fd; border-color:#5b3a83; }
+    body[data-theme="dark"] .btn-treatment { background:#0c2a3a; color:#7dd3fc; border-color:#075985; }
+    body[data-theme="dark"] .btn-crc { background:#3a2e0f; color:#fcd34d; border-color:#6b5513; }
+    body[data-theme="dark"] .btn-lost { background:#1e293b; color:#cbd5e1; border-color:#334155; }
+    body[data-theme="dark"] .tab { background:var(--surface); border-color:var(--border); color:var(--text-soft); }
+    body[data-theme="dark"] .tab.active { background:#172554; color:#93c5fd; border-color:#1d4ed8; }
+    body[data-theme="dark"] tr.crc-priority { background:#302a12; box-shadow:inset 4px 0 0 #f59e0b; }
+    body[data-theme="dark"] tr.crc-priority:hover { background:#3a3214; }
+    body[data-theme="dark"] tr.crc-priority.selected { background:var(--selected-row) !important; }
+
+    .notice.app-toast { position:fixed; right:16px; bottom:16px; z-index:2000; width:min(420px,calc(100vw - 32px)); margin:0; display:none; background:var(--surface); color:var(--text-strong); border:1px solid var(--border); box-shadow:0 18px 50px rgba(15,23,42,.22); }
+    .notice.app-toast.show { display:flex; }
+    .notice.app-toast.ok { border-color:#86efac; }
+    .notice.app-toast.error { border-color:#fca5a5; }
+    .notice.app-toast.warn { border-color:#fcd34d; }
+    .toast-actions { display:flex; align-items:center; gap:6px; }
+    #apiStatus { display:none; }
+
+    @media (max-width:1600px) {
+      .work-toolbar { grid-template-columns:minmax(260px, 300px) minmax(0,1fr); }
+      .toolbar-actions { gap:5px; }
+      .toolbar-group { gap:3px; padding:4px; }
+      .toolbar-group .btn { padding:5px 6px; font-size:8.8px; }
+      .toolbar-label { display:none; }
+    }
+
+    @media (max-width:1450px) {
+      .app-header { grid-template-columns:minmax(190px,.8fr) auto minmax(170px,.8fr); }
+      .kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
+    @media (max-width:1050px) {
+      .app-header { grid-template-columns:1fr auto; height:auto; }
+      .view-switch { grid-row:2; grid-column:1 / -1; justify-self:start; }
+      .header-tools { grid-column:2; grid-row:1; }
+      .work-toolbar { grid-template-columns:1fr; }
+      .compact-upload { width:100%; }
+      .toolbar-actions { justify-content:flex-start; flex-wrap:wrap; }
+      .table-scroll { max-height:calc(100vh - 390px); }
+    }
+    @media (max-width:760px) {
+      .app-header { position:sticky; top:0; padding:8px; }
+      .app-header .brand p { display:none; }
+      .header-tools .icon-text-btn { padding:6px 8px; font-size:9px; }
+      main { padding:8px; }
+      .view-switch { width:100%; }
+      .view-btn { flex:1; }
+      .toolbar-actions { display:grid; grid-template-columns:1fr; }
+      .toolbar-group { flex-wrap:wrap; }
+      .toolbar-group .btn { flex:1 1 auto; }
+      .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .kpi { min-height:72px; }
+      .workspace-help { display:none; }
+      .table-scroll { max-height:60vh; min-height:300px; }
+    }
+
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <div class="brand">
+      <h1>Pendência Temporária</h1>
+      <p>Gestão operacional e acompanhamento de pendências</p>
+    </div>
+    <nav class="view-switch" aria-label="Navegação principal">
+      <button class="view-btn active" id="btnViewOperation" type="button">Operação</button>
+      <button class="view-btn" id="btnViewDashboard" type="button">Dashboard</button>
+    </nav>
+    <div class="header-tools">
+      <button class="icon-text-btn" id="btnRefresh" type="button" title="Atualizar dados do Google Planilhas">Atualizar</button>
+      <span class="api-dot connecting" id="apiDot" title="Conectando ao Google Planilhas" aria-label="Status da integração"></span>
+      <button class="icon-text-btn" id="btnTheme" type="button" title="Alternar tema">Escuro</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="notice" class="notice app-toast" aria-live="polite">
+      <div>
+        <strong id="noticeTitle"></strong><br>
+        <small id="noticeText"></small>
+      </div>
+      <div class="toast-actions">
+        <button class="btn hidden" id="btnApiTest" type="button">Testar API</button>
+        <span id="apiStatus" class="badge warn">API não conectada</span>
+      </div>
+    </div>
+
+    <section id="operationView" class="app-view">
+      <section class="work-toolbar">
+        <div class="compact-upload">
+          <div class="compact-upload-copy">
+            <span class="toolbar-eyebrow">BASE EXCEL</span>
+            <span class="file-name" id="fileName">Nenhum relatório carregado</span>
+          </div>
+          <label class="btn upload-btn" for="fileInput">Carregar relatório</label>
+          <input class="file-input visually-hidden" type="file" id="fileInput" accept=".xlsx,.xls" />
+        </div>
+        <div class="toolbar-actions">
+          <div class="toolbar-group resolution-group">
+            <span class="toolbar-label">Resolução</span>
+            <button class="btn btn-primary" id="btnResolveSelected" disabled>Resolver selecionado</button>
+            <button class="btn btn-soft" id="btnManual">Resolver (Manual)</button>
+          </div>
+          <div class="toolbar-group treatment-group">
+            <span class="toolbar-label">Tratativa cliente</span>
+            <button class="btn btn-treatment" id="btnTreatmentSelected" disabled>Enviar para tratativa</button>
+            <button class="btn btn-treatment" id="btnManualTreatment">Tratativa (Manual)</button>
+          </div>
+          <div class="toolbar-group claim-group">
+            <span class="toolbar-label">Sinistro</span>
+            <button class="btn btn-claim" id="btnClaimSelected" disabled>Encaminhar sinistro</button>
+            <button class="btn btn-claim" id="btnManualClaim">Encaminhar sinistro (Manual)</button>
+          </div>
+          <div class="toolbar-group signal-group">
+            <span class="toolbar-label">Sinalizações</span>
+            <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
+            <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpis">
+<article class="kpi">
+<div class="label">Valor total conciliado</div>
+<div class="value" id="kpiTotal">R$ 0,00</div>
+<div class="sub" id="kpiTotalSub">União Excel + Resolvidos + Sinistros</div>
+</article>
+<article class="kpi open">
+<div class="label">Valor em aberto</div>
+<div class="value" id="kpiOpen">R$ 0,00</div>
+<div class="sub" id="kpiOpenSub">0 registros</div>
+</article>
+<article class="kpi treatment">
+<div class="label">Valor em tratativa</div>
+<div class="value" id="kpiTreatment">R$ 0,00</div>
+<div class="sub" id="kpiTreatmentSub">0 registros</div>
+</article>
+<article class="kpi resolved">
+<div class="label">Valor resolvido</div>
+<div class="value" id="kpiResolved">R$ 0,00</div>
+<div class="sub" id="kpiResolvedSub">0 registros</div>
+</article>
+<article class="kpi claim">
+<div class="label">Valor em sinistro</div>
+<div class="value" id="kpiClaim">R$ 0,00</div>
+<div class="sub" id="kpiClaimSub">0 registros</div>
+</article>
+<article class="kpi treatment">
+<div class="label">% em tratativa por valor</div>
+<div class="value" id="kpiTreatmentPct">0,00%</div>
+<div class="sub" id="kpiTreatmentPctSub">Tratativa ÷ total conciliado</div>
+</article>
+<article class="kpi">
+<div class="label">% resolvido por valor</div>
+<div class="value" id="kpiResolvedPct">0,00%</div>
+<div class="sub" id="kpiResolvedPctSub">Resolvido ÷ total conciliado</div>
+</article>
+<article class="kpi claim">
+<div class="label">% sinistro por valor</div>
+<div class="value" id="kpiClaimPct">0,00%</div>
+<div class="sub" id="kpiClaimPctSub">Sinistro ÷ total conciliado</div>
+</article>
+</section>
+
+      <section class="report-workspace">
+        <div class="workspace-heading">
+          <div>
+            <span class="toolbar-eyebrow">RELATÓRIO OPERACIONAL</span>
+            <h2>Registros</h2>
+          </div>
+          <span class="workspace-help">Selecione uma linha em Em aberto ou Em tratativa para habilitar as ações acima.</span>
+        </div>
+        <nav class="tabs">
+<button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
+<button class="tab" data-tab="treatment">Em tratativa <span id="treatmentCount">0</span></button>
+<button class="tab" data-tab="resolved">Resolvidos <span id="resolvedCount">0</span></button>
+<button class="tab" data-tab="claims">Sinistros <span id="claimCount">0</span></button>
+</nav>
+        <section class="panel" id="panelOpen">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente..."/>
+<select class="field" id="openClient"><option value="">Todos os clientes</option></select>
+<select class="field" id="openRange"><option value="">Todos os ranges</option></select>
+<select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
+</div>
+<small id="openSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="open">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataOcorrencia" title="Ordenar por Data Ocorrência">Data Ocorrência</th><th class="sortable" data-sort="cliente" title="Ordenar por Cliente">Cliente</th><th class="sortable" data-sort="destino" title="Ordenar por Destino">Destino</th><th class="sortable" data-sort="uf" title="Ordenar por UF">UF</th><th class="sortable" data-sort="range" title="Ordenar por Range">Range</th><th class="sortable" data-sort="prioridade" title="Ordenar por Prioridade">Prioridade</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th>
+</tr></thead>
+<tbody id="openBody"></tbody>
+</table>
+<div class="empty" id="openEmpty">Carregue um relatório para visualizar as pendências.</div>
+</div>
+<div class="pager"><button class="btn" id="openPrev">Anterior</button><span id="openPageLabel">Página 1</span><button class="btn" id="openNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelTreatment">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="treatmentSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..."/>
+<select class="field" id="treatmentReason"><option value="">Todos os motivos</option></select>
+</div>
+<small id="treatmentSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="treatment">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th>
+<th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th>
+<th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th>
+<th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th>
+<th class="sortable" data-sort="motivo" title="Ordenar por Motivo">Motivo da tratativa</th>
+<th class="sortable" data-sort="responsavel" title="Ordenar por Responsável">Responsável pela falha</th>
+<th class="sortable" data-sort="quemEnviou" title="Ordenar por Quem enviou">Quem enviou</th>
+<th class="sortable" data-sort="dataTratativa" title="Ordenar por Data de entrada">Entrada na tratativa</th>
+</tr></thead>
+<tbody id="treatmentBody"></tbody>
+</table>
+<div class="empty" id="treatmentEmpty">Nenhum registro aguardando a segunda etapa de tratativa.</div>
+</div>
+<div class="pager"><button class="btn" id="treatmentPrev">Anterior</button><span id="treatmentPageLabel">Página 1</span><button class="btn" id="treatmentNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelResolved">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="resolvedSearch" placeholder="Pesquisar Nota, Coleta, resolução..."/>
+<select class="field" id="resolvedFilter"><option value="">Todas as resoluções</option></select>
+<select class="field" id="resolvedPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+<select class="field" id="resolvedSolver"><option value="">Quem resolveu: todos</option></select>
+</div>
+<small id="resolvedSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="resolved">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="resolucao" title="Ordenar por Resolução">Resolução</th><th class="sortable" data-sort="responsavel" title="Ordenar por Responsável pela falha">Responsável pela falha</th><th class="sortable" data-sort="dataResolucao" title="Ordenar por Data Resolução">Data Resolução</th><th class="sortable" data-sort="quemResolveu" title="Ordenar por Quem resolveu">Quem resolveu</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+</tr></thead>
+<tbody id="resolvedBody"></tbody>
+</table>
+<div class="empty" id="resolvedEmpty">Nenhum caso resolvido encontrado no Google Planilhas.</div>
+</div>
+<div class="pager"><button class="btn" id="resolvedPrev">Anterior</button><span id="resolvedPageLabel">Página 1</span><button class="btn" id="resolvedNext">Próxima</button></div>
+</section>
+        <section class="panel hidden" id="panelClaims">
+<div class="panel-head">
+<div class="filters">
+<input class="field" id="claimSearch" placeholder="Pesquisar Nota, Coleta, Vocativo..."/>
+<select class="field" id="claimPresence"><option value="">Todos os status</option><option value="sim">Ainda consta na pendência</option><option value="nao">Fora da pendência atual</option></select>
+</div>
+<small id="claimSummary">0 registros</small>
+</div>
+<div class="table-scroll">
+<table data-sort-table="claim">
+<thead><tr>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataSinistro" title="Ordenar por Data Sinistro">Data Sinistro</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+</tr></thead>
+<tbody id="claimBody"></tbody>
+</table>
+<div class="empty" id="claimEmpty">Nenhum caso encaminhado para sinistro.</div>
+</div>
+<div class="pager"><button class="btn" id="claimPrev">Anterior</button><span id="claimPageLabel">Página 1</span><button class="btn" id="claimNext">Próxima</button></div>
+</section>
+      </section>
+    </section>
+
+    <section id="dashboardView" class="app-view hidden">
+      <div class="dashboard-heading">
+        <div>
+          <span class="toolbar-eyebrow">ANÁLISE GERENCIAL</span>
+          <h2>Dashboard</h2>
+          <p>Exposição financeira, causa raiz, falhas operacionais, produtividade da equipe e prevenção de perdas.</p>
+        </div>
+      </div>
+
+      <section class="dashboard-kpis">
+        <article class="dashboard-kpi exposure">
+          <div class="label">Exposição ativa</div>
+          <div class="value" id="dKpiExposure">R$ 0,00</div>
+          <div class="sub" id="dKpiExposureSub">Em aberto + em tratativa</div>
+        </article>
+        <article class="dashboard-kpi open">
+          <div class="label">Em aberto</div>
+          <div class="value" id="dKpiOpen">R$ 0,00</div>
+          <div class="sub" id="dKpiOpenSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi treatment">
+          <div class="label">Em tratativa</div>
+          <div class="value" id="dKpiTreatment">R$ 0,00</div>
+          <div class="sub" id="dKpiTreatmentSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi prevention">
+          <div class="label">Prevenção de perdas</div>
+          <div class="value" id="dKpiPrevention">R$ 0,00</div>
+          <div class="sub" id="dKpiPreventionSub">Valor resolvido no período</div>
+        </article>
+        <article class="dashboard-kpi claim">
+          <div class="label">Sinistro</div>
+          <div class="value" id="dKpiClaim">R$ 0,00</div>
+          <div class="sub" id="dKpiClaimSub">0 registros</div>
+        </article>
+        <article class="dashboard-kpi">
+          <div class="label">Taxa de solução</div>
+          <div class="value" id="dKpiSolveRate">0,00%</div>
+          <div class="sub" id="dKpiSolveRateSub">Resolvidos ÷ cenário analisado</div>
+        </article>
+        <article class="dashboard-kpi production">
+          <div class="label">Produção da equipe</div>
+          <div class="value" id="dKpiProduction">0</div>
+          <div class="sub" id="dKpiProductionSub">Casos resolvidos no período</div>
+        </article>
+        <article class="dashboard-kpi time">
+          <div class="label">Tempo médio de tratativa</div>
+          <div class="value" id="dKpiAvgTreatment">—</div>
+          <div class="sub" id="dKpiAvgTreatmentSub">Tratativas concluídas</div>
+        </article>
+      </section>
+
+      <section class="dashboard-filter-panel" aria-label="Filtros do dashboard">
+        <div class="dashboard-filter-field period">
+          <label for="dashPeriod">Período da produção</label>
+          <select id="dashPeriod"><option value="">Todo o histórico</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashClient">Cliente</label>
+          <select id="dashClient"><option value="">Todos os clientes</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashVocativo">Vocativo</label>
+          <select id="dashVocativo"><option value="">Todos os vocativos</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashStatus">Status</label>
+          <select id="dashStatus">
+            <option value="">Todos os status</option>
+            <option>Em aberto</option>
+            <option>Em tratativa</option>
+            <option>Resolvido</option>
+            <option>Sinistro</option>
+          </select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashReason">Causa / motivo</label>
+          <select id="dashReason"><option value="">Todas as causas</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashResponsible">Responsável pela falha</label>
+          <select id="dashResponsible"><option value="">Todos os responsáveis</option></select>
+        </div>
+        <div class="dashboard-filter-field">
+          <label for="dashSolver">Quem resolveu</label>
+          <select id="dashSolver"><option value="">Toda a equipe</option></select>
+        </div>
+        <div class="dashboard-filter-actions">
+          <button class="btn" id="btnClearDashboardFilters" type="button">Limpar filtros</button>
+        </div>
+      </section>
+
+      <div class="chart-filter-bar">
+        <div class="chart-filter-info">
+          <strong>Seleções dos gráficos:</strong>
+          <span class="chart-filter-empty" id="chartFilterChips">Nenhum filtro selecionado. Clique em uma barra ou fatia para cruzar os demais gráficos.</span>
+        </div>
+        <button class="btn" disabled id="btnClearChartFilters">Limpar seleções</button>
+      </div>
+
+      <section class="dashboard-charts">
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Cenário atual por status</h3>
+              <div class="chart-hint">Distribuição percentual do valor atual. Passe o mouse para ver valor, quantidade e participação de cada status.</div>
+            </div>
+            <div class="chart-general-total" id="chartStatusTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
+            </div>
+          </div>
+          <div class="chart-wrap status-chart-wrap"><canvas id="chartStatus"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Evolução operacional</h3>
+              <div class="chart-hint">Evolução por período com composição do status atual. O valor total de cada período aparece no topo; detalhes ficam no hover.</div>
+            </div>
+            <div class="chart-head-actions">
+              <div class="chart-general-total" id="chartOccurrenceTotal">
+                <small>Total geral</small>
+                R$ 0,00 • 0 registros
+              </div>
+              <select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
+                <option value="day">Dia</option>
+                <option value="week">Semana</option>
+                <option selected value="month">Mês</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-scroll">
+            <div class="chart-scroll-inner" id="chartOccurrenceInner"><canvas id="chartOccurrence"></canvas></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Causa raiz — impacto financeiro</h3>
+              <div class="chart-hint">Ranking das causas por impacto financeiro. As cores mostram o status atual; detalhes de valor e quantidade ficam no hover.</div>
+            </div>
+            <div class="chart-general-total" id="chartReasonTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
+            </div>
+          </div>
+          <div class="chart-scroll-y">
+            <div class="chart-scroll-y-inner"><canvas id="chartReason"></canvas></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Impacto por responsável pela falha</h3>
+              <div class="chart-hint">Ranking dos responsáveis por impacto financeiro. As barras mostram a composição por status atual, sem duplicidade.</div>
+            </div>
+            <div class="chart-general-total" id="chartResponsibleTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
+            </div>
+          </div>
+          <div class="chart-scroll-y">
+            <div class="chart-scroll-y-inner"><canvas id="chartResponsible"></canvas></div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Produção da equipe</h3>
+              <div class="chart-hint">Comparativo executivo de prevenção de perdas, casos resolvidos e média por caso.</div>
+            </div>
+            <div class="chart-general-total" id="chartSolverTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
+            </div>
+          </div>
+          <div class="team-production-panel" id="teamProductionPanel"></div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <h3>Prevenção de perdas ao longo do tempo</h3>
+              <div class="chart-hint">Prevenção de perdas por período e por pessoa. O total do período aparece acima do grupo de barras.</div>
+            </div>
+            <div class="chart-head-actions">
+              <div class="chart-general-total" id="chartResolutionDateTotal">
+                <small>Total geral</small>
+                R$ 0,00 • 0 registros
+              </div>
+              <select aria-label="Agrupamento da prevenção de perdas" class="chart-granularity" id="resolutionGranularity">
+                <option value="day">Dia</option>
+                <option value="week">Semana</option>
+                <option selected value="month">Mês</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-scroll">
+            <div class="chart-scroll-inner" id="chartResolutionDateInner"><canvas id="chartResolutionDate"></canvas></div>
+          </div>
+        </article>
+      </section>
+    </section>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div><h2 id="modalTitle">Registrar resolução</h2><div class="hint" id="modalHint">Os dados serão gravados diretamente no Google Planilhas.</div></div>
+      <button class="close-x" id="modalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="resolutionForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="fNota">Nota</label><input id="fNota" required /></div>
+          <div class="form-group"><label for="fColeta">Coleta</label><input id="fColeta" required /></div>
+          <div class="form-group"><label for="fValor">Valor Nota</label><input id="fValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="fVocativo">Vocativo</label><input id="fVocativo" required /></div>
+          <div class="form-group full"><label for="fResolution">Resolução</label><select id="fResolution" required><option value="">Selecione...</option></select></div>
+          <div class="form-group full"><label for="fSolvedBy">Quem resolveu <span style="font-weight:400">(obrigatório)</span></label><select id="fSolvedBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint" id="solvedByHint">Essa informação será gravada para todos os casos resolvidos.</div></div>
+          <div class="form-group full hidden" id="responsibleGroup">
+            <label for="fResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label>
+            <input id="fResponsible" placeholder="Digite livremente o nome da pessoa" />
+            <div class="hint">O responsável pela falha agora é informado na etapa de Tratativa Cliente.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="modalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">Salvar no Google Planilhas</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<div class="modal-backdrop hidden" id="treatmentModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="treatmentModalTitle">
+    <div class="modal-head">
+      <div><h2 id="treatmentModalTitle">Encaminhar para tratativa</h2><div class="hint">Esta é a primeira etapa. O registro só poderá ser finalizado depois como “Material localizado no cliente”.</div></div>
+      <button class="close-x" id="treatmentModalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="treatmentForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="tNota">Nota</label><input id="tNota" required /></div>
+          <div class="form-group"><label for="tColeta">Coleta</label><input id="tColeta" required /></div>
+          <div class="form-group"><label for="tValor">Valor Nota</label><input id="tValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="tVocativo">Vocativo</label><input id="tVocativo" required /></div>
+          <div class="form-group full"><label for="tReason">Motivo da tratativa</label><select id="tReason" required><option value="">Selecione...</option></select></div>
+          <div class="form-group"><label for="tSentBy">Quem está enviando <span style="font-weight:400">(obrigatório)</span></label><select id="tSentBy" required><option value="">Selecione Italo ou Bruna...</option></select><div class="hint">Esse usuário será usado automaticamente como “Quem resolveu” se a tratativa for concluída como resolvida.</div></div>
+          <div class="form-group"><label for="tResponsible">Responsável pela falha <span style="font-weight:400">(opcional)</span></label><input id="tResponsible" placeholder="Digite livremente o nome da pessoa" /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="treatmentModalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-treatment" id="btnSaveTreatment">Enviar para tratativa</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="claimModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="claimModalTitle">
+    <div class="modal-head">
+      <div><h2 id="claimModalTitle">Encaminhar para sinistro</h2><div class="hint">Nota + Coleta será gravada na aba Sinistros do Google Planilhas.</div></div>
+      <button class="close-x" id="claimModalClose" aria-label="Fechar">×</button>
+    </div>
+    <form id="claimForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="sNota">Nota</label><input id="sNota" required /></div>
+          <div class="form-group"><label for="sColeta">Coleta</label><input id="sColeta" required /></div>
+          <div class="form-group"><label for="sValor">Valor Nota</label><input id="sValor" inputmode="decimal" placeholder="0,00" required /></div>
+          <div class="form-group"><label for="sVocativo">Vocativo</label><input id="sVocativo" required /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="claimModalCancel">Cancelar</button>
+        <button type="submit" class="btn btn-claim" id="btnSaveClaim">Salvar em Sinistros</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const CONFIG = {
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwVsrVdvLRPF-H5m1CdEgCy7duSAD9XtxyAQT4nLCm3cs9G_Z5HJYhlbkre9KPRrbce/exec',
+    PAGE_SIZE: 100,
+    REALTIME_INTERVAL_MS: 5000
+  };
+
+  const state = {
+    apiReady: false,
+    reportLoaded: false,
+    reportRows: [],
+    resolvedRows: [],
+    resolvedMap: new Map(),
+    claimRows: [],
+    claimMap: new Map(),
+    treatmentRows: [],
+    treatmentMap: new Map(),
+    crcMap: new Map(),
+    notLocatedMap: new Map(),
+    resolutions: [],
+    responsibleResolutions: [],
+    treatmentReasons: [],
+    solvers: [],
+    selectedKey: null,
+    selectedSource: null,
+    openPage: 1,
+    resolvedPage: 1,
+    treatmentPage: 1,
+    claimPage: 1,
+    realtimeTimer: null,
+    realtimeSyncInFlight: false,
+    remoteSignature: '',
+    tableSort: {
+      open: { key: null, dir: 'asc' },
+      resolved: { key: null, dir: 'asc' },
+      treatment: { key: null, dir: 'asc' },
+      claim: { key: null, dir: 'asc' }
+    },
+    charts: {},
+    occurrenceGranularity: 'month',
+    resolutionGranularity: 'month',
+    resolutionModalMode: 'manual',
+    resolutionEditKey: null,
+    claimModalMode: 'manual',
+    claimEditKey: null,
+    treatmentModalMode: 'manual',
+    dashboardFilters: {
+      period: '',
+      client: '',
+      vocativo: '',
+      status: '',
+      reason: '',
+      responsible: '',
+      solver: ''
+    },
+    chartFilters: {
+      status: new Set(),
+      resolution: new Set(),
+      reason: new Set(),
+      responsible: new Set(),
+      solver: new Set(),
+      sender: new Set(),
+      vocativo: new Set(),
+      occurrencePeriod: new Set(),
+      resolutionPeriod: new Set()
+    }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const moneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pctFmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const compactMoneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
+  if (window.ChartDataLabels) Chart.register(window.ChartDataLabels);
+  const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const cleanText = (v) => String(v ?? '').trim();
+  const keyOf = (nota, coleta) => `${cleanText(nota)}||${cleanText(coleta)}`;
+  const dateFmt = new Intl.DateTimeFormat('pt-BR');
+  const monthFmt = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+
+  function parseDateValue(value) {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + value * 86400000);
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    const text = cleanText(value);
+    if (!text) return null;
+    let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    match = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+    const d = new Date(text);
+    return Number.isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function parseDateTimeValue(value) {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return new Date(value.getTime());
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + value * 86400000);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const text = cleanText(value);
+    if (!text) return null;
+    let m = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+    m = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+    const d = new Date(text);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function isoDateLocal(date) {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  function addDays(date, days) { const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); d.setDate(d.getDate() + days); return d; }
+  function startOfWeekMonday(date) { const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; }
+
+  function bucketInfo(dateValue, granularity) {
+    const date = parseDateValue(dateValue);
+    if (!date) return { key: 'NONE', label: 'Sem data', sort: 9e15 };
+    if (granularity === 'month') {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      return { key: `M:${isoDateLocal(start)}`, label: monthFmt.format(start).replace('.', ''), sort: start.getTime() };
+    }
+    if (granularity === 'week') {
+      const start = startOfWeekMonday(date), end = addDays(start, 6);
+      const sy = String(start.getFullYear()).slice(-2), ey = String(end.getFullYear()).slice(-2);
+      const startLabel = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}/${sy}`;
+      const endLabel = `${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
+      return { key: `W:${isoDateLocal(start)}`, label: `${startLabel} a ${endLabel}`, sort: start.getTime() };
+    }
+    return { key: `D:${isoDateLocal(date)}`, label: dateFmt.format(date), sort: date.getTime() };
+  }
+
+  function bucketLabelFromKey(key) {
+    if (key === 'NONE') return 'Sem data';
+    const [prefix, raw] = String(key).split(':');
+    const date = parseDateValue(raw);
+    if (!date) return key;
+    if (prefix === 'M') return monthFmt.format(date).replace('.', '');
+    if (prefix === 'W') {
+      const end = addDays(date, 6);
+      const sy = String(date.getFullYear()).slice(-2), ey = String(end.getFullYear()).slice(-2);
+      return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${sy} a ${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}/${ey}`;
+    }
+    return dateFmt.format(date);
+  }
+
+  function parseMoney(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    let s = cleanText(value).replace(/R\$/gi, '').replace(/\s/g, '');
+    if (!s) return 0;
+    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (s.includes(',')) s = s.replace(',', '.');
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  let noticeTimer = null;
+  function setApiIndicator(status, title = '') {
+    const dot = $('apiDot');
+    if (!dot) return;
+    dot.className = `api-dot ${status}`;
+    dot.title = title || (status === 'ok' ? 'Google Planilhas conectado' : status === 'connecting' ? 'Conectando ao Google Planilhas' : 'Falha na integração com Google Planilhas');
+  }
+
+  function setNotice(type, title, text) {
+    const n = $('notice');
+    if (!n) return;
+    $('noticeTitle').textContent = title || '';
+    $('noticeText').textContent = text || '';
+    const badge = $('apiStatus');
+    if (badge) {
+      badge.className = `badge ${type === 'ok' ? 'ok' : 'warn'}`;
+      badge.textContent = type === 'ok' ? 'API conectada' : 'API não conectada';
+    }
+    const canTest = type === 'error' && cleanText(CONFIG.APPS_SCRIPT_URL) && !CONFIG.APPS_SCRIPT_URL.includes('SEU_DEPLOYMENT_ID');
+    if ($('btnApiTest')) $('btnApiTest').classList.toggle('hidden', !canTest);
+
+    // Carregamento do Excel e conexão normal não ocupam espaço na tela.
+    const silent = title === 'Relatório carregado' || title === 'Google Planilhas conectado';
+    clearTimeout(noticeTimer);
+    n.className = `notice app-toast ${type}`;
+    if (silent) return;
+    n.classList.add('show');
+    noticeTimer = setTimeout(() => n.classList.remove('show'), type === 'error' ? 7000 : 3500);
+  }
+
+  function setAppView(view) {
+    const dashboard = view === 'dashboard';
+    $('operationView').classList.toggle('hidden', dashboard);
+    $('dashboardView').classList.toggle('hidden', !dashboard);
+    $('btnViewOperation').classList.toggle('active', !dashboard);
+    $('btnViewDashboard').classList.toggle('active', dashboard);
+    if (dashboard) requestAnimationFrame(() => renderCharts());
+  }
+
+  function applyTheme(theme) {
+    const dark = theme === 'dark';
+    document.body.dataset.theme = dark ? 'dark' : 'light';
+    localStorage.setItem('pendencia-theme', dark ? 'dark' : 'light');
+    if ($('btnTheme')) $('btnTheme').textContent = dark ? 'Claro' : 'Escuro';
+    if (window.Chart) {
+      Chart.defaults.color = dark ? '#cbd5e1' : '#475569';
+      Chart.defaults.borderColor = dark ? 'rgba(148,163,184,.18)' : 'rgba(100,116,139,.16)';
+      if (!$('dashboardView')?.classList.contains('hidden')) requestAnimationFrame(() => { rebuildDashboardFilters(); renderDashboardKpis(); renderCharts(); });
+    }
+  }
+
+  function getAppsScriptBase() {
+    const base = cleanText(CONFIG.APPS_SCRIPT_URL);
+    if (!base || base.includes('SEU_DEPLOYMENT_ID') || !base.endsWith('/exec')) throw new Error('Configure APPS_SCRIPT_URL com a URL /exec do Apps Script no index.html.');
+    return base;
+  }
+
+  let jsonpSeq = 0;
+  function apiGet(action, timeoutMs = 20000) {
+    const base = getAppsScriptBase();
+    return new Promise((resolve, reject) => {
+      const callback = `__gasJsonp_${Date.now()}_${++jsonpSeq}`;
+      const script = document.createElement('script');
+      let finished = false;
+      const cleanup = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        try { delete window[callback]; } catch (_) { window[callback] = undefined; }
+        script.remove();
+      };
+      window[callback] = payload => {
+        cleanup();
+        if (!payload || payload.ok === false) return reject(new Error(payload?.error || 'O Apps Script retornou uma resposta inválida.'));
+        resolve(payload);
+      };
+      script.onerror = () => { cleanup(); reject(new Error('O Apps Script não respondeu. Confirme a implantação como Aplicativo da Web e a permissão de acesso.')); };
+      const timer = setTimeout(() => { cleanup(); reject(new Error('Tempo esgotado ao consultar o Google Apps Script.')); }, timeoutMs);
+      script.src = `${base}?action=${encodeURIComponent(action)}&callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  function normalizeResolvedRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = {
+        nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
+        resolucao: cleanText(r.resolucao), responsavel: cleanText(r.responsavel), dataResolucao: cleanText(r.dataResolucao),
+        quemResolveu: cleanText(r.quemResolveu), key: keyOf(r.nota, r.coleta)
+      };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
+    }
+    return [...byKey.values()];
+  }
+
+  function normalizeClaimRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = { nota:cleanText(r.nota), coleta:cleanText(r.coleta), valorNota:parseMoney(r.valorNota), vocativo:cleanText(r.vocativo), dataSinistro:cleanText(r.dataSinistro), key:keyOf(r.nota,r.coleta) };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
+    }
+    return [...byKey.values()];
+  }
+
+  function normalizeTreatmentRows(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const row = {
+        nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
+        motivo: cleanText(r.motivo), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
+        statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao), quemEnviou: cleanText(r.quemEnviou),
+        key: keyOf(r.nota, r.coleta)
+      };
+      if (row.nota && row.coleta) byKey.set(row.key, row);
+    }
+    return [...byKey.values()];
+  }
+
+  function normalizeKeyMap(rows) {
+    const map = new Map();
+    for (const r of rows || []) {
+      const nota = cleanText(r.nota), coleta = cleanText(r.coleta);
+      if (nota && coleta) map.set(keyOf(nota,coleta), { nota, coleta });
+    }
+    return map;
+  }
+
+  function getRemoteSignature(payload) {
+    return JSON.stringify({
+      resolvidos: payload?.resolvidos || [],
+      sinistros: payload?.sinistros || [],
+      tratativas: payload?.tratativas || [],
+      prioridadeCrc: payload?.prioridadeCrc || [],
+      naoLocalizado: payload?.naoLocalizado || [],
+      resolutions: payload?.resolutions || [],
+      responsibleResolutions: payload?.responsibleResolutions || [],
+      treatmentReasons: payload?.treatmentReasons || [],
+      solvers: payload?.solvers || []
+    });
+  }
+
+  function applyBootstrap(payload, render = true) {
+    state.remoteSignature = getRemoteSignature(payload);
+    state.resolutions = payload.resolutions || [];
+    state.responsibleResolutions = payload.responsibleResolutions || [];
+    state.treatmentReasons = payload.treatmentReasons || [];
+    state.solvers = payload.solvers || [];
+    state.resolvedRows = normalizeResolvedRows(payload.resolvidos || []);
+    state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
+    state.claimRows = normalizeClaimRows(payload.sinistros || []);
+    state.claimMap = new Map(state.claimRows.map(r => [r.key, r]));
+    state.treatmentRows = normalizeTreatmentRows(payload.tratativas || []);
+    state.treatmentMap = new Map(state.treatmentRows.map(r => [r.key, r]));
+    state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
+    state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
+    fillResolutionSelectors();
+    rebuildDashboardFilters();
+    if (render) rebuildView();
+  }
+
+  async function refreshGoogleData(render = true) {
+    const payload = await apiGet('bootstrap');
+    applyBootstrap(payload, render);
+    return payload;
+  }
+
+  async function syncRealtime() {
+    if (!state.apiReady || state.realtimeSyncInFlight || document.hidden) return;
+    state.realtimeSyncInFlight = true;
+    try {
+      const payload = await apiGet('bootstrap');
+      const nextSignature = getRemoteSignature(payload);
+      if (nextSignature !== state.remoteSignature) {
+        applyBootstrap(payload, false);
+        rebuildView();
+      }
+      setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
+    } catch (err) {
+      setApiIndicator('error', 'Falha temporária na sincronização automática');
+      console.warn('Falha na sincronização automática:', err);
+    } finally {
+      state.realtimeSyncInFlight = false;
+    }
+  }
+
+  function startRealtimeSync() {
+    if (state.realtimeTimer) clearInterval(state.realtimeTimer);
+    state.realtimeTimer = setInterval(syncRealtime, CONFIG.REALTIME_INTERVAL_MS);
+  }
+
+  async function connectApi() {
+    setApiIndicator('connecting', 'Conectando ao Google Planilhas');
+    try {
+      await refreshGoogleData(false);
+      state.apiReady = true;
+      rebuildView();
+      startRealtimeSync();
+      setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
+      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Tratativas, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
+    } catch (err) {
+      state.apiReady = false;
+      setApiIndicator('error', 'Não foi possível conectar ao Google Planilhas');
+      rebuildView();
+      setNotice('error', 'Não foi possível conectar ao Google Apps Script', err.message);
+    }
+  }
+
+  async function postAndConfirm(payload, predicate, failureMessage) {
+    const base = getAppsScriptBase();
+    await fetch(base, { method:'POST', mode:'no-cors', cache:'no-store', body:JSON.stringify(payload) });
+    let lastError = null;
+    for (let attempt=0; attempt<8; attempt++) {
+      await wait(attempt === 0 ? 450 : 700);
+      try {
+        await refreshGoogleData(false);
+        if (predicate()) { rebuildView(); return true; }
+      } catch (err) { lastError = err; }
+    }
+    throw new Error(lastError?.message || failureMessage || 'O envio foi feito, mas não foi possível confirmar a gravação no Google Planilhas.');
+  }
+
+  function fillResolutionSelectors() {
+    $('fResolution').innerHTML = '<option value="">Selecione...</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    const historicalResolutions = [...new Set([...state.resolutions, ...state.resolvedRows.map(r=>cleanText(r.resolucao)).filter(Boolean)])];
+    $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + historicalResolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('fSolvedBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('tReason').innerHTML = '<option value="">Selecione...</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('tSentBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('treatmentReason').innerHTML = '<option value="">Todos os motivos</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  }
+
+  $('fileInput').addEventListener('change', async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if ($('fileName')) $('fileName').textContent = file.name;
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type:'array', cellDates:true });
+      const sheetName = workbook.SheetNames.includes('Export') ? 'Export' : workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval:'', raw:true });
+      const required = ['Nota','Coleta','Valor Nota','Vocativo'];
+      const headers = rows.length ? Object.keys(rows[0]) : [];
+      const missing = required.filter(h => !headers.includes(h));
+      if (missing.length) throw new Error(`Colunas obrigatórias não encontradas: ${missing.join(', ')}`);
+      const byKey = new Map();
+      let duplicateLines = 0, valueConflicts = 0;
+      for (const row of rows) {
+        const nota = cleanText(row['Nota']), coleta = cleanText(row['Coleta']);
+        if (!nota || !coleta) continue;
+        const key = keyOf(nota, coleta), value = parseMoney(row['Valor Nota']);
+        if (!byKey.has(key)) {
+          byKey.set(key, { ...row, __key:key, __nota:nota, __coleta:coleta, __valor:value, __vocativo:cleanText(row['Vocativo']), __dataOcorrencia:parseDateValue(row['Data Ocorrencia']), __duplicateCount:1, __valueConflict:false });
+        } else {
+          duplicateLines++;
+          const current = byKey.get(key);
+          current.__duplicateCount++;
+          if (Math.abs(current.__valor - value) > .005) { current.__valueConflict = true; valueConflicts++; current.__valor = Math.max(current.__valor, value); }
+          for (const [field,val] of Object.entries(row)) if (!cleanText(current[field]) && cleanText(val)) current[field] = val;
+          if (!current.__dataOcorrencia) current.__dataOcorrencia = parseDateValue(row['Data Ocorrencia']);
+        }
+      }
+      state.reportRows = [...byKey.values()];
+      state.reportLoaded = true;
+      state.selectedKey = null;
+      state.openPage = 1;
+      rebuildFilters();
+      rebuildDashboardFilters();
+      rebuildView();
+      const detail = `${rows.length.toLocaleString('pt-BR')} linhas lidas; ${state.reportRows.length.toLocaleString('pt-BR')} registros únicos Nota + Coleta. Duplicidades são desconsideradas nas quantidades e valores` + (valueConflicts ? `; ${valueConflicts} divergências de valor consolidadas em um único registro.` : '.');
+      setNotice(state.apiReady ? 'ok' : 'warn', 'Relatório carregado', detail);
+    } catch (err) { setNotice('error','Erro ao carregar o Excel',err.message); }
+  });
+
+  function rebuildFilters() {
+    const clients = [...new Set(state.reportRows.map(r => cleanText(r['Cliente'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    const ranges = [...new Set(state.reportRows.map(r => cleanText(r['Range de Dias'])).filter(Boolean))];
+    const priorities = [...new Set(state.reportRows.map(r => cleanText(r['Prioridade'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v=>`<option>${esc(v)}</option>`).join('');
+    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v=>`<option>${esc(v)}</option>`).join('');
+    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v=>`<option>${esc(v)}</option>`).join('');
+  }
+
+  const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
+  const reasonLabel = r => cleanText(r.causalReason) || (
+    r.status === 'claim'
+      ? (cleanText(r.resolucao) || cleanText(r.treatmentReason))
+      : r.status === 'resolved'
+        ? cleanText(r.resolucao)
+        : r.status === 'treatment'
+          ? cleanText(r.treatmentReason)
+          : ''
+  );
+  const chartFilterDefs = {
+    status: { label:'Status', getter:r => statusLabel(r.status) },
+    resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
+    reason: { label:'Motivo', getter:r => reasonLabel(r) },
+    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO' },
+    solver: { label:'Quem resolveu', getter:r => cleanText(r.quemResolveu) || 'Não informado' },
+    sender: { label:'Quem enviou', getter:r => cleanText(r.treatmentSender) || 'Não informado' },
+    vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
+    occurrencePeriod: {
+      label:'Período operacional',
+      getter:r => bucketInfo(r.statusDate, state.occurrenceGranularity).key
+    },
+    resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
+  };
+
+
+  function dashboardPeriodKey(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function dashboardPeriodLabel(key) {
+    if (!key) return 'Todo o histórico';
+    const m = String(key).match(/^(\d{4})-(\d{2})$/);
+    if (!m) return key;
+    return monthFmt.format(new Date(Number(m[1]), Number(m[2])-1, 1));
+  }
+
+  function dashboardGlobalValue(row, field) {
+    if (field === 'client') return cleanText(row['Cliente']) || 'Sem informação';
+    if (field === 'vocativo') return cleanText(row.__vocativo) || 'Sem informação';
+    if (field === 'status') return statusLabel(row.status);
+    if (field === 'reason') return cleanText(row.causalReason) || reasonLabel(row);
+    if (field === 'responsible') return cleanText(row.causalResponsible || row.treatmentResponsible || row.responsavel) || 'NÃO IDENTIFICADO';
+    if (field === 'solver') return cleanText(row.quemResolveu) || 'Não informado';
+    return '';
+  }
+
+  function applyDashboardFilters(rows, excludeChartDimension=null, useProductionPeriod=false) {
+    let filtered = applyChartFilters(rows, excludeChartDimension);
+    const f = state.dashboardFilters;
+    filtered = filtered.filter(r => {
+      for (const field of ['client','vocativo','status','reason','responsible','solver']) {
+        const selected = cleanText(f[field]);
+        if (selected && dashboardGlobalValue(r, field) !== selected) return false;
+      }
+      if (useProductionPeriod && f.period) {
+        if (dashboardPeriodKey(r.dataResolucao || r.treatmentConclusion) !== f.period) return false;
+      }
+      return true;
+    });
+    return filtered;
+  }
+
+  function setDashboardSelectOptions(id, values, firstLabel, formatter=null) {
+    const el = $(id);
+    if (!el) return;
+    const current = el.value;
+    const unique = [...new Set((values || []).filter(Boolean))];
+    el.innerHTML = `<option value="">${esc(firstLabel)}</option>` + unique.map(v => `<option value="${esc(v)}">${esc(formatter ? formatter(v) : v)}</option>`).join('');
+    if ([...el.options].some(o => o.value === current)) el.value = current;
+  }
+
+  function rebuildDashboardFilters() {
+    const master = uniqueRowsByKey(getMasterRows());
+    const collator = (a,b)=>String(a).localeCompare(String(b),'pt-BR');
+    const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
+    const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
+    const causalRows = getCausalAnalysisRows();
+    const reasons = causalRows.map(r=>r.causalReason).filter(Boolean).sort(collator);
+    const responsibles = causalRows
+      .map(r=>cleanText(r.causalResponsible) || 'NÃO IDENTIFICADO')
+      .filter(Boolean)
+      .sort(collator);
+    const solvers = master.map(r=>cleanText(r.quemResolveu)).filter(Boolean).sort(collator);
+    const periods = master.filter(r=>r.status==='resolved' && r.dataResolucao).map(r=>dashboardPeriodKey(r.dataResolucao)).filter(Boolean).sort();
+
+    setDashboardSelectOptions('dashPeriod', periods, 'Todo o histórico', dashboardPeriodLabel);
+    setDashboardSelectOptions('dashClient', clients, 'Todos os clientes');
+    setDashboardSelectOptions('dashVocativo', vocativos, 'Todos os vocativos');
+    setDashboardSelectOptions('dashReason', reasons, 'Todas as causas');
+    setDashboardSelectOptions('dashResponsible', responsibles, 'Todos os responsáveis');
+    setDashboardSelectOptions('dashSolver', solvers, 'Toda a equipe');
+
+    for (const [field,id] of Object.entries({
+      period:'dashPeriod', client:'dashClient', vocativo:'dashVocativo', status:'dashStatus',
+      reason:'dashReason', responsible:'dashResponsible', solver:'dashSolver'
+    })) {
+      if ($(id)) $(id).value = state.dashboardFilters[field] || '';
+    }
+  }
+
+  function clearDashboardFilters() {
+    for (const key of Object.keys(state.dashboardFilters)) state.dashboardFilters[key] = '';
+    rebuildDashboardFilters();
+    if (!$('dashboardView')?.classList.contains('hidden')) {
+      renderDashboardKpis();
+      renderCharts();
+    }
+  }
+
+  function getCausalAnalysisRows() {
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    const keys = new Set([
+      ...state.treatmentMap.keys(),
+      ...state.resolvedMap.keys(),
+      ...state.claimMap.keys()
+    ]);
+
+    const rows = [];
+
+    for (const key of keys) {
+      const treatment = state.treatmentMap.get(key);
+      const resolved = state.resolvedMap.get(key);
+      const claim = state.claimMap.get(key);
+      const report = reportMap.get(key);
+
+      // Status atual/prioridade visual:
+      // 1) Sinistro  2) Resolvido  3) Tratativa Cliente
+      const status = claim ? 'claim' : resolved ? 'resolved' : treatment ? 'treatment' : null;
+      if (!status) continue;
+
+      // Motivo / causa raiz:
+      // Sinistro: procura primeiro a Resolução e depois o Motivo da tratativa.
+      // Resolvido: Resolução.
+      // Tratativa: Motivo da tratativa.
+      const causalReason =
+        status === 'claim'
+          ? (cleanText(resolved?.resolucao) || cleanText(treatment?.motivo))
+          : status === 'resolved'
+            ? cleanText(resolved?.resolucao)
+            : cleanText(treatment?.motivo);
+
+      // Estes dois gráficos só trabalham com casos onde a causa foi identificada.
+      if (!causalReason) continue;
+
+      // Responsável pela falha:
+      // Para Sinistro, se passou por Tratativas Cliente, esse responsável é priorizado.
+      // Caso contrário, usa o responsável que existir em Resolvidos.
+      const causalResponsible =
+        status === 'claim'
+          ? (cleanText(treatment?.responsavel) || cleanText(resolved?.responsavel))
+          : status === 'resolved'
+            ? (cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel))
+            : cleanText(treatment?.responsavel);
+
+      const currentSource =
+        status === 'claim' ? claim :
+        status === 'resolved' ? resolved :
+        treatment;
+
+      const value = Number(currentSource?.valorNota || 0);
+      const nota = cleanText(currentSource?.nota);
+      const coleta = cleanText(currentSource?.coleta);
+      const vocativo = cleanText(currentSource?.vocativo);
+
+      rows.push({
+        ...(report || {}),
+        __key:key,
+        key,
+        nota,
+        coleta,
+        __nota:nota,
+        __coleta:coleta,
+        valorNota:value,
+        __valor:value,
+        vocativo,
+        __vocativo:vocativo,
+
+        status,
+        causalReason,
+        causalResponsible,
+
+        // Mantém compatibilidade com os filtros/interações existentes.
+        resolucao:cleanText(resolved?.resolucao),
+        responsavel:causalResponsible,
+        treatmentReason:cleanText(treatment?.motivo),
+        treatmentResponsible:causalResponsible,
+
+        inClaim:!!claim,
+        inResolved:!!resolved,
+        inTreatment:!!treatment
+      });
+    }
+
+    return rows;
+  }
+
+  function getMasterRows() {
+    // Uma única linha canônica por Nota + Coleta em toda a aplicação.
+    // A etapa mais avançada do fluxo sempre prevalece:
+    // Sinistro > Resolvido > Em tratativa > Em aberto.
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    const keys = new Set([
+      ...reportMap.keys(),
+      ...state.treatmentMap.keys(),
+      ...state.resolvedMap.keys(),
+      ...state.claimMap.keys()
+    ]);
+
+    const rows = [];
+    for (const key of keys) {
+      const report = reportMap.get(key);
+      const treatment = state.treatmentMap.get(key);
+      const resolved = state.resolvedMap.get(key);
+      const claim = state.claimMap.get(key);
+
+      const status =
+        claim ? 'claim' :
+        resolved ? 'resolved' :
+        treatment ? 'treatment' :
+        'open';
+
+      // A fonte principal do registro acompanha o status atual.
+      const currentSource =
+        status === 'claim' ? claim :
+        status === 'resolved' ? resolved :
+        status === 'treatment' ? treatment :
+        report;
+
+      if (!currentSource) continue;
+
+      const nota = cleanText(
+        currentSource.nota ??
+        report?.__nota
+      );
+      const coleta = cleanText(
+        currentSource.coleta ??
+        report?.__coleta
+      );
+
+      const value =
+        status === 'claim' ? Number(claim?.valorNota || 0) :
+        status === 'resolved' ? Number(resolved?.valorNota || 0) :
+        status === 'treatment' ? Number(treatment?.valorNota || 0) :
+        Number(report?.__valor || 0);
+
+      const vocativo =
+        status === 'claim' ? cleanText(claim?.vocativo) :
+        status === 'resolved' ? cleanText(resolved?.vocativo) :
+        status === 'treatment' ? cleanText(treatment?.vocativo) :
+        cleanText(report?.__vocativo);
+
+      const dataOcorrencia = report
+        ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia']))
+        : null;
+
+      const statusDate =
+        status === 'claim' ? cleanText(claim?.dataSinistro) :
+        status === 'resolved' ? cleanText(resolved?.dataResolucao) :
+        status === 'treatment' ? cleanText(treatment?.dataTratativa) :
+        dataOcorrencia;
+
+      rows.push({
+        ...(report || {}),
+        __key:key,
+        key,
+        __nota:nota,
+        __coleta:coleta,
+        nota,
+        coleta,
+        __valor:value,
+        valorNota:value,
+        __vocativo:vocativo,
+        vocativo,
+        status,
+        statusDate,
+
+        // Dados específicos das fontes, preservados para histórico e análises.
+        dataSinistro:cleanText(claim?.dataSinistro),
+        resolucao:cleanText(resolved?.resolucao),
+        responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel),
+        dataResolucao:cleanText(resolved?.dataResolucao),
+        quemResolveu:cleanText(resolved?.quemResolveu),
+
+        motivo:cleanText(treatment?.motivo),
+        dataTratativa:cleanText(treatment?.dataTratativa),
+        quemEnviou:cleanText(treatment?.quemEnviou),
+        treatmentReason:cleanText(treatment?.motivo),
+        treatmentResponsible:cleanText(treatment?.responsavel),
+        treatmentStatus:cleanText(treatment?.statusTratativa),
+        treatmentDate:cleanText(treatment?.dataTratativa),
+        treatmentConclusion:cleanText(treatment?.dataConclusao),
+        treatmentSender:cleanText(treatment?.quemEnviou),
+
+        __dataOcorrencia:dataOcorrencia,
+        stillPending:!!report,
+
+        // Flags históricas não alteram o status atual.
+        inResolved:!!resolved,
+        inClaim:!!claim,
+        inTreatment:!!treatment,
+
+        crcPriority:state.crcMap.has(key),
+        notLocated:state.notLocatedMap.has(key)
+      });
+    }
+
+    return rows;
+  }
+
+  // Garante que qualquer medição conte apenas uma vez cada combinação Nota + Coleta.
+  function uniqueRowsByKey(rows) {
+    const byKey = new Map();
+    for (const r of rows || []) {
+      const key = cleanText(r.__key || r.key || keyOf(r.__nota || r.nota, r.__coleta || r.coleta));
+      if (key && !byKey.has(key)) byKey.set(key, r);
+    }
+    return [...byKey.values()];
+  }
+
+  function applyChartFilters(rows, excludeDimension=null) {
+    return rows.filter(r => {
+      for (const [dimension, selected] of Object.entries(state.chartFilters)) {
+        if (dimension === excludeDimension || !selected.size) continue;
+        if (!selected.has(chartFilterDefs[dimension].getter(r))) return false;
+      }
+      return true;
+    });
+  }
+
+  function toggleChartFilter(dimension, value, alsoStatus=null) {
+    const selected = state.chartFilters[dimension];
+    if (selected.has(value)) selected.delete(value); else selected.add(value);
+    if (alsoStatus) { const s = state.chartFilters.status; if (!s.has(alsoStatus)) s.add(alsoStatus); }
+    state.openPage = state.resolvedPage = state.treatmentPage = state.claimPage = 1;
+    rebuildView();
+  }
+  function clearChartFilters() { Object.values(state.chartFilters).forEach(set=>set.clear()); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView(); }
+
+  function renderChartFilterChips() {
+    const holder = $('chartFilterChips'), chips=[];
+    for (const [dimension, selected] of Object.entries(state.chartFilters)) {
+      for (const value of selected) {
+        const displayValue = ['occurrencePeriod','resolutionPeriod'].includes(dimension) ? bucketLabelFromKey(value) : value;
+        chips.push(`<button type="button" class="filter-chip" data-dim="${esc(dimension)}" data-value="${esc(value)}" title="Remover filtro">${esc(chartFilterDefs[dimension].label)}: ${esc(displayValue)} ×</button>`);
+      }
+    }
+    holder.className = chips.length ? '' : 'chart-filter-empty';
+    holder.innerHTML = chips.length ? chips.join('') : 'Nenhuma seleção nos gráficos. Use os filtros acima ou clique em uma barra/fatia para cruzar o painel.';
+    $('btnClearChartFilters').disabled = !chips.length;
+  }
+
+  function getOpenRows(applyFilters=true) {
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open'));
+    if (!applyFilters) return rows;
+    const q = cleanText($('openSearch').value).toLowerCase(), client=$('openClient').value, range=$('openRange').value, priority=$('openPriority').value;
+    return rows.filter(r => {
+      if (client && cleanText(r['Cliente']) !== client) return false;
+      if (range && cleanText(r['Range de Dias']) !== range) return false;
+      if (priority && cleanText(r['Prioridade']) !== priority) return false;
+      if (q) {
+        const hay = [r.__nota,r.__coleta,r.__vocativo,r['Cliente'],r['Destino'],r['UF Destino'],r['Range de Dias'],r['Prioridade']].map(cleanText).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function getTreatmentRows(applyFilters=true) {
+    let rows = applyChartFilters(
+      uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='treatment')
+    );
+
+    if (!applyFilters) return rows;
+
+    const q=cleanText($('treatmentSearch').value).toLowerCase();
+    const reason=$('treatmentReason').value;
+
+    return rows.filter(r => {
+      if (reason && r.treatmentReason !== reason) return false;
+      if (
+        q &&
+        ![
+          r.nota,
+          r.coleta,
+          r.vocativo,
+          r.treatmentReason,
+          r.treatmentResponsible,
+          r.treatmentSender
+        ].join(' ').toLowerCase().includes(q)
+      ) return false;
+      return true;
+    });
+  }
+
+  function getResolvedRows(applyFilters=true) {
+    let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='resolved'));
+    if (!applyFilters) return rows;
+    const q=cleanText($('resolvedSearch').value).toLowerCase(), resolution=$('resolvedFilter').value, presence=$('resolvedPresence').value, solver=$('resolvedSolver').value;
+    return rows.filter(r => {
+      if (resolution && r.resolucao !== resolution) return false;
+      if (presence === 'sim' && !r.stillPending) return false;
+      if (presence === 'nao' && r.stillPending) return false;
+      if (solver && cleanText(r.quemResolveu) !== solver) return false;
+      if (q && ![r.nota,r.coleta,r.vocativo,r.resolucao,r.responsavel,r.quemResolveu].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function getClaimRows(applyFilters=true) {
+    let rows = applyChartFilters(
+      uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='claim')
+    );
+
+    if (!applyFilters) return rows;
+
+    const q=cleanText($('claimSearch').value).toLowerCase();
+    const presence=$('claimPresence').value;
+
+    return rows.filter(r => {
+      if (presence === 'sim' && !r.stillPending) return false;
+      if (presence === 'nao' && r.stillPending) return false;
+      if (q && ![r.nota,r.coleta,r.vocativo].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function rebuildView() {
+    renderChartFilterChips();
+    renderKpis();
+    renderDashboardKpis();
+    if (!$('dashboardView')?.classList.contains('hidden')) renderCharts();
+    renderOpenTable();
+    renderTreatmentTable();
+    renderResolvedTable();
+    renderClaimTable();
+    updateSelectedActions();
+  }
+
+  function renderKpis() {
+    const master=applyChartFilters(uniqueRowsByKey(getMasterRows()));
+    const open=master.filter(r=>r.status==='open'), treatment=master.filter(r=>r.status==='treatment'), resolved=master.filter(r=>r.status==='resolved'), claims=master.filter(r=>r.status==='claim');
+    const total=master.reduce((s,r)=>s+r.__valor,0), openValue=open.reduce((s,r)=>s+r.__valor,0), treatmentValue=treatment.reduce((s,r)=>s+r.__valor,0), resolvedValue=resolved.reduce((s,r)=>s+r.__valor,0), claimValue=claims.reduce((s,r)=>s+r.__valor,0);
+    const resolvedStill=resolved.filter(r=>r.stillPending).length, claimStill=claims.filter(r=>r.stillPending).length;
+    $('kpiTotal').textContent=moneyFmt.format(total);
+    $('kpiTotalSub').textContent=`${master.length.toLocaleString('pt-BR')} chaves únicas na união das bases`;
+    $('kpiOpen').textContent=moneyFmt.format(openValue); $('kpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros`;
+    $('kpiTreatment').textContent=moneyFmt.format(treatmentValue); $('kpiTreatmentSub').textContent=`${treatment.length.toLocaleString('pt-BR')} aguardando conclusão`;
+    $('kpiResolved').textContent=moneyFmt.format(resolvedValue); $('kpiResolvedSub').textContent=`${resolved.length.toLocaleString('pt-BR')} registros • ${resolvedStill.toLocaleString('pt-BR')} ainda no Excel`;
+    $('kpiClaim').textContent=moneyFmt.format(claimValue); $('kpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros • ${claimStill.toLocaleString('pt-BR')} ainda no Excel`;
+    $('kpiTreatmentPct').textContent=`${pctFmt.format(total ? treatmentValue/total*100 : 0)}%`; $('kpiTreatmentPctSub').textContent=`${moneyFmt.format(treatmentValue)} ÷ ${moneyFmt.format(total)}`;
+    $('kpiResolvedPct').textContent=`${pctFmt.format(total ? resolvedValue/total*100 : 0)}%`; $('kpiResolvedPctSub').textContent=`${moneyFmt.format(resolvedValue)} ÷ ${moneyFmt.format(total)}`;
+    $('kpiClaimPct').textContent=`${pctFmt.format(total ? claimValue/total*100 : 0)}%`; $('kpiClaimPctSub').textContent=`${moneyFmt.format(claimValue)} ÷ ${moneyFmt.format(total)}`;
+    $('openCount').textContent=open.length.toLocaleString('pt-BR');
+    $('treatmentCount').textContent=treatment.length.toLocaleString('pt-BR');
+    $('resolvedCount').textContent=resolved.length.toLocaleString('pt-BR');
+    $('claimCount').textContent=claims.length.toLocaleString('pt-BR');
+  }
+
+  function renderDashboardKpis() {
+    if (!$('dKpiExposure')) return;
+    const master = uniqueRowsByKey(getMasterRows());
+    const current = applyDashboardFilters(master);
+    const open = current.filter(r=>r.status==='open');
+    const treatment = current.filter(r=>r.status==='treatment');
+    const claims = current.filter(r=>r.status==='claim');
+    const resolvedCurrent = current.filter(r=>r.status==='resolved');
+
+    const productionRows = applyDashboardFilters(master.filter(r=>r.status==='resolved'), null, true);
+    const exposureValue = [...open,...treatment].reduce((s,r)=>s+Number(r.__valor||0),0);
+    const openValue = open.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const treatmentValue = treatment.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const preventionValue = productionRows.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const claimValue = claims.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const scenarioCount = open.length + treatment.length + resolvedCurrent.length + claims.length;
+    const solveRate = scenarioCount ? (resolvedCurrent.length / scenarioCount * 100) : 0;
+    const avgResolvedValue = productionRows.length ? preventionValue / productionRows.length : 0;
+
+    const concludedTreatments = applyDashboardFilters(
+      master.filter(r=>r.inTreatment && r.treatmentDate && r.treatmentConclusion),
+      null,
+      false
+    ).filter(r => !state.dashboardFilters.period || dashboardPeriodKey(r.treatmentConclusion) === state.dashboardFilters.period);
+
+    const durations = concludedTreatments.map(r=>{
+      const a=parseDateTimeValue(r.treatmentDate), b=parseDateTimeValue(r.treatmentConclusion);
+      return a && b && b>=a ? (b-a)/3600000 : null;
+    }).filter(v=>v!=null && Number.isFinite(v));
+    const avgHours = durations.length ? durations.reduce((s,v)=>s+v,0)/durations.length : null;
+    const avgTimeText = avgHours == null ? '—' : avgHours < 48 ? `${pctFmt.format(avgHours)} h` : `${pctFmt.format(avgHours/24)} dias`;
+    const periodText = state.dashboardFilters.period ? dashboardPeriodLabel(state.dashboardFilters.period) : 'todo o histórico';
+
+    $('dKpiExposure').textContent=moneyFmt.format(exposureValue);
+    $('dKpiExposureSub').textContent=`${(open.length+treatment.length).toLocaleString('pt-BR')} casos ativos`;
+    $('dKpiOpen').textContent=moneyFmt.format(openValue);
+    $('dKpiOpenSub').textContent=`${open.length.toLocaleString('pt-BR')} registros sem tratativa`;
+    $('dKpiTreatment').textContent=moneyFmt.format(treatmentValue);
+    $('dKpiTreatmentSub').textContent=`${treatment.length.toLocaleString('pt-BR')} registros em tratamento`;
+    $('dKpiPrevention').textContent=moneyFmt.format(preventionValue);
+    $('dKpiPreventionSub').textContent=`${productionRows.length.toLocaleString('pt-BR')} resolvidos • ${periodText}`;
+    $('dKpiClaim').textContent=moneyFmt.format(claimValue);
+    $('dKpiClaimSub').textContent=`${claims.length.toLocaleString('pt-BR')} registros em sinistro`;
+    $('dKpiSolveRate').textContent=`${pctFmt.format(solveRate)}%`;
+    $('dKpiSolveRateSub').textContent=`${resolvedCurrent.length.toLocaleString('pt-BR')} resolvidos de ${scenarioCount.toLocaleString('pt-BR')} casos`;
+    $('dKpiProduction').textContent=productionRows.length.toLocaleString('pt-BR');
+    $('dKpiProductionSub').textContent=productionRows.length ? `Média ${moneyFmt.format(avgResolvedValue)} por caso • ${periodText}` : `Nenhum caso resolvido • ${periodText}`;
+    $('dKpiAvgTreatment').textContent=avgTimeText;
+    $('dKpiAvgTreatmentSub').textContent=`${durations.length.toLocaleString('pt-BR')} tratativas concluídas • ${periodText}`;
+  }
+
+  function chartSelectionValues(id, labels) {
+    if (id === 'chartStatus') return null;
+    if (id === 'chartReason') return { dimension:'reason', values:labels };
+    if (id === 'chartSolver') return { dimension:'solver', values:labels };
+    if (id === 'chartResponsible') return { dimension:'responsible', values:labels };
+    if (id === 'chartOccurrence') return { dimension:'occurrencePeriod', values:labels };
+    if (id === 'chartResolutionDate') return { dimension:'resolutionPeriod', values:labels };
+    return null;
+  }
+
+  function chartRgb(id, datasetLabel, dataLabel='') {
+    const label = dataLabel || datasetLabel || '';
+    if (label === 'Em aberto' || datasetLabel === 'Em aberto') return [239,68,68];
+    if (label === 'Em tratativa' || datasetLabel === 'Em tratativa') return [14,165,233];
+    if (label === 'Resolvido' || datasetLabel === 'Resolvido') return [34,197,94];
+    if (label === 'Sinistro' || datasetLabel === 'Sinistro') return [168,85,247];
+    if (id === 'chartResolutionDate' || id === 'chartSolver') {
+      if (label === 'Italo' || datasetLabel === 'Italo') return [37,99,235];   // azul
+      if (label === 'Bruna' || datasetLabel === 'Bruna') return [249,115,22];  // laranja
+      return [100,116,139];
+    }
+    if (id === 'chartResponsible') return [249,115,22];
+    if (id === 'chartSender') return [14,165,233];
+    return [100,116,139];
+  }
+
+  function applyChartSelectionStyles(id, config) {
+    const labels = config?.data?.labels || [];
+    const info = chartSelectionValues(id, labels);
+    if (!info) return;
+    const selected = state.chartFilters[info.dimension];
+    const selectedDisplay = new Set(
+      [...(selected || [])].map(v => ['occurrencePeriod','resolutionPeriod'].includes(info.dimension) ? bucketLabelFromKey(v) : v)
+    );
+    const statusSelected = state.chartFilters.status;
+
+    (config.data.datasets || []).forEach(ds => {
+      const normal = [], hover = [], borders = [], widths = [];
+      labels.forEach((label, index) => {
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount','chartSolver'].includes(id) ? label : '');
+        let hasConstraint = false;
+        let matches = true;
+        if (selectedDisplay.size) {
+          hasConstraint = true;
+          matches = matches && selectedDisplay.has(label);
+        }
+        if (['chartReason','chartResponsible','chartOccurrence'].includes(id) && statusSelected.size) {
+          hasConstraint = true;
+          matches = matches && statusSelected.has(ds.label);
+        }
+        const alpha = !hasConstraint ? .82 : (matches ? .96 : .16);
+        normal.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
+        hover.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+        borders.push(`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${matches && hasConstraint ? 1 : .9})`);
+        widths.push(matches && hasConstraint ? 2.5 : 1.4);
+      });
+      ds.backgroundColor = normal;
+      ds.hoverBackgroundColor = hover;
+      ds.borderColor = borders;
+      ds.hoverBorderColor = labels.map((label) => {
+        const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount','chartSolver'].includes(id) ? label : '');
+        return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
+      });
+      ds.borderWidth = widths;
+      ds.hoverBorderWidth = widths.map(() => 2);
+    });
+  }
+
+  function makeChart(id, config) {
+    if (state.charts[id]) state.charts[id].destroy();
+    config.options = config.options || {};
+    config.options.animation = { duration:180 };
+    applyChartSelectionStyles(id, config);
+    state.charts[id] = new Chart($(id), config);
+  }
+
+  const chartMoneyTooltip = { callbacks:{ label:ctx => {
+    const raw=Number(ctx.raw||0), count=Number(ctx.dataset?._counts?.[ctx.dataIndex]||0);
+    const isDoughnut=['doughnut','pie'].includes(ctx.chart.config.type), multi=(ctx.chart.data.datasets||[]).length>1;
+    const total=isDoughnut ? (ctx.dataset.data||[]).reduce((s,v)=>s+Number(v||0),0) : multi ? ctx.chart.data.datasets.reduce((s,ds)=>s+Number(ds.data?.[ctx.dataIndex]||0),0) : 0;
+    const pct=total?raw/total*100:0, pctText=total?` (${pctFmt.format(pct)}%)`:'';
+    return `${ctx.dataset.label || ctx.label || ''}: ${moneyFmt.format(raw)}${pctText} • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
+  }}};
+  const chartCountTooltip = { callbacks:{ label:ctx => `${ctx.dataset.label || ctx.label || ''}: ${Number(ctx.raw||0).toLocaleString('pt-BR')} ${Number(ctx.raw||0)===1?'registro':'registros'}` }};
+  const horizontalBarDataLabels={
+    anchor:'end',align:'right',offset:5,clamp:true,clip:false,
+    formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
+    font:{size:9,weight:'800'},textAlign:'left',
+    color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155',
+    backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(17,24,39,.94)':'rgba(255,255,255,.94)',
+    borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
+  };
+  const stackedBarDataLabels={
+    anchor:'center',align:'center',clamp:true,clip:false,
+    display:ctx=>Math.abs(ctx.chart.getDatasetMeta(ctx.datasetIndex).data?.[ctx.dataIndex]?.width||0)>=72,
+    formatter:v=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
+    font:{size:9,weight:'800'},textAlign:'center',
+    color:()=>document.body.dataset.theme==='dark'?'#f8fafc':'#0f172a',
+    backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.92)',
+    borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
+  };
+  function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
+  function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?82:granularity==='week'?112:104; inner.style.width=`${Math.max(640,Math.max(1,bucketCount)*per)}px`;}
+  function sizeHorizontalBars(canvasId,labelCount){
+    const canvas=$(canvasId);
+    if(!canvas)return;
+    const holder=canvas.parentElement;
+    if(!holder)return;
+    const height=Math.max(270, 58 + Math.max(1,labelCount)*30);
+    holder.style.height=`${height}px`;
+    holder.style.minHeight=`${height}px`;
+  }
+
+  function stackedPairs(rows,getter,limit=null){
+    const map=new Map();
+    for(const r of rows){const label=cleanText(getter(r))||'Sem informação'; if(!map.has(label))map.set(label,{open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0}); const g=map.get(label); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`] += 1;}
+    let pairs=[...map.entries()].sort((a,b)=>(b[1].open+b[1].treatment+b[1].resolved+b[1].claim)-(a[1].open+a[1].treatment+a[1].resolved+a[1].claim)); if(limit)pairs=pairs.slice(0,limit); return pairs;
+  }
+  function temporalPairs(rows,dateGetter,granularity){const map=new Map(); for(const r of rows){const info=bucketInfo(dateGetter(r),granularity); if(!map.has(info.key))map.set(info.key,{...info,value:0,count:0}); map.get(info.key).value+=Number(r.__valor||0); map.get(info.key).count+=1;} return [...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort);}
+
+  const stackTopTotalsPlugin = {
+    id:'stackTopTotals',
+    afterDatasetsDraw(chart, args, opts){
+      const allowed = opts?.canvasIds || [];
+      if (allowed.length && !allowed.includes(chart.canvas?.id)) return;
+      const datasets = chart.data.datasets || [];
+      if (!datasets.length) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = '800 9px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
+
+      const labelCount = chart.data.labels?.length || 0;
+      for (let i=0;i<labelCount;i++){
+        let total=0, count=0, x=null, top=Infinity;
+        datasets.forEach((ds,dsIndex)=>{
+          total += Number(ds.data?.[i] || 0);
+          count += Number(ds._counts?.[i] || 0);
+          const el=chart.getDatasetMeta(dsIndex)?.data?.[i];
+          if(el){
+            if(Number.isFinite(el.x)) x=el.x;
+            if(Number.isFinite(el.y)) top=Math.min(top,el.y);
+          }
+        });
+        if(!total || x==null || !Number.isFinite(top)) continue;
+        const text=compactMoneyFmt.format(total);
+        const padX=4, h=16, w=ctx.measureText(text).width+padX*2;
+        const bx=x-w/2, by=Math.max(chart.chartArea.top+1,top-20);
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.94)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx,by,w,h,4); else ctx.rect(bx,by,w,h);
+        ctx.fill();
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'#e5e7eb':'#334155';
+        ctx.fillText(text,x,by+h-3);
+      }
+      ctx.restore();
+    }
+  };
+
+  const groupedPeriodTotalsPlugin = {
+    id:'groupedPeriodTotals',
+    afterDatasetsDraw(chart){
+      if(chart.canvas?.id!=='chartResolutionDate') return;
+      const datasets=chart.data.datasets||[];
+      const ctx=chart.ctx;
+      ctx.save();
+      ctx.font='800 9px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+
+      const count=chart.data.labels?.length||0;
+      for(let i=0;i<count;i++){
+        let total=0, centerX=0, visibleBars=0, top=Infinity;
+        datasets.forEach((ds,dsIndex)=>{
+          total+=Number(ds.data?.[i]||0);
+          const el=chart.getDatasetMeta(dsIndex)?.data?.[i];
+          if(el && Number(ds.data?.[i]||0)>0){
+            centerX+=el.x; visibleBars++;
+            top=Math.min(top,el.y);
+          }
+        });
+        if(!total || !visibleBars || !Number.isFinite(top)) continue;
+        centerX/=visibleBars;
+        const text=compactMoneyFmt.format(total);
+        const padX=4, h=16, w=ctx.measureText(text).width+padX*2;
+        const bx=centerX-w/2, by=Math.max(chart.chartArea.top+1,top-21);
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.94)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx,by,w,h,4); else ctx.rect(bx,by,w,h);
+        ctx.fill();
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'#e5e7eb':'#334155';
+        ctx.fillText(text,centerX,by+h-3);
+      }
+      ctx.restore();
+    }
+  };
+
+  function renderOccurrenceStatusChart(master){
+    const rows=applyDashboardFilters(master,'occurrencePeriod');
+    const occurrenceTotalValue=rows.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const occurrenceTotalCount=rows.length;
+    if($('chartOccurrenceTotal')){
+      $('chartOccurrenceTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(occurrenceTotalValue)} • ${occurrenceTotalCount.toLocaleString('pt-BR')} ${occurrenceTotalCount===1?'registro':'registros'}`;
+    }
+    const map=new Map();
+    for(const r of rows){
+      const info=bucketInfo(r.statusDate,state.occurrenceGranularity);
+      if(!map.has(info.key))map.set(info.key,{...info,open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0});
+      const g=map.get(info.key); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`]++;
+    }
+    const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
+    sizeTemporalChart('chartOccurrenceInner',pairs.length,state.occurrenceGranularity);
+    const defs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
+    makeChart('chartOccurrence',{
+      type:'bar',
+      plugins:[stackTopTotalsPlugin],
+      data:{labels,datasets:defs.map(([label,key])=>({
+        label,
+        data:pairs.map(x=>x[key]),
+        _counts:pairs.map(x=>x[`${key}Count`]),
+        stack:'total',
+        borderRadius:4,
+        borderSkipped:false,
+        maxBarThickness:54
+      }))},
+      options:{
+        maintainAspectRatio:false,
+        layout:{padding:{top:28,right:10,bottom:2,left:2}},
+        onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], status=defs[el.datasetIndex]?.[0]; if(key)toggleChartFilter('occurrencePeriod',key,status);},
+        scales:{
+          x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.occurrenceGranularity)},grid:{display:false}},
+          y:{stacked:true,beginAtZero:true,grace:'14%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.12)':'rgba(148,163,184,.16)'}}
+        },
+        plugins:{
+          legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
+          tooltip:chartMoneyTooltip,
+          datalabels:{display:false},
+          stackTopTotals:{canvasIds:['chartOccurrence']}
+        }
+      }
+    });
+  }
+
+  function renderResolutionDateBySolver(master){
+    const rows=applyDashboardFilters(master.filter(r=>r.status==='resolved'&&r.dataResolucao),'resolutionPeriod',true);
+    const resolutionDateTotalValue=rows.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const resolutionDateTotalCount=rows.length;
+    if($('chartResolutionDateTotal')){
+      $('chartResolutionDateTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(resolutionDateTotalValue)} • ${resolutionDateTotalCount.toLocaleString('pt-BR')} ${resolutionDateTotalCount===1?'registro':'registros'}`;
+    }
+    const solverLabels=[...new Set([...state.solvers, ...rows.map(r=>cleanText(r.quemResolveu)||'Não informado')])].filter(Boolean);
+    const map=new Map();
+    for(const r of rows){
+      const info=bucketInfo(r.dataResolucao,state.resolutionGranularity), solver=cleanText(r.quemResolveu)||'Não informado';
+      if(!map.has(info.key))map.set(info.key,{...info,bySolver:new Map()});
+      const bucket=map.get(info.key), cur=bucket.bySolver.get(solver)||{value:0,count:0};
+      cur.value+=Number(r.__valor||0); cur.count++; bucket.bySolver.set(solver,cur);
+    }
+    const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
+    sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
+    makeChart('chartResolutionDate',{
+      type:'bar',
+      plugins:[groupedPeriodTotalsPlugin],
+      data:{labels,datasets:solverLabels.map(solver=>({
+        label:solver,
+        data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
+        _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
+        maxBarThickness:40,
+        categoryPercentage:.66,
+        barPercentage:.78,
+        borderRadius:5,
+        borderSkipped:false
+      }))},
+      options:{
+        maintainAspectRatio:false,
+        layout:{padding:{top:28,right:10,bottom:2,left:2}},
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], key=keys[el.index], solver=solverLabels[el.datasetIndex];
+          if(key){toggleChartFilter('resolutionPeriod',key); if(solver)toggleChartFilter('solver',solver,'Resolvido');}
+        },
+        scales:{
+          x:{
+            offset:true,
+            ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.resolutionGranularity)},
+            grid:{display:false}
+          },
+          y:{beginAtZero:true,grace:'18%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}
+        },
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:chartMoneyTooltip,
+          datalabels:{display:false}
+        }
+      }
+    });
+  }
+
+  function renderCharts(){
+    if (!$('chartStatus')) return;
+    const master=uniqueRowsByKey(getMasterRows());
+    rebuildDashboardFilters();
+
+    // 1. Cenário atual por status
+    const statusBase=applyDashboardFilters(master,'status');
+    const statusDefs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
+    const statusGroups=statusDefs.map(([label,key])=>{
+      const rows=statusBase.filter(r=>r.status===key);
+      return {label,key,rows,value:rows.reduce((s,r)=>s+Number(r.__valor||0),0),count:rows.length};
+    });
+    const statusLabels=statusGroups.map(x=>x.label), vals=statusGroups.map(x=>x.value), counts=statusGroups.map(x=>x.count);
+    const statusTotalValue=statusBase.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const statusTotalCount=statusBase.length;
+    if($('chartStatusTotal')){
+      $('chartStatusTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(statusTotalValue)} • ${statusTotalCount.toLocaleString('pt-BR')} ${statusTotalCount===1?'registro':'registros'}`;
+    }
+    const statusPcts=vals.map(v=>statusTotalValue?Number(v)/statusTotalValue*100:0);
+    const statusColors={
+      'Em aberto':'rgba(239,68,68,.92)',
+      'Em tratativa':'rgba(14,165,233,.92)',
+      'Resolvido':'rgba(34,197,94,.92)',
+      'Sinistro':'rgba(168,85,247,.92)'
+    };
+    makeChart('chartStatus',{
+      type:'bar',
+      data:{
+        labels:['Cenário atual'],
+        datasets:statusGroups.map((g,index)=>({
+          label:g.label,
+          data:[statusPcts[index]],
+          _actualValues:[g.value],
+          _counts:[g.count],
+          stack:'status',
+          backgroundColor:statusColors[g.label],
+          borderColor:statusColors[g.label].replace('.92','1'),
+          borderWidth:1,
+          borderRadius:6,
+          borderSkipped:false,
+          barThickness:44
+        }))
+      },
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const status=statusGroups[els[0].datasetIndex]?.label;
+          if(status)toggleChartFilter('status',status);
+        },
+        scales:{
+          x:{
+            stacked:true,
+            min:0,max:100,
+            ticks:{callback:v=>`${v}%`,font:{size:9,weight:'700'}},
+            grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}
+          },
+          y:{stacked:true,display:false}
+        },
+        plugins:{
+          legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
+          tooltip:{callbacks:{label:ctx=>{
+            const ds=ctx.dataset, value=Number(ds._actualValues?.[ctx.dataIndex]||0), count=Number(ds._counts?.[ctx.dataIndex]||0), pct=Number(ctx.raw||0);
+            return `${ds.label}: ${moneyFmt.format(value)} (${pctFmt.format(pct)}%) • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
+          }}},
+          datalabels:{
+            display:ctx=>Number(ctx.raw||0)>=8,
+            formatter:(v)=>`${pctFmt.format(Number(v))}%`,
+            color:'#ffffff',
+            font:{size:10,weight:'900'}
+          }
+        }
+      }
+    });
+
+    // 2. Evolução operacional por Data Ocorrência
+    renderOccurrenceStatusChart(master);
+
+    // 3. Causa raiz / motivo operacional
+    // Universo: todos os registros que existem em Tratativas, Resolvidos ou Sinistros.
+    // Cada Nota + Coleta já vem canônica do master, portanto nunca duplica:
+    // Sinistro > Resolvido > Em tratativa.
+    const causalBase = getCausalAnalysisRows();
+    const reasonSource=applyDashboardFilters(causalBase,'reason');
+    const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
+    const reasonTotalValue=reasonSource.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const reasonTotalCount=reasonSource.length;
+    if($('chartReasonTotal')){
+      $('chartReasonTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(reasonTotalValue)} • ${reasonTotalCount.toLocaleString('pt-BR')} ${reasonTotalCount===1?'registro':'registros'}`;
+    }
+    sizeHorizontalBars('chartReason', reasonLabels.length);
+    makeChart('chartReason',{
+      type:'bar',
+      data:{labels:reasonLabels,datasets:[
+        {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22}
+      ]},
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], label=reasonLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
+          toggleChartFilter('reason',label,status);
+        },
+        scales:{
+          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
+        },
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:{display:false}}
+      }
+    });
+
+    // 4. Responsáveis pela falha
+    // Mesmo universo causal: Tratativas + Resolvidos + Sinistros, sempre 1 Nota + Coleta.
+    const responsibleBase=applyDashboardFilters(causalBase,'responsible');
+    const responsiblePairs=stackedPairs(
+      responsibleBase,
+      r=>cleanText(r.causalResponsible) || 'NÃO IDENTIFICADO'
+    ), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    const responsibleTotalValue=responsibleBase.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const responsibleTotalCount=responsibleBase.length;
+    if($('chartResponsibleTotal')){
+      $('chartResponsibleTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(responsibleTotalValue)} • ${responsibleTotalCount.toLocaleString('pt-BR')} ${responsibleTotalCount===1?'registro':'registros'}`;
+    }
+    sizeHorizontalBars('chartResponsible', responsibleLabels.length);
+    makeChart('chartResponsible',{
+      type:'bar',
+      data:{labels:responsibleLabels,datasets:[
+        {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22}
+      ]},
+      options:{
+        indexAxis:'y',
+        maintainAspectRatio:false,
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const el=els[0], label=responsibleLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
+          toggleChartFilter('responsible',label,status);
+        },
+        scales:{
+          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
+        },
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:{display:false}}
+      }
+    });
+
+    // 5. Produção da equipe
+    const solverBase=applyDashboardFilters(master.filter(r=>r.status==='resolved'),'solver',true), solverMap=new Map();
+    for(const r of solverBase){
+      const label=cleanText(r.quemResolveu)||'Não informado';
+      if(!solverMap.has(label))solverMap.set(label,{value:0,count:0});
+      const x=solverMap.get(label); x.value+=Number(r.__valor||0); x.count++;
+    }
+    const solverPairs=[...solverMap.entries()].sort((a,b)=>b[1].value-a[1].value);
+    const solverTotalValue=solverBase.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const solverTotalCount=solverBase.length;
+    if($('chartSolverTotal')){
+      $('chartSolverTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(solverTotalValue)} • ${solverTotalCount.toLocaleString('pt-BR')} ${solverTotalCount===1?'registro':'registros'}`;
+    }
+    const teamPanel=$('teamProductionPanel');
+    if(teamPanel){
+      const maxTeamValue=Math.max(1,...solverPairs.map(x=>x[1].value));
+      const selectedSolvers=state.chartFilters.solver || new Set();
+      const solverColor=name=>name==='Italo'?'#2563eb':name==='Bruna'?'#f97316':'#64748b';
+      teamPanel.innerHTML=solverPairs.length ? solverPairs.map(([name,data])=>{
+        const avg=data.count?data.value/data.count:0;
+        const pct=Math.max(4,Math.min(100,data.value/maxTeamValue*100));
+        const active=selectedSolvers.has(name)?' active':'';
+        const color=solverColor(name);
+        return `<button type="button" class="team-member-card${active}" data-solver="${esc(name)}" style="text-align:left;font:inherit;color:inherit">
+          <div class="team-member-name">
+            <span>${esc(name)}</span>
+            <span class="team-member-dot" style="background:${color}"></span>
+          </div>
+          <div class="team-member-value">${moneyFmt.format(data.value)}</div>
+          <div class="team-member-caption">prevenção de perdas</div>
+          <div class="team-member-stats">
+            <div class="team-member-stat"><small>Casos resolvidos</small><strong>${data.count.toLocaleString('pt-BR')}</strong></div>
+            <div class="team-member-stat"><small>Média por caso</small><strong>${moneyFmt.format(avg)}</strong></div>
+          </div>
+          <div class="team-member-bar"><span style="width:${pct}%;background:${color}"></span></div>
+        </button>`;
+      }).join('') : `<div class="team-production-empty">Nenhum caso resolvido no período selecionado.</div>`;
+      teamPanel.querySelectorAll('[data-solver]').forEach(btn=>btn.addEventListener('click',()=>toggleChartFilter('solver',btn.dataset.solver,'Resolvido')));
+    }
+
+    // 6. Prevenção de perdas no tempo
+    renderResolutionDateBySolver(master);
+  }
+
+  function sortSignalText(row) {
+    const labels = [];
+    const key = row.__key || row.key;
+    if (state.crcMap.has(key)) labels.push('Prioridade CRC');
+    if (state.notLocatedMap.has(key)) labels.push('Não localizado no cliente');
+    return labels.join(' | ');
+  }
+
+  function sortValue(table, row, key) {
+    switch (key) {
+      case 'nota': return cleanText(row.__nota ?? row.nota);
+      case 'coleta': return cleanText(row.__coleta ?? row.coleta);
+      case 'valor': return Number(row.__valor ?? row.valorNota ?? 0);
+      case 'vocativo': return cleanText(row.__vocativo ?? row.vocativo);
+      case 'dataOcorrencia': {
+        const d = row.__dataOcorrencia || parseDateValue(row['Data Ocorrencia']);
+        return d instanceof Date && !Number.isNaN(d.getTime()) ? d.getTime() : null;
+      }
+      case 'cliente': return cleanText(row['Cliente']);
+      case 'destino': return cleanText(row['Destino']);
+      case 'uf': return cleanText(row['UF Destino']);
+      case 'range': return cleanText(row['Range de Dias']);
+      case 'prioridade': return cleanText(row['Prioridade']);
+      case 'resolucao': return cleanText(row.resolucao);
+      case 'responsavel': return cleanText(row.responsavel);
+      case 'quemEnviou': return cleanText(row.quemEnviou || row.treatmentSender);
+      case 'dataResolucao': {
+        const d = parseDateValue(row.dataResolucao);
+        return d ? d.getTime() : null;
+      }
+      case 'dataSinistro': {
+        const d = parseDateValue(row.dataSinistro);
+        return d ? d.getTime() : null;
+      }
+      case 'quemResolveu': return cleanText(row.quemResolveu);
+      case 'motivo': return cleanText(row.motivo || row.treatmentReason);
+      case 'dataTratativa': {
+        const d = parseDateValue(row.dataTratativa || row.treatmentDate);
+        return d ? d.getTime() : null;
+      }
+      case 'sinalizacoes': return sortSignalText(row);
+      case 'statusAtual': {
+        const parts = [row.stillPending ? 'Ainda consta na pendência' : 'Fora da pendência atual'];
+        if (table === 'resolved' && row.inClaim) parts.push('Também em sinistro');
+        if (table === 'claim' && row.inResolved) parts.push('Também resolvido');
+        return parts.join(' | ');
+      }
+      default: return '';
+    }
+  }
+
+  function compareSortValues(a, b, dir) {
+    const aEmpty = a === null || a === undefined || a === '';
+    const bEmpty = b === null || b === undefined || b === '';
+    if (aEmpty && bEmpty) return 0;
+    if (aEmpty) return 1;
+    if (bEmpty) return -1;
+    let cmp = 0;
+    if (typeof a === 'number' && typeof b === 'number') cmp = a - b;
+    else cmp = String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    return dir === 'desc' ? -cmp : cmp;
+  }
+
+  function applyTableSort(rows, table) {
+    const cfg = state.tableSort[table];
+    if (!cfg || !cfg.key) {
+      if (table === 'open') return rows.sort((a,b)=>Number(b.crcPriority)-Number(a.crcPriority)||b.__valor-a.__valor);
+      return rows.sort((a,b)=>Number(b.stillPending)-Number(a.stillPending)||Number(b.valorNota||0)-Number(a.valorNota||0));
+    }
+    return rows.sort((a,b) => {
+      const cmp = compareSortValues(sortValue(table,a,cfg.key), sortValue(table,b,cfg.key), cfg.dir);
+      if (cmp) return cmp;
+      return keyOf(a.__nota ?? a.nota, a.__coleta ?? a.coleta).localeCompare(keyOf(b.__nota ?? b.nota, b.__coleta ?? b.coleta), 'pt-BR', { numeric:true });
+    });
+  }
+
+  function updateSortIndicators(table) {
+    document.querySelectorAll(`table[data-sort-table="${table}"] th[data-sort]`).forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      const cfg = state.tableSort[table];
+      if (cfg?.key === th.dataset.sort) th.classList.add(cfg.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+
+  function setTableSort(table, key) {
+    const cfg = state.tableSort[table];
+    if (!cfg) return;
+    if (cfg.key === key) cfg.dir = cfg.dir === 'asc' ? 'desc' : 'asc';
+    else { cfg.key = key; cfg.dir = 'asc'; }
+    if (table === 'open') { state.openPage = 1; renderOpenTable(); }
+    else if (table === 'resolved') { state.resolvedPage = 1; renderResolvedTable(); }
+    else if (table === 'treatment') { state.treatmentPage = 1; renderTreatmentTable(); }
+    else if (table === 'claim') { state.claimPage = 1; renderClaimTable(); }
+  }
+
+  function signalBadges(key){
+    const badges=[];
+    if(state.crcMap.has(key))badges.push('<span class="badge crc">Prioridade CRC</span>');
+    if(state.notLocatedMap.has(key))badges.push('<span class="badge lost">Não localizado no cliente</span>');
+    return badges.length?`<div class="signal-stack">${badges.join('')}</div>`:'—';
+  }
+
+  function renderOpenTable(){
+    const rows=applyTableSort(getOpenRows(true), 'open'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('open');
+    if(state.openPage>totalPages)state.openPage=totalPages; const start=(state.openPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('openEmpty').classList.toggle('hidden',rows.length>0);
+    $('openBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.__key)}" class="${state.selectedKey===r.__key?'selected ':''}${r.crcPriority?'crc-priority':''}">
+      <td>${esc(r.__nota)}</td><td>${esc(r.__coleta)}</td><td class="money">${moneyFmt.format(r.__valor)}</td><td>${esc(r.__vocativo)}</td><td>${esc(r.__dataOcorrencia?dateFmt.format(r.__dataOcorrencia):'Sem data')}</td><td>${esc(r['Cliente'])}</td><td>${esc(r['Destino'])}</td><td>${esc(r['UF Destino'])}</td><td>${esc(r['Range de Dias'])}</td><td>${esc(r['Prioridade'])}</td><td>${signalBadges(r.__key)}</td>
+    </tr>`).join('');
+    $('openSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.__valor,0))}`; $('openPageLabel').textContent=`Página ${state.openPage} de ${totalPages}`; $('openPrev').disabled=state.openPage<=1; $('openNext').disabled=state.openPage>=totalPages;
+  }
+
+  function renderTreatmentTable(){
+    const rows=applyTableSort(getTreatmentRows(true), 'treatment'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('treatment');
+    if(state.treatmentPage>totalPages)state.treatmentPage=totalPages; const start=(state.treatmentPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('treatmentEmpty').classList.toggle('hidden',rows.length>0);
+    $('treatmentBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.key)}" class="${state.selectedSource==='treatment'&&state.selectedKey===r.key?'selected ':''}${r.crcPriority?'crc-priority':''}">
+      <td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td>
+      <td>${esc(r.treatmentReason)}</td><td>${esc(r.treatmentResponsible||'—')}</td><td>${esc(r.quemEnviou||'—')}</td>
+      <td>${esc(r.treatmentDate&&parseDateValue(r.treatmentDate)?dateFmt.format(parseDateValue(r.treatmentDate)):'Sem data')}</td>
+    </tr>`).join('');
+    $('treatmentSummary').textContent=`${rows.length.toLocaleString('pt-BR')} aguardando conclusão • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
+    $('treatmentPageLabel').textContent=`Página ${state.treatmentPage} de ${totalPages}`;
+    $('treatmentPrev').disabled=state.treatmentPage<=1; $('treatmentNext').disabled=state.treatmentPage>=totalPages;
+  }
+
+  function renderResolvedTable(){
+    const rows=applyTableSort(getResolvedRows(true), 'resolved'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('resolved');
+    if(state.resolvedPage>totalPages)state.resolvedPage=totalPages; const start=(state.resolvedPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('resolvedEmpty').classList.toggle('hidden',rows.length>0);
+    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.treatmentResponsible||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inTreatment?' <span class="badge treatment">Passou por tratativa</span>':''}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
+    $('resolvedSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('resolvedPageLabel').textContent=`Página ${state.resolvedPage} de ${totalPages}`; $('resolvedPrev').disabled=state.resolvedPage<=1; $('resolvedNext').disabled=state.resolvedPage>=totalPages;
+  }
+
+  function renderClaimTable(){
+    const rows=applyTableSort(getClaimRows(true), 'claim'), totalPages=Math.max(1,Math.ceil(rows.length/CONFIG.PAGE_SIZE));
+    updateSortIndicators('claim');
+    if(state.claimPage>totalPages)state.claimPage=totalPages; const start=(state.claimPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
+    $('claimEmpty').classList.toggle('hidden',rows.length>0);
+    $('claimBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.dataSinistro&&parseDateValue(r.dataSinistro)?dateFmt.format(parseDateValue(r.dataSinistro)):'Sem data')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inResolved?' <span class="badge info">Também resolvido</span>':''}</td></tr>`).join('');
+    $('claimSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('claimPageLabel').textContent=`Página ${state.claimPage} de ${totalPages}`; $('claimPrev').disabled=state.claimPage<=1; $('claimNext').disabled=state.claimPage>=totalPages;
+  }
+
+  function openModal(data={},mode='manual'){
+    state.resolutionModalMode=mode;
+    state.resolutionEditKey=mode==='edit'?keyOf(data.nota,data.coleta):null;
+    $('fNota').value=data.nota??''; $('fColeta').value=data.coleta??''; $('fValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('fVocativo').value=data.vocativo??''; $('fResolution').value=data.resolucao??''; $('fResponsible').value=data.responsavel??''; $('fSolvedBy').value=data.quemResolveu??'';
+    const locked=mode==='report'||mode==='treatment'; ['fNota','fColeta','fValor','fVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('fResolution').disabled=false;
+    $('fSolvedBy').disabled=false;
+    $('solvedByHint').textContent='Essa informação será gravada para todos os casos resolvidos.';
+    $('modalTitle').textContent=mode==='edit'?'Editar resolução':mode==='report'?'Resolver registro selecionado':mode==='treatment'?'Concluir tratativa':'Resolver (Manual)'; updateResponsibleVisibility(); $('modalBackdrop').classList.remove('hidden');
+  }
+  const closeModal=()=>{ $('fResolution').disabled=false; $('fSolvedBy').disabled=false; $('modalBackdrop').classList.add('hidden'); };
+  function updateResponsibleVisibility(){const show=state.responsibleResolutions.includes($('fResolution').value); $('responsibleGroup').classList.toggle('hidden',!show); if(!show)$('fResponsible').value='';}
+  function openReportResolution(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentModal(data={},mode='manual'){
+    state.treatmentModalMode=mode;
+    $('tNota').value=data.nota??''; $('tColeta').value=data.coleta??''; $('tValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('tVocativo').value=data.vocativo??'';
+    $('tReason').value=data.motivo??''; $('tSentBy').value=data.quemEnviou??''; $('tResponsible').value=data.responsavel??'';
+    const locked=mode==='report'; ['tNota','tColeta','tValor','tVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('treatmentModalTitle').textContent=mode==='report'?'Encaminhar registro para tratativa':'Tratativa (Manual)';
+    $('treatmentModalBackdrop').classList.remove('hidden');
+  }
+  const closeTreatmentModal=()=>$('treatmentModalBackdrop').classList.add('hidden');
+  function openReportTreatment(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openTreatmentModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentResolution(key){
+    const t=state.treatmentMap.get(key); if(!t)return;
+    openModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo,resolucao:'Material localizado no cliente',responsavel:t.responsavel,quemResolveu:t.quemEnviou||''},'treatment');
+    $('fResolution').value='Material localizado no cliente';
+    $('fResolution').disabled=true;
+    if(t.quemEnviou){
+      $('fSolvedBy').value=t.quemEnviou;
+      $('fSolvedBy').disabled=true;
+      $('solvedByHint').textContent=`Preenchido automaticamente com ${t.quemEnviou}, que enviou o registro para tratativa.`;
+    }else{
+      $('fSolvedBy').disabled=false;
+      $('solvedByHint').textContent='Registro antigo sem “Quem enviou”. Selecione Italo ou Bruna uma vez; o backend também preencherá o histórico da tratativa.';
+    }
+    updateResponsibleVisibility();
+  }
+
+  function openClaimModal(data={},mode='manual'){
+    state.claimModalMode=mode;
+    state.claimEditKey=mode==='edit'?keyOf(data.nota,data.coleta):null;
+    $('sNota').value=data.nota??''; $('sColeta').value=data.coleta??''; $('sValor').value=data.valorNota!=null?String(data.valorNota).replace('.',','):''; $('sVocativo').value=data.vocativo??'';
+    const locked=mode==='report'; ['sNota','sColeta','sValor','sVocativo'].forEach(id=>$(id).readOnly=locked);
+    $('claimModalTitle').textContent=mode==='edit'?'Editar sinistro':mode==='report'?'Encaminhar registro para sinistro':'Encaminhar sinistro (Manual)'; $('claimModalBackdrop').classList.remove('hidden');
+  }
+  const closeClaimModal=()=>$('claimModalBackdrop').classList.add('hidden');
+  function openReportClaim(key){const r=state.reportRows.find(x=>x.__key===key); if(!r)return; state.selectedKey=key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions(); openClaimModal({nota:r.__nota,coleta:r.__coleta,valorNota:r.__valor,vocativo:r.__vocativo},'report');}
+
+  function openTreatmentClaim(key){
+    const t=state.treatmentMap.get(key); if(!t)return;
+    state.selectedKey=key; state.selectedSource='treatment';
+    renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
+    openClaimModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo},'report');
+  }
+
+  function getSelectedActionRow(){
+    if(!state.selectedKey)return null;
+    if(state.selectedSource==='treatment'){
+      const t=state.treatmentMap.get(state.selectedKey);
+      if(!t)return null;
+      return {key:t.key, nota:t.nota, coleta:t.coleta, valorNota:t.valorNota, vocativo:t.vocativo, source:'treatment'};
+    }
+    const r=state.reportRows.find(x=>x.__key===state.selectedKey);
+    if(!r)return null;
+    return {key:r.__key, nota:r.__nota, coleta:r.__coleta, valorNota:r.__valor, vocativo:r.__vocativo, source:'open'};
+  }
+
+  function updateSelectedActions(){
+    const row=getSelectedActionRow(), enabled=!!row&&state.apiReady;
+    $('btnResolveSelected').disabled=!enabled;
+    $('btnClaimSelected').disabled=!enabled;
+    $('btnTreatmentSelected').disabled=!enabled || row?.source==='treatment';
+    $('btnToggleCrc').disabled=!enabled;
+    $('btnToggleLost').disabled=!enabled;
+    const isCrc=!!row&&state.crcMap.has(row.key), isLost=!!row&&state.notLocatedMap.has(row.key);
+    $('btnToggleCrc').textContent=isCrc?'Remover Prioridade CRC':'Marcar Prioridade CRC'; $('btnToggleCrc').classList.toggle('btn-active',isCrc);
+    $('btnToggleLost').textContent=isLost?'Remover Não localizado':'Marcar Não localizado'; $('btnToggleLost').classList.toggle('btn-active',isLost);
+  }
+
+  $('openBody').addEventListener('click',e=>{
+    const resolveBtn=e.target.closest('.resolve-row'); if(resolveBtn){e.stopPropagation(); openReportResolution(resolveBtn.dataset.key); return;}
+    const claimBtn=e.target.closest('.claim-row'); if(claimBtn){e.stopPropagation(); openReportClaim(claimBtn.dataset.key); return;}
+    const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedKey=tr.dataset.key; state.selectedSource='open'; renderOpenTable(); renderTreatmentTable(); updateSelectedActions();}
+  });
+  $('openBody').addEventListener('dblclick',e=>{const tr=e.target.closest('tr[data-key]'); if(tr){state.selectedSource='open'; openReportResolution(tr.dataset.key);}});
+  $('treatmentBody').addEventListener('click',e=>{
+    const tr=e.target.closest('tr[data-key]');
+    if(!tr)return;
+    state.selectedKey=tr.dataset.key;
+    state.selectedSource='treatment';
+    renderOpenTable();
+    renderTreatmentTable();
+    updateSelectedActions();
+  });
+  $('treatmentBody').addEventListener('dblclick',e=>{
+    const tr=e.target.closest('tr[data-key]');
+    if(tr){state.selectedKey=tr.dataset.key; state.selectedSource='treatment'; openTreatmentResolution(tr.dataset.key);}
+  });
+  $('resolvedBody').addEventListener('click',e=>{const btn=e.target.closest('.edit-resolved'); if(!btn)return; const r=state.resolvedRows.find(x=>x.key===btn.dataset.key); if(r)openModal(r,'edit');});
+  $('claimBody').addEventListener('click',async e=>{
+    const edit=e.target.closest('.edit-claim'); if(edit){const r=state.claimRows.find(x=>x.key===edit.dataset.key); if(r)openClaimModal(r,'edit'); return;}
+    const remove=e.target.closest('.remove-claim'); if(!remove)return;
+    const r=state.claimRows.find(x=>x.key===remove.dataset.key); if(!r)return;
+    if(!confirm(`Remover Nota ${r.nota} / Coleta ${r.coleta} da aba Sinistros?`))return;
+    try{await postAndConfirm({action:'removerSinistro',nota:r.nota,coleta:r.coleta},()=>!state.claimMap.has(r.key),'Não foi possível confirmar a remoção do sinistro.'); setNotice('ok','Sinistro removido',`Nota ${r.nota} / Coleta ${r.coleta} foi removida da aba Sinistros.`);}catch(err){setNotice('error','Falha ao remover',err.message);}
+  });
+
+  $('resolutionForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const treatmentForKey=state.treatmentMap.get(keyOf($('fNota').value,$('fColeta').value));
+    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
+    if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
+    const key=keyOf(payload.nota,payload.coleta);
+    if(payload.resolucao==='Material localizado no cliente' && !state.treatmentMap.has(key)){
+      $('fResolution').focus();
+      return setNotice('warn','Tratativa obrigatória','Para usar “Material localizado no cliente”, a Nota + Coleta precisa primeiro existir na aba Em tratativa.');
+    }
+    const duplicateResolved=state.resolvedMap.has(key) && !(state.resolutionModalMode==='edit' && state.resolutionEditKey===key);
+    if(duplicateResolved){
+      $('fNota').focus();
+      return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Resolvidos. O sistema não permite cadastro duplicado.`);
+    }
+    const btn=$('btnSave'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{await postAndConfirm(payload,()=>state.resolvedMap.has(key)&&state.resolvedMap.get(key).resolucao===payload.resolucao,'Não foi possível confirmar a resolução.'); state.selectedKey=null; state.selectedSource=null; closeModal(); setNotice('ok','Registro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada em Resolvidos.`);}catch(err){setNotice('error','Falha ao gravar',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+  });
+
+  $('treatmentForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload={action:'salvarTratativa',nota:cleanText($('tNota').value),coleta:cleanText($('tColeta').value),valorNota:parseMoney($('tValor').value),vocativo:cleanText($('tVocativo').value),motivo:$('tReason').value,responsavel:cleanText($('tResponsible').value),quemEnviou:$('tSentBy').value};
+    if(!payload.quemEnviou){$('tSentBy').focus(); return setNotice('error','Selecione quem está enviando','Escolha Italo ou Bruna antes de encaminhar para tratativa.');}
+    const key=keyOf(payload.nota,payload.coleta);
+    if(state.treatmentMap.has(key)) return setNotice('warn','Tratativa já cadastrada',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe na base de Tratativas.`);
+    if(state.resolvedMap.has(key)) return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já está em Resolvidos.`);
+    const btn=$('btnSaveTreatment'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{await postAndConfirm(payload,()=>state.treatmentMap.has(key),'Não foi possível confirmar a entrada na tratativa.'); state.selectedKey=null; state.selectedSource=null; closeTreatmentModal(); setNotice('ok','Tratativa criada',`Nota ${payload.nota} / Coleta ${payload.coleta} foi enviada para a segunda etapa.`);}catch(err){setNotice('error','Falha ao criar tratativa',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+  });
+
+  $('claimForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
+    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const key=keyOf(payload.nota,payload.coleta);
+    const duplicateClaim=state.claimMap.has(key) && !(state.claimModalMode==='edit' && state.claimEditKey===key);
+    if(duplicateClaim){
+      $('sNota').focus();
+      return setNotice('warn','Sinistro já cadastrado',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe em Sinistros. O sistema não permite cadastro duplicado.`);
+    }
+    const btn=$('btnSaveClaim'),old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Salvando...';
+    try{await postAndConfirm(payload,()=>state.claimMap.has(key),'Não foi possível confirmar o encaminhamento para sinistro.'); state.selectedKey=null; state.selectedSource=null; closeClaimModal(); setNotice('ok','Sinistro confirmado',`Nota ${payload.nota} / Coleta ${payload.coleta} foi gravada na aba Sinistros.`);}catch(err){setNotice('error','Falha ao gravar sinistro',err.message);}finally{btn.disabled=false;btn.innerHTML=old;}
+  });
+
+  async function toggleMarker(type){
+    if(!state.apiReady)return;
+    const r=getSelectedActionRow(); if(!r)return;
+    const isCrc=type==='crc', map=isCrc?state.crcMap:state.notLocatedMap, action=isCrc?'setPrioridadeCrc':'setNaoLocalizado', ativo=!map.has(r.key), label=isCrc?'Prioridade CRC':'Não localizado no cliente';
+    try{await postAndConfirm({action,nota:r.nota,coleta:r.coleta,ativo},()=>((isCrc?state.crcMap:state.notLocatedMap).has(r.key)===ativo),`Não foi possível confirmar ${label}.`); setNotice('ok',ativo?`${label} marcado`:`${label} removido`,`Nota ${r.nota} / Coleta ${r.coleta}.`);}catch(err){setNotice('error','Falha ao atualizar',err.message);}
+  }
+
+  $('btnApiTest').addEventListener('click',()=>{try{window.open(`${getAppsScriptBase()}?action=health&_=${Date.now()}`,'_blank','noopener');}catch(err){setNotice('error','URL do Apps Script inválida',err.message);}});
+  $('btnRefresh').addEventListener('click',()=>connectApi());
+  $('btnManual').addEventListener('click',()=>openModal({},'manual'));
+  $('btnManualTreatment').addEventListener('click',()=>openTreatmentModal({},'manual'));
+  $('btnManualClaim').addEventListener('click',()=>openClaimModal({},'manual'));
+  $('btnResolveSelected').addEventListener('click',()=>{
+    if(!state.selectedKey)return;
+    if(state.selectedSource==='treatment') openTreatmentResolution(state.selectedKey);
+    else openReportResolution(state.selectedKey);
+  });
+  $('btnTreatmentSelected').addEventListener('click',()=>{
+    if(state.selectedKey && state.selectedSource!=='treatment') openReportTreatment(state.selectedKey);
+  });
+  $('btnClaimSelected').addEventListener('click',()=>{
+    if(!state.selectedKey)return;
+    if(state.selectedSource==='treatment') openTreatmentClaim(state.selectedKey);
+    else openReportClaim(state.selectedKey);
+  });
+  $('btnToggleCrc').addEventListener('click',()=>toggleMarker('crc'));
+  $('btnToggleLost').addEventListener('click',()=>toggleMarker('lost'));
+  $('modalClose').addEventListener('click',closeModal); $('modalCancel').addEventListener('click',closeModal); $('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();}); $('fResolution').addEventListener('change',updateResponsibleVisibility);
+  $('treatmentModalClose').addEventListener('click',closeTreatmentModal); $('treatmentModalCancel').addEventListener('click',closeTreatmentModal); $('treatmentModalBackdrop').addEventListener('click',e=>{if(e.target===$('treatmentModalBackdrop'))closeTreatmentModal();});
+  $('claimModalClose').addEventListener('click',closeClaimModal); $('claimModalCancel').addEventListener('click',closeClaimModal); $('claimModalBackdrop').addEventListener('click',e=>{if(e.target===$('claimModalBackdrop'))closeClaimModal();});
+
+  document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===tab));
+    const target=tab.dataset.tab;
+    state.selectedKey=null;
+    state.selectedSource=null;
+    $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelTreatment').classList.toggle('hidden',target!=='treatment'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
+    renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
+  }));
+  $('btnClearChartFilters').addEventListener('click',clearChartFilters);
+  const dashboardFilterBindings = {
+    dashPeriod:'period',
+    dashClient:'client',
+    dashVocativo:'vocativo',
+    dashStatus:'status',
+    dashReason:'reason',
+    dashResponsible:'responsible',
+    dashSolver:'solver'
+  };
+  for (const [id,field] of Object.entries(dashboardFilterBindings)) {
+    $(id)?.addEventListener('change',()=>{
+      state.dashboardFilters[field] = $(id).value;
+      renderDashboardKpis();
+      renderCharts();
+    });
+  }
+  $('btnClearDashboardFilters')?.addEventListener('click',clearDashboardFilters);
+
+  $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
+  $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
+  $('chartFilterChips').addEventListener('click',e=>{const chip=e.target.closest('.filter-chip'); if(!chip)return; const dim=chip.dataset.dim,value=chip.dataset.value; if(state.chartFilters[dim]){state.chartFilters[dim].delete(value); rebuildView();}});
+  ['openSearch','openClient','openRange','openPriority'].forEach(id=>$(id).addEventListener(id==='openSearch'?'input':'change',()=>{state.openPage=1;renderOpenTable();}));
+  ['treatmentSearch','treatmentReason'].forEach(id=>$(id).addEventListener(id==='treatmentSearch'?'input':'change',()=>{state.treatmentPage=1;renderTreatmentTable();}));
+  ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id=>$(id).addEventListener(id==='resolvedSearch'?'input':'change',()=>{state.resolvedPage=1;renderResolvedTable();}));
+  ['claimSearch','claimPresence'].forEach(id=>$(id).addEventListener(id==='claimSearch'?'input':'change',()=>{state.claimPage=1;renderClaimTable();}));
+  $('openPrev').addEventListener('click',()=>{if(state.openPage>1){state.openPage--;renderOpenTable();}}); $('openNext').addEventListener('click',()=>{state.openPage++;renderOpenTable();});
+  $('treatmentPrev').addEventListener('click',()=>{if(state.treatmentPage>1){state.treatmentPage--;renderTreatmentTable();}}); $('treatmentNext').addEventListener('click',()=>{state.treatmentPage++;renderTreatmentTable();});
+  $('resolvedPrev').addEventListener('click',()=>{if(state.resolvedPage>1){state.resolvedPage--;renderResolvedTable();}}); $('resolvedNext').addEventListener('click',()=>{state.resolvedPage++;renderResolvedTable();});
+  $('claimPrev').addEventListener('click',()=>{if(state.claimPage>1){state.claimPage--;renderClaimTable();}}); $('claimNext').addEventListener('click',()=>{state.claimPage++;renderClaimTable();});
+
+  document.querySelectorAll('table[data-sort-table] th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const table = th.closest('table')?.dataset.sortTable;
+      if (table) setTableSort(table, th.dataset.sort);
+    });
+  });
+
+  $('btnViewOperation').addEventListener('click', () => setAppView('operation'));
+  $('btnViewDashboard').addEventListener('click', () => setAppView('dashboard'));
+  $('btnTheme').addEventListener('click', () => applyTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncRealtime();
+  });
+  window.addEventListener('focus', syncRealtime);
+
+  applyTheme(localStorage.getItem('pendencia-theme') || 'light');
+  setAppView('operation');
+  if ($('occurrenceGranularity')) $('occurrenceGranularity').value = 'month';
+  if ($('resolutionGranularity')) $('resolutionGranularity').value = 'month';
+  // Mantém a barra de ações sempre imediatamente abaixo do cabeçalho fixo,
+  // mesmo quando o cabeçalho muda de altura em telas menores.
+  function syncStickyHeaderHeight() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+    document.documentElement.style.setProperty('--app-header-height', `${Math.ceil(header.getBoundingClientRect().height)}px`);
+  }
+  syncStickyHeaderHeight();
+  window.addEventListener('resize', syncStickyHeaderHeight);
+  if (window.ResizeObserver) {
+    const stickyHeaderObserver = new ResizeObserver(syncStickyHeaderHeight);
+    const stickyHeader = document.querySelector('.app-header');
+    if (stickyHeader) stickyHeaderObserver.observe(stickyHeader);
+  }
+
+  connectApi();
+  rebuildView();
+</script>
+</body>
+</html>
