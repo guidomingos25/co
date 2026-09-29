@@ -1087,7 +1087,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Evolução operacional</h3>
-              <div class="chart-hint">Em aberto, tratativa e resolvido usam Data Ocorrência; Sinistro usa a Data Sinistro registrada no momento do encaminhamento.</div>
+              <div class="chart-hint">Cada Nota + Coleta aparece uma única vez. A data vem sempre da etapa atual: Em aberto = Data Ocorrência, Em tratativa = Data Entrada Tratativa, Resolvido = Data Resolução e Sinistro = Data Sinistro.</div>
             </div>
             <select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
               <option value="day">Dia</option>
@@ -1514,7 +1514,7 @@
     for (const r of rows || []) {
       const row = {
         nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
-        motivo: cleanText(r.motivo), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
+        motivo: cleanText(r.treatmentReason), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
         statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao), quemEnviou: cleanText(r.quemEnviou),
         key: keyOf(r.nota, r.coleta)
       };
@@ -1698,7 +1698,10 @@
     solver: { label:'Quem resolveu', getter:r => cleanText(r.quemResolveu) || 'Não informado' },
     sender: { label:'Quem enviou', getter:r => cleanText(r.treatmentSender) || 'Não informado' },
     vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
-    occurrencePeriod: { label:'Período operacional', getter:r => bucketInfo(r.status==='claim' && r.dataSinistro ? r.dataSinistro : r.__dataOcorrencia, state.occurrenceGranularity).key },
+    occurrencePeriod: {
+      label:'Período operacional',
+      getter:r => bucketInfo(r.statusDate, state.occurrenceGranularity).key
+    },
     resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
   };
 
@@ -1790,37 +1793,115 @@
   }
 
   function getMasterRows() {
+    // Uma única linha canônica por Nota + Coleta em toda a aplicação.
+    // A etapa mais avançada do fluxo sempre prevalece:
+    // Sinistro > Resolvido > Em tratativa > Em aberto.
     const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
-    const keys = new Set([...reportMap.keys(), ...state.resolvedMap.keys(), ...state.claimMap.keys(), ...state.treatmentMap.keys()]);
+    const keys = new Set([
+      ...reportMap.keys(),
+      ...state.treatmentMap.keys(),
+      ...state.resolvedMap.keys(),
+      ...state.claimMap.keys()
+    ]);
+
     const rows = [];
     for (const key of keys) {
-      const report = reportMap.get(key), resolved = state.resolvedMap.get(key), claim = state.claimMap.get(key), treatment = state.treatmentMap.get(key);
-      const treatmentPending = !!treatment && !['concluída','concluida'].includes(cleanText(treatment.statusTratativa).toLowerCase()) && !resolved && !claim;
-      const status = resolved ? 'resolved' : claim ? 'claim' : treatmentPending ? 'treatment' : 'open';
-      const source = report || resolved || claim || treatment || {};
-      const value = report ? Number(report.__valor||0) : resolved ? Number(resolved.valorNota||0) : claim ? Number(claim.valorNota||0) : Number(treatment?.valorNota||0);
-      const vocativo = report ? report.__vocativo : resolved ? cleanText(resolved.vocativo) : claim ? cleanText(claim.vocativo) : cleanText(treatment?.vocativo);
+      const report = reportMap.get(key);
+      const treatment = state.treatmentMap.get(key);
+      const resolved = state.resolvedMap.get(key);
+      const claim = state.claimMap.get(key);
+
+      const status =
+        claim ? 'claim' :
+        resolved ? 'resolved' :
+        treatment ? 'treatment' :
+        'open';
+
+      // A fonte principal do registro acompanha o status atual.
+      const currentSource =
+        status === 'claim' ? claim :
+        status === 'resolved' ? resolved :
+        status === 'treatment' ? treatment :
+        report;
+
+      if (!currentSource) continue;
+
+      const nota = cleanText(
+        currentSource.nota ??
+        report?.__nota
+      );
+      const coleta = cleanText(
+        currentSource.coleta ??
+        report?.__coleta
+      );
+
+      const value =
+        status === 'claim' ? Number(claim?.valorNota || 0) :
+        status === 'resolved' ? Number(resolved?.valorNota || 0) :
+        status === 'treatment' ? Number(treatment?.valorNota || 0) :
+        Number(report?.__valor || 0);
+
+      const vocativo =
+        status === 'claim' ? cleanText(claim?.vocativo) :
+        status === 'resolved' ? cleanText(resolved?.vocativo) :
+        status === 'treatment' ? cleanText(treatment?.vocativo) :
+        cleanText(report?.__vocativo);
+
+      const dataOcorrencia = report
+        ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia']))
+        : null;
+
+      const statusDate =
+        status === 'claim' ? cleanText(claim?.dataSinistro) :
+        status === 'resolved' ? cleanText(resolved?.dataResolucao) :
+        status === 'treatment' ? cleanText(treatment?.dataTratativa) :
+        dataOcorrencia;
+
       rows.push({
-        ...(report || {}), __key:key, key,
-        __nota: report ? report.__nota : cleanText(source.nota),
-        __coleta: report ? report.__coleta : cleanText(source.coleta),
-        __valor:value, valorNota:value,
-        __vocativo:vocativo, vocativo,
+        ...(report || {}),
+        __key:key,
+        key,
+        __nota:nota,
+        __coleta:coleta,
+        nota,
+        coleta,
+        __valor:value,
+        valorNota:value,
+        __vocativo:vocativo,
+        vocativo,
         status,
+        statusDate,
+
+        // Dados específicos das fontes, preservados para histórico e análises.
         dataSinistro:cleanText(claim?.dataSinistro),
-        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
-        treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa), treatmentConclusion:cleanText(treatment?.dataConclusao), treatmentSender:cleanText(treatment?.quemEnviou),
-        __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
-        stillPending: !!report,
-        inResolved: !!resolved,
-        inClaim: !!claim,
-        inTreatment: !!treatment,
-        crcPriority: state.crcMap.has(key),
-        notLocated: state.notLocatedMap.has(key),
-        nota: report ? report.__nota : cleanText(source.nota),
-        coleta: report ? report.__coleta : cleanText(source.coleta)
+        resolucao:cleanText(resolved?.resolucao),
+        responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel),
+        dataResolucao:cleanText(resolved?.dataResolucao),
+        quemResolveu:cleanText(resolved?.quemResolveu),
+
+        motivo:cleanText(treatment?.motivo),
+        dataTratativa:cleanText(treatment?.dataTratativa),
+        quemEnviou:cleanText(treatment?.quemEnviou),
+        treatmentReason:cleanText(treatment?.motivo),
+        treatmentResponsible:cleanText(treatment?.responsavel),
+        treatmentStatus:cleanText(treatment?.statusTratativa),
+        treatmentDate:cleanText(treatment?.dataTratativa),
+        treatmentConclusion:cleanText(treatment?.dataConclusao),
+        treatmentSender:cleanText(treatment?.quemEnviou),
+
+        __dataOcorrencia:dataOcorrencia,
+        stillPending:!!report,
+
+        // Flags históricas não alteram o status atual.
+        inResolved:!!resolved,
+        inClaim:!!claim,
+        inTreatment:!!treatment,
+
+        crcPriority:state.crcMap.has(key),
+        notLocated:state.notLocatedMap.has(key)
       });
     }
+
     return rows;
   }
 
@@ -1883,29 +1964,28 @@
   }
 
   function getTreatmentRows(applyFilters=true) {
-    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
-    let rows = state.treatmentRows
-      .filter(t => !['concluída','concluida'].includes(cleanText(t.statusTratativa).toLowerCase()) && !state.resolvedMap.has(t.key))
-      .map(t => {
-        const report = reportMap.get(t.key), claim = state.claimMap.get(t.key);
-        const value = report ? Number(report.__valor||0) : Number(t.valorNota||0);
-        return {
-          ...(report||{}), __key:t.key, key:t.key,
-          __nota:report?report.__nota:t.nota, __coleta:report?report.__coleta:t.coleta,
-          nota:report?report.__nota:t.nota, coleta:report?report.__coleta:t.coleta,
-          __valor:value, valorNota:value, __vocativo:report?report.__vocativo:t.vocativo, vocativo:report?report.__vocativo:t.vocativo,
-          motivo:t.motivo, responsavel:t.responsavel, quemEnviou:t.quemEnviou, dataTratativa:t.dataTratativa,
-          status:'treatment', inTreatment:true, inClaim:!!claim, stillPending:!!report,
-          treatmentReason:t.motivo, treatmentResponsible:t.responsavel, treatmentStatus:t.statusTratativa, treatmentDate:t.dataTratativa, treatmentSender:t.quemEnviou,
-          crcPriority:state.crcMap.has(t.key), notLocated:state.notLocatedMap.has(t.key)
-        };
-      });
-    rows = applyChartFilters(rows);
+    let rows = applyChartFilters(
+      uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='treatment')
+    );
+
     if (!applyFilters) return rows;
-    const q=cleanText($('treatmentSearch').value).toLowerCase(), reason=$('treatmentReason').value;
+
+    const q=cleanText($('treatmentSearch').value).toLowerCase();
+    const reason=$('treatmentReason').value;
+
     return rows.filter(r => {
-      if (reason && r.motivo !== reason) return false;
-      if (q && ![r.nota,r.coleta,r.vocativo,r.motivo,r.responsavel,r.quemEnviou].join(' ').toLowerCase().includes(q)) return false;
+      if (reason && r.treatmentReason !== reason) return false;
+      if (
+        q &&
+        ![
+          r.nota,
+          r.coleta,
+          r.vocativo,
+          r.treatmentReason,
+          r.treatmentResponsible,
+          r.treatmentSender
+        ].join(' ').toLowerCase().includes(q)
+      ) return false;
       return true;
     });
   }
@@ -1925,25 +2005,15 @@
   }
 
   function getClaimRows(applyFilters=true) {
-    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
-    let rows = state.claimRows.map(c => {
-      const report=reportMap.get(c.key), resolved=state.resolvedMap.get(c.key);
-      const value=report?Number(report.__valor||0):Number(c.valorNota||0);
-      return {
-        ...(report||{}), __key:c.key, key:c.key,
-        __nota:report?report.__nota:c.nota, __coleta:report?report.__coleta:c.coleta,
-        nota:report?report.__nota:c.nota, coleta:report?report.__coleta:c.coleta,
-        __valor:value, valorNota:value, __vocativo:report?report.__vocativo:c.vocativo, vocativo:report?report.__vocativo:c.vocativo,
-        __dataOcorrencia:report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
-        dataSinistro:cleanText(c.dataSinistro),
-        status: resolved ? 'resolved' : 'claim', inResolved:!!resolved, inClaim:true, stillPending:!!report,
-        resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
-        crcPriority:state.crcMap.has(c.key), notLocated:state.notLocatedMap.has(c.key)
-      };
-    });
-    rows = applyChartFilters(rows);
+    let rows = applyChartFilters(
+      uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='claim')
+    );
+
     if (!applyFilters) return rows;
-    const q=cleanText($('claimSearch').value).toLowerCase(), presence=$('claimPresence').value;
+
+    const q=cleanText($('claimSearch').value).toLowerCase();
+    const presence=$('claimPresence').value;
+
     return rows.filter(r => {
       if (presence === 'sim' && !r.stillPending) return false;
       if (presence === 'nao' && r.stillPending) return false;
@@ -2170,8 +2240,7 @@
     const rows=applyDashboardFilters(master,'occurrencePeriod');
     const map=new Map();
     for(const r of rows){
-      const operationalDate = r.status==='claim' && r.dataSinistro ? r.dataSinistro : r.__dataOcorrencia;
-      const info=bucketInfo(operationalDate,state.occurrenceGranularity);
+      const info=bucketInfo(r.statusDate,state.occurrenceGranularity);
       if(!map.has(info.key))map.set(info.key,{...info,open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0});
       const g=map.get(info.key); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`]++;
     }
@@ -2550,8 +2619,8 @@
     $('treatmentEmpty').classList.toggle('hidden',rows.length>0);
     $('treatmentBody').innerHTML=pageRows.map(r=>`<tr data-key="${esc(r.key)}" class="${state.selectedSource==='treatment'&&state.selectedKey===r.key?'selected ':''}${r.crcPriority?'crc-priority':''}">
       <td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td>
-      <td>${esc(r.motivo)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.quemEnviou||'—')}</td>
-      <td>${esc(r.dataTratativa&&parseDateValue(r.dataTratativa)?dateFmt.format(parseDateValue(r.dataTratativa)):'Sem data')}</td>
+      <td>${esc(r.treatmentReason)}</td><td>${esc(r.treatmentResponsible||'—')}</td><td>${esc(r.quemEnviou||'—')}</td>
+      <td>${esc(r.treatmentDate&&parseDateValue(r.treatmentDate)?dateFmt.format(parseDateValue(r.treatmentDate)):'Sem data')}</td>
     </tr>`).join('');
     $('treatmentSummary').textContent=`${rows.length.toLocaleString('pt-BR')} aguardando conclusão • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`;
     $('treatmentPageLabel').textContent=`Página ${state.treatmentPage} de ${totalPages}`;
@@ -2563,7 +2632,7 @@
     updateSortIndicators('resolved');
     if(state.resolvedPage>totalPages)state.resolvedPage=totalPages; const start=(state.resolvedPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
     $('resolvedEmpty').classList.toggle('hidden',rows.length>0);
-    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.responsavel||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inTreatment?' <span class="badge treatment">Passou por tratativa</span>':''}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
+    $('resolvedBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.resolucao)}</td><td>${esc(r.treatmentResponsible||'—')}</td><td>${esc(r.dataResolucao&&parseDateValue(r.dataResolucao)?dateFmt.format(parseDateValue(r.dataResolucao)):'Sem data')}</td><td>${esc(r.quemResolveu||'Não informado')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inTreatment?' <span class="badge treatment">Passou por tratativa</span>':''}${r.inClaim?' <span class="badge claim">Também em sinistro</span>':''}</td></tr>`).join('');
     $('resolvedSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('resolvedPageLabel').textContent=`Página ${state.resolvedPage} de ${totalPages}`; $('resolvedPrev').disabled=state.resolvedPage<=1; $('resolvedNext').disabled=state.resolvedPage>=totalPages;
   }
 
