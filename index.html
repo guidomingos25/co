@@ -313,10 +313,11 @@
 
     #panelClaims th:nth-child(1), #panelClaims td:nth-child(1) { width: 8%; }
     #panelClaims th:nth-child(2), #panelClaims td:nth-child(2) { width: 9%; }
-    #panelClaims th:nth-child(3), #panelClaims td:nth-child(3) { width: 13%; }
-    #panelClaims th:nth-child(4), #panelClaims td:nth-child(4) { width: 25%; }
-    #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 20%; }
-    #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 25%; }
+    #panelClaims th:nth-child(3), #panelClaims td:nth-child(3) { width: 12%; }
+    #panelClaims th:nth-child(4), #panelClaims td:nth-child(4) { width: 21%; }
+    #panelClaims th:nth-child(5), #panelClaims td:nth-child(5) { width: 12%; }
+    #panelClaims th:nth-child(6), #panelClaims td:nth-child(6) { width: 16%; }
+    #panelClaims th:nth-child(7), #panelClaims td:nth-child(7) { width: 22%; }
 
     #panelTreatment th:nth-child(1), #panelTreatment td:nth-child(1) { width: 7%; }
     #panelTreatment th:nth-child(2), #panelTreatment td:nth-child(2) { width: 8%; }
@@ -960,7 +961,7 @@
 <div class="table-scroll">
 <table data-sort-table="claim">
 <thead><tr>
-<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
+<th class="sortable" data-sort="nota" title="Ordenar por Nota">Nota</th><th class="sortable" data-sort="coleta" title="Ordenar por Coleta">Coleta</th><th class="money sortable" data-sort="valor" title="Ordenar por Valor Nota">Valor Nota</th><th class="sortable" data-sort="vocativo" title="Ordenar por Vocativo">Vocativo</th><th class="sortable" data-sort="dataSinistro" title="Ordenar por Data Sinistro">Data Sinistro</th><th class="sortable" data-sort="sinalizacoes" title="Ordenar por Sinalizações">Sinalizações</th><th class="sortable" data-sort="statusAtual" title="Ordenar por Status no relatório atual">Status no relatório atual</th>
 </tr></thead>
 <tbody id="claimBody"></tbody>
 </table>
@@ -1086,7 +1087,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Evolução operacional</h3>
-              <div class="chart-hint">Exposição por Data Ocorrência, separada pelo status atual.</div>
+              <div class="chart-hint">Em aberto, tratativa e resolvido usam Data Ocorrência; Sinistro usa a Data Sinistro registrada no momento do encaminhamento.</div>
             </div>
             <select aria-label="Agrupamento da Data Ocorrência" class="chart-granularity" id="occurrenceGranularity">
               <option value="day">Dia</option>
@@ -1502,7 +1503,7 @@
   function normalizeClaimRows(rows) {
     const byKey = new Map();
     for (const r of rows || []) {
-      const row = { nota:cleanText(r.nota), coleta:cleanText(r.coleta), valorNota:parseMoney(r.valorNota), vocativo:cleanText(r.vocativo), key:keyOf(r.nota,r.coleta) };
+      const row = { nota:cleanText(r.nota), coleta:cleanText(r.coleta), valorNota:parseMoney(r.valorNota), vocativo:cleanText(r.vocativo), dataSinistro:cleanText(r.dataSinistro), key:keyOf(r.nota,r.coleta) };
       if (row.nota && row.coleta) byKey.set(row.key, row);
     }
     return [...byKey.values()];
@@ -1697,7 +1698,7 @@
     solver: { label:'Quem resolveu', getter:r => cleanText(r.quemResolveu) || 'Não informado' },
     sender: { label:'Quem enviou', getter:r => cleanText(r.treatmentSender) || 'Não informado' },
     vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
-    occurrencePeriod: { label:'Data ocorrência', getter:r => bucketInfo(r.__dataOcorrencia, state.occurrenceGranularity).key },
+    occurrencePeriod: { label:'Período operacional', getter:r => bucketInfo(r.status==='claim' && r.dataSinistro ? r.dataSinistro : r.__dataOcorrencia, state.occurrenceGranularity).key },
     resolutionPeriod: { label:'Data resolução', getter:r => bucketInfo(r.dataResolucao, state.resolutionGranularity).key }
   };
 
@@ -1802,6 +1803,7 @@
         __valor:value, valorNota:value,
         __vocativo:vocativo, vocativo,
         status,
+        dataSinistro:cleanText(claim?.dataSinistro),
         resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
         treatmentReason:cleanText(treatment?.motivo), treatmentResponsible:cleanText(treatment?.responsavel), treatmentStatus:cleanText(treatment?.statusTratativa), treatmentDate:cleanText(treatment?.dataTratativa), treatmentConclusion:cleanText(treatment?.dataConclusao), treatmentSender:cleanText(treatment?.quemEnviou),
         __dataOcorrencia: report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
@@ -1929,6 +1931,7 @@
         nota:report?report.__nota:c.nota, coleta:report?report.__coleta:c.coleta,
         __valor:value, valorNota:value, __vocativo:report?report.__vocativo:c.vocativo, vocativo:report?report.__vocativo:c.vocativo,
         __dataOcorrencia:report ? (report.__dataOcorrencia || parseDateValue(report['Data Ocorrencia'])) : null,
+        dataSinistro:cleanText(c.dataSinistro),
         status: resolved ? 'resolved' : 'claim', inResolved:!!resolved, inClaim:true, stillPending:!!report,
         resolucao:cleanText(resolved?.resolucao), responsavel:cleanText(resolved?.responsavel), dataResolucao:cleanText(resolved?.dataResolucao), quemResolveu:cleanText(resolved?.quemResolveu),
         crcPriority:state.crcMap.has(c.key), notLocated:state.notLocatedMap.has(c.key)
@@ -2163,7 +2166,8 @@
     const rows=applyDashboardFilters(master,'occurrencePeriod');
     const map=new Map();
     for(const r of rows){
-      const info=bucketInfo(r.__dataOcorrencia,state.occurrenceGranularity);
+      const operationalDate = r.status==='claim' && r.dataSinistro ? r.dataSinistro : r.__dataOcorrencia;
+      const info=bucketInfo(operationalDate,state.occurrenceGranularity);
       if(!map.has(info.key))map.set(info.key,{...info,open:0,treatment:0,resolved:0,claim:0,openCount:0,treatmentCount:0,resolvedCount:0,claimCount:0});
       const g=map.get(info.key); g[r.status]+=Number(r.__valor||0); g[`${r.status}Count`]++;
     }
@@ -2406,6 +2410,10 @@
         const d = parseDateValue(row.dataResolucao);
         return d ? d.getTime() : null;
       }
+      case 'dataSinistro': {
+        const d = parseDateValue(row.dataSinistro);
+        return d ? d.getTime() : null;
+      }
       case 'quemResolveu': return cleanText(row.quemResolveu);
       case 'motivo': return cleanText(row.motivo || row.treatmentReason);
       case 'dataTratativa': {
@@ -2514,7 +2522,7 @@
     updateSortIndicators('claim');
     if(state.claimPage>totalPages)state.claimPage=totalPages; const start=(state.claimPage-1)*CONFIG.PAGE_SIZE, pageRows=rows.slice(start,start+CONFIG.PAGE_SIZE);
     $('claimEmpty').classList.toggle('hidden',rows.length>0);
-    $('claimBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inResolved?' <span class="badge info">Também resolvido</span>':''}</td></tr>`).join('');
+    $('claimBody').innerHTML=pageRows.map(r=>`<tr class="${r.stillPending&&r.crcPriority?'crc-priority':''}"><td>${esc(r.nota)}</td><td>${esc(r.coleta)}</td><td class="money">${moneyFmt.format(r.valorNota)}</td><td>${esc(r.vocativo)}</td><td>${esc(r.dataSinistro&&parseDateValue(r.dataSinistro)?dateFmt.format(parseDateValue(r.dataSinistro)):'Sem data')}</td><td>${signalBadges(r.key)}</td><td>${r.stillPending?'<span class="badge warn">Ainda consta na pendência</span>':'<span class="badge ok">Fora da pendência atual</span>'}${r.inResolved?' <span class="badge info">Também resolvido</span>':''}</td></tr>`).join('');
     $('claimSummary').textContent=`${rows.length.toLocaleString('pt-BR')} registros • ${moneyFmt.format(rows.reduce((s,r)=>s+r.valorNota,0))}`; $('claimPageLabel').textContent=`Página ${state.claimPage} de ${totalPages}`; $('claimPrev').disabled=state.claimPage<=1; $('claimNext').disabled=state.claimPage>=totalPages;
   }
 
