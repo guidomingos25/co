@@ -1116,7 +1116,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Todos os responsáveis registrados em Tratativas ou Resolvidos, ordenados por impacto financeiro. Use o scroll quando necessário.</div>
+              <div class="chart-hint">Resolvidos e tratativas por responsável. Casos sem responsável aparecem como NÃO IDENTIFICADO, com valor e quantidade total. Use o scroll quando necessário.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1694,7 +1694,7 @@
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
     reason: { label:'Motivo', getter:r => reasonLabel(r) },
-    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.treatmentResponsible || r.responsavel) || 'Não informado' },
+    responsible: { label:'Responsável pela falha', getter:r => cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO' },
     solver: { label:'Quem resolveu', getter:r => cleanText(r.quemResolveu) || 'Não informado' },
     sender: { label:'Quem enviou', getter:r => cleanText(r.treatmentSender) || 'Não informado' },
     vocativo: { label:'Vocativo', getter:r => cleanText(r.__vocativo) || 'Sem informação' },
@@ -1721,7 +1721,7 @@
     if (field === 'vocativo') return cleanText(row.__vocativo) || 'Sem informação';
     if (field === 'status') return statusLabel(row.status);
     if (field === 'reason') return reasonLabel(row);
-    if (field === 'responsible') return cleanText(row.treatmentResponsible || row.responsavel) || 'Não informado';
+    if (field === 'responsible') return cleanText(row.treatmentResponsible || row.responsavel) || 'NÃO IDENTIFICADO';
     if (field === 'solver') return cleanText(row.quemResolveu) || 'Não informado';
     return '';
   }
@@ -1757,7 +1757,11 @@
     const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
     const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
     const reasons = master.map(reasonLabel).filter(v=>v && v!=='Sem motivo definido' && v!=='Sinistro').sort(collator);
-    const responsibles = master.map(r=>cleanText(r.treatmentResponsible || r.responsavel)).filter(Boolean).sort(collator);
+    const responsibles = master
+      .filter(r=>r.status==='resolved' || r.status==='treatment')
+      .map(r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO')
+      .filter(Boolean)
+      .sort(collator);
     const solvers = master.map(r=>cleanText(r.quemResolveu)).filter(Boolean).sort(collator);
     const periods = master.filter(r=>r.status==='resolved' && r.dataResolucao).map(r=>dashboardPeriodKey(r.dataResolucao)).filter(Boolean).sort();
 
@@ -2240,6 +2244,50 @@
     });
   }
 
+  const responsibleTotalsPlugin = {
+    id:'responsibleTotals',
+    afterDatasetsDraw(chart){
+      if(chart.canvas?.id !== 'chartResponsible') return;
+      const {ctx, scales:{x}} = chart;
+      const labels = chart.data.labels || [];
+      ctx.save();
+      ctx.font = '800 9px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
+
+      labels.forEach((_, index)=>{
+        let totalValue = 0;
+        let totalCount = 0;
+        let y = null;
+        for(let dsIndex=0; dsIndex<chart.data.datasets.length; dsIndex++){
+          const ds = chart.data.datasets[dsIndex];
+          totalValue += Number(ds.data?.[index] || 0);
+          totalCount += Number(ds._counts?.[index] || 0);
+          const el = chart.getDatasetMeta(dsIndex)?.data?.[index];
+          if(el && Number.isFinite(el.y)) y = el.y;
+        }
+        if(!totalValue || y == null) return;
+
+        const label = `${compactMoneyFmt.format(totalValue)} • ${totalCount.toLocaleString('pt-BR')} ${totalCount===1?'registro':'registros'}`;
+        const px = Math.min(x.getPixelForValue(totalValue) + 7, chart.chartArea.right - ctx.measureText(label).width - 2);
+
+        const padX = 4, padY = 3, w = ctx.measureText(label).width + padX*2, h = 15;
+        const bx = Math.max(chart.chartArea.left + 2, px - padX);
+        const by = y - h/2;
+
+        ctx.fillStyle = document.body.dataset.theme==='dark' ? 'rgba(15,23,42,.88)' : 'rgba(255,255,255,.92)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(bx, by, w, h, 4);
+        else ctx.rect(bx, by, w, h);
+        ctx.fill();
+
+        ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
+        ctx.fillText(label, bx + padX, y);
+      });
+      ctx.restore();
+    }
+  };
+
   function renderCharts(){
     if (!$('chartStatus')) return;
     const master=uniqueRowsByKey(getMasterRows());
@@ -2311,16 +2359,17 @@
 
     // 4. Responsáveis pela falha
     const responsibleBase=applyDashboardFilters(
-      master.filter(r=>cleanText(r.treatmentResponsible || r.responsavel)),
+      master.filter(r=>r.status==='resolved' || r.status==='treatment'),
       'responsible'
     );
     const responsiblePairs=stackedPairs(
       responsibleBase,
-      r=>r.treatmentResponsible || r.responsavel
+      r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO'
     ), responsibleLabels=responsiblePairs.map(x=>x[0]);
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
       type:'bar',
+      plugins:[responsibleTotalsPlugin],
       data:{labels:responsibleLabels,datasets:[
         {label:'Em aberto',data:responsiblePairs.map(x=>x[1].open),_counts:responsiblePairs.map(x=>x[1].openCount),stack:'total'},
         {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
@@ -2330,6 +2379,7 @@
       options:{
         indexAxis:'y',
         maintainAspectRatio:false,
+        layout:{padding:{right:120}},
         onClick:(e,els)=>{
           if(!els.length)return;
           const el=els[0], label=responsibleLabels[el.index], status=statusLabels[el.datasetIndex];
@@ -2339,7 +2389,7 @@
           x:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
           y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
         },
-        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}
+        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{display:false}}
       }
     });
 
