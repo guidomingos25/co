@@ -2656,6 +2656,24 @@
     }
   };
 
+  function adaptiveColumnSizing(categoryCount, grouped=false){
+    const count=Math.max(1,Number(categoryCount)||1);
+
+    if(grouped){
+      if(count<=2) return {maxBarThickness:64,categoryPercentage:.82,barPercentage:.88};
+      if(count<=4) return {maxBarThickness:56,categoryPercentage:.78,barPercentage:.86};
+      if(count<=6) return {maxBarThickness:50,categoryPercentage:.74,barPercentage:.84};
+      if(count<=10) return {maxBarThickness:44,categoryPercentage:.70,barPercentage:.82};
+      return {maxBarThickness:38,categoryPercentage:.66,barPercentage:.78};
+    }
+
+    if(count<=2) return {maxBarThickness:82,categoryPercentage:.82,barPercentage:.92};
+    if(count<=4) return {maxBarThickness:72,categoryPercentage:.80,barPercentage:.90};
+    if(count<=6) return {maxBarThickness:64,categoryPercentage:.76,barPercentage:.88};
+    if(count<=10) return {maxBarThickness:56,categoryPercentage:.72,barPercentage:.86};
+    return {maxBarThickness:48,categoryPercentage:.68,barPercentage:.84};
+  }
+
   function renderOccurrenceStatusChart(master){
     const rows=applyDashboardFilters(master,'occurrencePeriod');
     const occurrenceTotalValue=rows.reduce((s,r)=>s+Number(r.__valor||0),0);
@@ -2671,6 +2689,7 @@
     }
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartOccurrenceInner',pairs.length,state.occurrenceGranularity);
+    const occurrenceBarSize=adaptiveColumnSizing(pairs.length,false);
     const defs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
     makeChart('chartOccurrence',{
       type:'bar',
@@ -2682,7 +2701,9 @@
         stack:'total',
         borderRadius:4,
         borderSkipped:false,
-        maxBarThickness:54
+        maxBarThickness:occurrenceBarSize.maxBarThickness,
+        categoryPercentage:occurrenceBarSize.categoryPercentage,
+        barPercentage:occurrenceBarSize.barPercentage
       }))},
       options:{
         maintainAspectRatio:false,
@@ -2719,6 +2740,7 @@
     }
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
+    const resolutionBarSize=adaptiveColumnSizing(pairs.length,true);
     makeChart('chartResolutionDate',{
       type:'bar',
       plugins:[groupedPeriodTotalsPlugin],
@@ -2726,9 +2748,9 @@
         label:solver,
         data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
         _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
-        maxBarThickness:40,
-        categoryPercentage:.66,
-        barPercentage:.78,
+        maxBarThickness:resolutionBarSize.maxBarThickness,
+        categoryPercentage:resolutionBarSize.categoryPercentage,
+        barPercentage:resolutionBarSize.barPercentage,
         borderRadius:5,
         borderSkipped:false
       }))},
@@ -3151,6 +3173,37 @@
     openClaimModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo},'report');
   }
 
+  function getCurrentOperationalStatus(key){
+    if(!key) return '';
+    if(state.claimMap.has(key)) return 'claim';
+    if(state.resolvedMap.has(key)) return 'resolved';
+
+    const treatment=state.treatmentMap.get(key);
+    if(treatment){
+      const treatmentStatus=cleanText(treatment.statusTratativa).toLowerCase();
+      if(!['concluída','concluida'].includes(treatmentStatus)) return 'treatment';
+    }
+
+    if(state.reportRows.some(r=>r.__key===key)) return 'open';
+    return '';
+  }
+
+  function blockManualDirectRegistration(kind, key, nota, coleta){
+    const status=getCurrentOperationalStatus(key);
+    if(status!=='open' && status!=='treatment') return false;
+
+    const actionText=kind==='claim' ? 'encaminhar para Sinistro' : 'resolver';
+    const sourceText=status==='open' ? 'Em aberto' : 'Em tratativa';
+    const buttonText=kind==='claim' ? 'Encaminhar sinistro' : 'Resolver selecionado';
+
+    setNotice(
+      'warn',
+      'Cadastro manual bloqueado',
+      `A Nota ${nota} / Coleta ${coleta} está ${sourceText}. Para ${actionText}, selecione/marque esse registro na respectiva aba e use o botão “${buttonText}”.`
+    );
+    return true;
+  }
+
   function getSelectedActionRow(){
     if(!state.selectedKey)return null;
     if(state.selectedSource==='treatment'){
@@ -3206,9 +3259,16 @@
   $('resolutionForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
     const treatmentForKey=state.treatmentMap.get(keyOf($('fNota').value,$('fColeta').value));
-    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
+    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',origem:state.resolutionModalMode,nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
     if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
     const key=keyOf(payload.nota,payload.coleta);
+    const currentStatusForResolution=getCurrentOperationalStatus(key);
+    payload.constaEmAberto=currentStatusForResolution==='open';
+    payload.constaEmTratativa=currentStatusForResolution==='treatment';
+    if(state.resolutionModalMode==='manual' && blockManualDirectRegistration('resolved',key,payload.nota,payload.coleta)){
+      $('fNota').focus();
+      return;
+    }
     if(payload.resolucao==='Material localizado no cliente' && !state.treatmentMap.has(key)){
       $('fResolution').focus();
       return setNotice('warn','Tratativa obrigatória','Para usar “Material localizado no cliente”, a Nota + Coleta precisa primeiro existir na aba Em tratativa.');
@@ -3235,8 +3295,15 @@
 
   $('claimForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',origem:state.claimModalMode,nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
     const key=keyOf(payload.nota,payload.coleta);
+    const currentStatusForClaim=getCurrentOperationalStatus(key);
+    payload.constaEmAberto=currentStatusForClaim==='open';
+    payload.constaEmTratativa=currentStatusForClaim==='treatment';
+    if(state.claimModalMode==='manual' && blockManualDirectRegistration('claim',key,payload.nota,payload.coleta)){
+      $('sNota').focus();
+      return;
+    }
     const duplicateClaim=state.claimMap.has(key) && !(state.claimModalMode==='edit' && state.claimEditKey===key);
     if(duplicateClaim){
       $('sNota').focus();
