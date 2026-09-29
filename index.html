@@ -1104,7 +1104,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Tratativas, resolvidos e sinistros sem duplicidade. A barra soma o valor total da causa e separa o status atual.</div>
+              <div class="chart-hint">Somente casos com motivo identificado. Sinistro prioriza a Resolução; se não houver, usa Motivo da tratativa. Resolvido usa Resolução e Tratativa usa Motivo da tratativa.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1116,7 +1116,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Tratativas, resolvidos e sinistros sem duplicidade. Casos sem responsável aparecem como NÃO IDENTIFICADO; o rótulo mostra valor e quantidade totais.</div>
+              <div class="chart-hint">Somente casos com motivo identificado. O status atual define a cor: Sinistro, depois Resolvido e, por último, Em tratativa. Responsável vazio continua como NÃO IDENTIFICADO.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1689,7 +1689,18 @@
   }
 
   const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
-  const reasonLabel = r => cleanText(r.treatmentReason) || cleanText(r.resolucao) || 'NÃO IDENTIFICADO';
+  const reasonLabel = r => {
+    if (r.status === 'claim') {
+      return cleanText(r.resolucao) || cleanText(r.treatmentReason) || '';
+    }
+    if (r.status === 'resolved') {
+      return cleanText(r.resolucao) || '';
+    }
+    if (r.status === 'treatment') {
+      return cleanText(r.treatmentReason) || '';
+    }
+    return '';
+  };
   const chartFilterDefs = {
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
@@ -1759,7 +1770,10 @@
     const collator = (a,b)=>String(a).localeCompare(String(b),'pt-BR');
     const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
     const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
-    const causalRows = master.filter(r=>r.inTreatment || r.inResolved || r.inClaim);
+    const causalRows = master.filter(r=>
+      ['treatment','resolved','claim'].includes(r.status) &&
+      !!reasonLabel(r)
+    );
     const reasons = causalRows.map(reasonLabel).filter(Boolean).sort(collator);
     const responsibles = causalRows
       .map(r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO')
@@ -2399,7 +2413,10 @@
     // Universo: todos os registros que existem em Tratativas, Resolvidos ou Sinistros.
     // Cada Nota + Coleta já vem canônica do master, portanto nunca duplica:
     // Sinistro > Resolvido > Em tratativa.
-    const causalBase = master.filter(r=>r.inTreatment || r.inResolved || r.inClaim);
+    const causalBase = master.filter(r=>
+      ['treatment','resolved','claim'].includes(r.status) &&
+      !!reasonLabel(r)
+    );
     const reasonSource=applyDashboardFilters(causalBase,'reason');
     const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
     sizeHorizontalBars('chartReason', reasonLabels.length);
