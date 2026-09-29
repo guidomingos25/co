@@ -646,6 +646,25 @@
     .dashboard-charts .chart-wrap { height:270px; }
     .dashboard-charts .chart-scroll-inner { height:270px; }
 
+    .chart-scroll-y {
+      width:100%;
+      max-height:340px;
+      overflow-y:auto;
+      overflow-x:hidden;
+      padding-right:4px;
+      scrollbar-gutter:stable;
+    }
+    .chart-scroll-y-inner {
+      position:relative;
+      width:100%;
+      min-height:270px;
+      height:270px;
+    }
+    .chart-scroll-y::-webkit-scrollbar { width:8px; }
+    .chart-scroll-y::-webkit-scrollbar-track { background:var(--surface-2); border-radius:999px; }
+    .chart-scroll-y::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+    .chart-scroll-y::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
     @media (max-width:1200px) {
       .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .dashboard-charts { grid-template-columns:1fr; }
@@ -1084,20 +1103,24 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Motivos operacionais que mais concentram valor, separados pelo status atual.</div>
+              <div class="chart-hint">Todos os motivos operacionais, ordenados por impacto financeiro e separados pelo status atual.</div>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chartReason"></canvas></div>
+          <div class="chart-scroll-y">
+            <div class="chart-scroll-y-inner"><canvas id="chartReason"></canvas></div>
+          </div>
         </article>
 
         <article class="chart-card">
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Inclui responsáveis registrados em Tratativas e também diretamente em Resolvidos, separados pelo status atual.</div>
+              <div class="chart-hint">Todos os responsáveis registrados em Tratativas ou Resolvidos, ordenados por impacto financeiro. Use o scroll quando necessário.</div>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
+          <div class="chart-scroll-y">
+            <div class="chart-scroll-y-inner"><canvas id="chartResponsible"></canvas></div>
+          </div>
         </article>
 
         <article class="chart-card">
@@ -2119,7 +2142,15 @@
   };
   function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
   function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?82:granularity==='week'?112:104; inner.style.width=`${Math.max(640,Math.max(1,bucketCount)*per)}px`;}
-  function sizeHorizontalBars(canvasId,labelCount){const canvas=$(canvasId); if(!canvas)return; const wrap=canvas.closest('.chart-wrap'); if(!wrap)return; wrap.style.height=`${Math.max(270, Math.min(520, 44 + labelCount*28))}px`;}
+  function sizeHorizontalBars(canvasId,labelCount){
+    const canvas=$(canvasId);
+    if(!canvas)return;
+    const holder=canvas.parentElement;
+    if(!holder)return;
+    const height=Math.max(270, 58 + Math.max(1,labelCount)*30);
+    holder.style.height=`${height}px`;
+    holder.style.minHeight=`${height}px`;
+  }
 
   function stackedPairs(rows,getter,limit=null){
     const map=new Map();
@@ -2248,7 +2279,7 @@
       const label=reasonLabel(r);
       return label && label!=='Sem motivo definido' && label!=='Sinistro';
     });
-    const reasonPairs=stackedPairs(reasonSource,reasonLabel,10), reasonLabels=reasonPairs.map(x=>x[0]);
+    const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
     sizeHorizontalBars('chartReason', reasonLabels.length);
     makeChart('chartReason',{
       type:'bar',
@@ -2281,8 +2312,7 @@
     );
     const responsiblePairs=stackedPairs(
       responsibleBase,
-      r=>r.treatmentResponsible || r.responsavel,
-      10
+      r=>r.treatmentResponsible || r.responsavel
     ), responsibleLabels=responsiblePairs.map(x=>x[0]);
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
