@@ -1250,7 +1250,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Evolução operacional</h3>
-              <div class="chart-hint">Evolução por período com composição do status atual. O valor total de cada período aparece no topo; detalhes ficam no hover.</div>
+              <div class="chart-hint">Evolução por período com composição do status atual. Rótulos pequenos aparecem somente onde couberem; o total do período fica no topo e o restante permanece no hover.</div>
             </div>
             <div class="chart-head-actions">
               <div class="chart-general-total" id="chartOccurrenceTotal">
@@ -1273,7 +1273,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Ranking das causas por impacto financeiro. As cores mostram o status atual; detalhes de valor e quantidade ficam no hover.</div>
+              <div class="chart-hint">Ranking das causas por impacto financeiro. Valores compactos aparecem apenas nos segmentos com espaço suficiente; detalhes completos ficam no hover.</div>
             </div>
             <div class="chart-general-total" id="chartReasonTotal">
               <small>Total geral</small>
@@ -1289,7 +1289,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Ranking dos responsáveis por impacto financeiro. As barras mostram a composição por status atual, sem duplicidade.</div>
+              <div class="chart-hint">Ranking dos responsáveis por impacto financeiro. Valores compactos aparecem apenas quando couberem; detalhes completos ficam no hover.</div>
             </div>
             <div class="chart-general-total" id="chartResponsibleTotal">
               <small>Total geral</small>
@@ -1319,7 +1319,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Prevenção de perdas ao longo do tempo</h3>
-              <div class="chart-hint">Prevenção de perdas por período e por pessoa. O total do período aparece acima do grupo de barras.</div>
+              <div class="chart-hint">Prevenção de perdas por período e por pessoa. Cada barra mostra um valor compacto quando houver espaço; o total do período permanece acima do grupo.</div>
             </div>
             <div class="chart-head-actions">
               <div class="chart-general-total" id="chartResolutionDateTotal">
@@ -2488,6 +2488,69 @@
     backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.92)',
     borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
   };
+  function shortMoneyLabel(value){
+    const n=Number(value||0);
+    const abs=Math.abs(n);
+    if(!abs) return '';
+    if(abs>=1000000){
+      return `${(n/1000000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1})}M`;
+    }
+    if(abs>=1000){
+      return `${(n/1000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}k`;
+    }
+    return n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+
+  function barLabelFits(ctx,text,minHeight=14,padX=7){
+    if(!text) return false;
+    const el=ctx.chart.getDatasetMeta(ctx.datasetIndex)?.data?.[ctx.dataIndex];
+    if(!el) return false;
+    const width=Math.abs(Number(el.width||0));
+    const height=Math.abs(Number(el.height||0));
+    const textWidth=ctx.chart.ctx.measureText(text).width;
+    return width >= (textWidth + padX*2) && height >= minHeight;
+  }
+
+  const smartMoneyDataLabels={
+    anchor:'center',
+    align:'center',
+    clamp:true,
+    clip:true,
+    display:ctx=>{
+      const value=Number(ctx.dataset?.data?.[ctx.dataIndex]||0);
+      if(!value) return false;
+      const text=shortMoneyLabel(value);
+      return barLabelFits(ctx,text,14,5);
+    },
+    formatter:v=>shortMoneyLabel(v),
+    color:'#ffffff',
+    font:{size:8,weight:'900'},
+    textAlign:'center',
+    textStrokeColor:'rgba(0,0,0,.28)',
+    textStrokeWidth:2,
+    padding:0
+  };
+
+  const smartPercentDataLabels={
+    anchor:'center',
+    align:'center',
+    clamp:true,
+    clip:true,
+    display:ctx=>{
+      const value=Number(ctx.dataset?.data?.[ctx.dataIndex]||0);
+      if(!value) return false;
+      const text=`${pctFmt.format(value)}%`;
+      return barLabelFits(ctx,text,16,5);
+    },
+    formatter:v=>`${pctFmt.format(Number(v))}%`,
+    color:'#ffffff',
+    font:{size:8,weight:'900'},
+    textAlign:'center',
+    textStrokeColor:'rgba(0,0,0,.28)',
+    textStrokeWidth:2,
+    padding:0
+  };
+
   function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
   function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?82:granularity==='week'?112:104; inner.style.width=`${Math.max(640,Math.max(1,bucketCount)*per)}px`;}
   function sizeHorizontalBars(canvasId,labelCount){
@@ -2625,7 +2688,7 @@
         plugins:{
           legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
           tooltip:chartMoneyTooltip,
-          datalabels:{display:false},
+          datalabels:smartMoneyDataLabels,
           stackTopTotals:{canvasIds:['chartOccurrence']}
         }
       }
@@ -2681,7 +2744,7 @@
         plugins:{
           legend:{position:'bottom'},
           tooltip:chartMoneyTooltip,
-          datalabels:{display:false}
+          datalabels:smartMoneyDataLabels
         }
       }
     });
@@ -2753,12 +2816,7 @@
             const ds=ctx.dataset, value=Number(ds._actualValues?.[ctx.dataIndex]||0), count=Number(ds._counts?.[ctx.dataIndex]||0), pct=Number(ctx.raw||0);
             return `${ds.label}: ${moneyFmt.format(value)} (${pctFmt.format(pct)}%) • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
           }}},
-          datalabels:{
-            display:ctx=>Number(ctx.raw||0)>=8,
-            formatter:(v)=>`${pctFmt.format(Number(v))}%`,
-            color:'#ffffff',
-            font:{size:10,weight:'900'}
-          }
+          datalabels:smartPercentDataLabels
         }
       }
     });
@@ -2798,7 +2856,7 @@
           x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
           y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
         },
-        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:{display:false}}
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:smartMoneyDataLabels}
       }
     });
 
@@ -2834,7 +2892,7 @@
           x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
           y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
         },
-        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:{display:false}}
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:smartMoneyDataLabels}
       }
     });
 
