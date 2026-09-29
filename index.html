@@ -1104,7 +1104,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Somente casos com motivo identificado. Sinistro prioriza a Resolução; se não houver, usa Motivo da tratativa. Resolvido usa Resolução e Tratativa usa Motivo da tratativa.</div>
+              <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro tem prioridade visual; a causa vem primeiro de Resolução e depois de Motivo da tratativa.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1116,7 +1116,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Somente casos com motivo identificado. O status atual define a cor: Sinistro, depois Resolvido e, por último, Em tratativa. Responsável vazio continua como NÃO IDENTIFICADO.</div>
+              <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro = roxo, Resolvido = verde e Tratativa = azul. Responsável vazio fica como NÃO IDENTIFICADO.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1514,7 +1514,7 @@
     for (const r of rows || []) {
       const row = {
         nota: cleanText(r.nota), coleta: cleanText(r.coleta), valorNota: parseMoney(r.valorNota), vocativo: cleanText(r.vocativo),
-        motivo: cleanText(r.treatmentReason), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
+        motivo: cleanText(r.motivo), responsavel: cleanText(r.responsavel), dataTratativa: cleanText(r.dataTratativa),
         statusTratativa: cleanText(r.statusTratativa) || 'Pendente', dataConclusao: cleanText(r.dataConclusao), quemEnviou: cleanText(r.quemEnviou),
         key: keyOf(r.nota, r.coleta)
       };
@@ -1689,18 +1689,15 @@
   }
 
   const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
-  const reasonLabel = r => {
-    if (r.status === 'claim') {
-      return cleanText(r.resolucao) || cleanText(r.treatmentReason) || '';
-    }
-    if (r.status === 'resolved') {
-      return cleanText(r.resolucao) || '';
-    }
-    if (r.status === 'treatment') {
-      return cleanText(r.treatmentReason) || '';
-    }
-    return '';
-  };
+  const reasonLabel = r => cleanText(r.causalReason) || (
+    r.status === 'claim'
+      ? (cleanText(r.resolucao) || cleanText(r.treatmentReason))
+      : r.status === 'resolved'
+        ? cleanText(r.resolucao)
+        : r.status === 'treatment'
+          ? cleanText(r.treatmentReason)
+          : ''
+  );
   const chartFilterDefs = {
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
@@ -1734,8 +1731,8 @@
     if (field === 'client') return cleanText(row['Cliente']) || 'Sem informação';
     if (field === 'vocativo') return cleanText(row.__vocativo) || 'Sem informação';
     if (field === 'status') return statusLabel(row.status);
-    if (field === 'reason') return reasonLabel(row);
-    if (field === 'responsible') return cleanText(row.treatmentResponsible || row.responsavel) || 'NÃO IDENTIFICADO';
+    if (field === 'reason') return cleanText(row.causalReason) || reasonLabel(row);
+    if (field === 'responsible') return cleanText(row.causalResponsible || row.treatmentResponsible || row.responsavel) || 'NÃO IDENTIFICADO';
     if (field === 'solver') return cleanText(row.quemResolveu) || 'Não informado';
     return '';
   }
@@ -1770,13 +1767,10 @@
     const collator = (a,b)=>String(a).localeCompare(String(b),'pt-BR');
     const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
     const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
-    const causalRows = master.filter(r=>
-      ['treatment','resolved','claim'].includes(r.status) &&
-      !!reasonLabel(r)
-    );
-    const reasons = causalRows.map(reasonLabel).filter(Boolean).sort(collator);
+    const causalRows = getCausalAnalysisRows();
+    const reasons = causalRows.map(r=>r.causalReason).filter(Boolean).sort(collator);
     const responsibles = causalRows
-      .map(r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO')
+      .map(r=>cleanText(r.causalResponsible) || 'NÃO IDENTIFICADO')
       .filter(Boolean)
       .sort(collator);
     const solvers = master.map(r=>cleanText(r.quemResolveu)).filter(Boolean).sort(collator);
@@ -1804,6 +1798,93 @@
       renderDashboardKpis();
       renderCharts();
     }
+  }
+
+  function getCausalAnalysisRows() {
+    const reportMap = new Map(state.reportRows.map(r=>[r.__key,r]));
+    const keys = new Set([
+      ...state.treatmentMap.keys(),
+      ...state.resolvedMap.keys(),
+      ...state.claimMap.keys()
+    ]);
+
+    const rows = [];
+
+    for (const key of keys) {
+      const treatment = state.treatmentMap.get(key);
+      const resolved = state.resolvedMap.get(key);
+      const claim = state.claimMap.get(key);
+      const report = reportMap.get(key);
+
+      // Status atual/prioridade visual:
+      // 1) Sinistro  2) Resolvido  3) Tratativa Cliente
+      const status = claim ? 'claim' : resolved ? 'resolved' : treatment ? 'treatment' : null;
+      if (!status) continue;
+
+      // Motivo / causa raiz:
+      // Sinistro: procura primeiro a Resolução e depois o Motivo da tratativa.
+      // Resolvido: Resolução.
+      // Tratativa: Motivo da tratativa.
+      const causalReason =
+        status === 'claim'
+          ? (cleanText(resolved?.resolucao) || cleanText(treatment?.motivo))
+          : status === 'resolved'
+            ? cleanText(resolved?.resolucao)
+            : cleanText(treatment?.motivo);
+
+      // Estes dois gráficos só trabalham com casos onde a causa foi identificada.
+      if (!causalReason) continue;
+
+      // Responsável pela falha:
+      // Para Sinistro, se passou por Tratativas Cliente, esse responsável é priorizado.
+      // Caso contrário, usa o responsável que existir em Resolvidos.
+      const causalResponsible =
+        status === 'claim'
+          ? (cleanText(treatment?.responsavel) || cleanText(resolved?.responsavel))
+          : status === 'resolved'
+            ? (cleanText(resolved?.responsavel) || cleanText(treatment?.responsavel))
+            : cleanText(treatment?.responsavel);
+
+      const currentSource =
+        status === 'claim' ? claim :
+        status === 'resolved' ? resolved :
+        treatment;
+
+      const value = Number(currentSource?.valorNota || 0);
+      const nota = cleanText(currentSource?.nota);
+      const coleta = cleanText(currentSource?.coleta);
+      const vocativo = cleanText(currentSource?.vocativo);
+
+      rows.push({
+        ...(report || {}),
+        __key:key,
+        key,
+        nota,
+        coleta,
+        __nota:nota,
+        __coleta:coleta,
+        valorNota:value,
+        __valor:value,
+        vocativo,
+        __vocativo:vocativo,
+
+        status,
+        causalReason,
+        causalResponsible,
+
+        // Mantém compatibilidade com os filtros/interações existentes.
+        resolucao:cleanText(resolved?.resolucao),
+        responsavel:causalResponsible,
+        treatmentReason:cleanText(treatment?.motivo),
+        treatmentResponsible:causalResponsible,
+
+        inClaim:!!claim,
+        inResolved:!!resolved,
+        inTreatment:!!treatment
+      });
+    }
+
+    return rows;
   }
 
   function getMasterRows() {
@@ -2413,10 +2494,7 @@
     // Universo: todos os registros que existem em Tratativas, Resolvidos ou Sinistros.
     // Cada Nota + Coleta já vem canônica do master, portanto nunca duplica:
     // Sinistro > Resolvido > Em tratativa.
-    const causalBase = master.filter(r=>
-      ['treatment','resolved','claim'].includes(r.status) &&
-      !!reasonLabel(r)
-    );
+    const causalBase = getCausalAnalysisRows();
     const reasonSource=applyDashboardFilters(causalBase,'reason');
     const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
     sizeHorizontalBars('chartReason', reasonLabels.length);
@@ -2450,7 +2528,7 @@
     const responsibleBase=applyDashboardFilters(causalBase,'responsible');
     const responsiblePairs=stackedPairs(
       responsibleBase,
-      r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO'
+      r=>cleanText(r.causalResponsible) || 'NÃO IDENTIFICADO'
     ), responsibleLabels=responsiblePairs.map(x=>x[0]);
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
