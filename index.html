@@ -699,6 +699,132 @@
       margin-left:auto;
     }
 
+    /* ===== Visual executivo dos gráficos ===== */
+    .dashboard-charts .chart-card {
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .dashboard-charts .chart-card-head {
+      padding-bottom:6px;
+    }
+    .dashboard-charts .chart-card-title h3 {
+      font-size:13px;
+      letter-spacing:-.01em;
+    }
+    .dashboard-charts .chart-hint {
+      max-width:760px;
+      line-height:1.35;
+    }
+    .status-chart-wrap {
+      height:210px !important;
+      display:flex;
+      align-items:center;
+    }
+    .status-chart-wrap canvas { max-height:185px; }
+
+    .team-production-panel {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      padding:8px 2px 2px;
+    }
+    .team-member-card {
+      position:relative;
+      min-height:148px;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+      cursor:pointer;
+      transition:transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+      overflow:hidden;
+    }
+    .team-member-card:hover {
+      transform:translateY(-1px);
+      border-color:#94a3b8;
+      box-shadow:0 8px 20px rgba(15,23,42,.08);
+    }
+    .team-member-card.active {
+      outline:2px solid rgba(37,99,235,.18);
+      border-color:#60a5fa;
+    }
+    .team-member-name {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:var(--text-strong);
+    }
+    .team-member-dot {
+      width:9px;height:9px;border-radius:999px;flex:0 0 auto;
+    }
+    .team-member-value {
+      margin-top:13px;
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:-.035em;
+      color:var(--text-strong);
+    }
+    .team-member-caption {
+      margin-top:3px;
+      font-size:9px;
+      color:var(--text-soft);
+      font-weight:700;
+    }
+    .team-member-stats {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:13px;
+    }
+    .team-member-stat {
+      padding:7px 8px;
+      border-radius:8px;
+      background:var(--surface);
+      border:1px solid var(--border);
+    }
+    .team-member-stat small {
+      display:block;
+      color:var(--text-soft);
+      font-size:7px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .team-member-stat strong {
+      display:block;
+      margin-top:2px;
+      color:var(--text-strong);
+      font-size:11px;
+    }
+    .team-member-bar {
+      height:5px;
+      margin-top:12px;
+      border-radius:999px;
+      background:var(--border);
+      overflow:hidden;
+    }
+    .team-member-bar > span {
+      display:block;
+      height:100%;
+      border-radius:999px;
+    }
+    .team-production-empty {
+      grid-column:1/-1;
+      padding:34px 12px;
+      text-align:center;
+      color:var(--text-soft);
+      border:1px dashed var(--border);
+      border-radius:12px;
+    }
+    @media (max-width:760px) {
+      .team-production-panel { grid-template-columns:1fr; }
+    }
+
     @media (max-width:1200px) {
       .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .dashboard-charts { grid-template-columns:1fr; }
@@ -1110,21 +1236,21 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Cenário atual por status</h3>
-              <div class="chart-hint">Valor atual em aberto, em tratativa, resolvido e sinistro. Quantidade e percentual no hover.</div>
+              <div class="chart-hint">Distribuição percentual do valor atual. Passe o mouse para ver valor, quantidade e participação de cada status.</div>
             </div>
             <div class="chart-general-total" id="chartStatusTotal">
               <small>Total geral</small>
               R$ 0,00 • 0 registros
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+          <div class="chart-wrap status-chart-wrap"><canvas id="chartStatus"></canvas></div>
         </article>
 
         <article class="chart-card">
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Evolução operacional</h3>
-              <div class="chart-hint">Cada Nota + Coleta aparece uma única vez. A data vem sempre da etapa atual: Em aberto = Data Ocorrência, Em tratativa = Data Entrada Tratativa, Resolvido = Data Resolução e Sinistro = Data Sinistro.</div>
+              <div class="chart-hint">Evolução por período com composição do status atual. Rótulos pequenos aparecem somente onde couberem; o total do período fica no topo e o restante permanece no hover.</div>
             </div>
             <div class="chart-head-actions">
               <div class="chart-general-total" id="chartOccurrenceTotal">
@@ -1147,7 +1273,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro tem prioridade visual; a causa vem primeiro de Resolução e depois de Motivo da tratativa.</div>
+              <div class="chart-hint">Ranking das causas por impacto financeiro. Valores compactos aparecem apenas nos segmentos com espaço suficiente; detalhes completos ficam no hover.</div>
             </div>
             <div class="chart-general-total" id="chartReasonTotal">
               <small>Total geral</small>
@@ -1163,7 +1289,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro = roxo, Resolvido = verde e Tratativa = azul. Responsável vazio fica como NÃO IDENTIFICADO.</div>
+              <div class="chart-hint">Ranking dos responsáveis por impacto financeiro. Valores compactos aparecem apenas quando couberem; detalhes completos ficam no hover.</div>
             </div>
             <div class="chart-general-total" id="chartResponsibleTotal">
               <small>Total geral</small>
@@ -1179,21 +1305,21 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Produção da equipe</h3>
-              <div class="chart-hint">Valor resolvido por pessoa. Quantidade de casos no hover.</div>
+              <div class="chart-hint">Comparativo executivo de prevenção de perdas, casos resolvidos e média por caso.</div>
             </div>
             <div class="chart-general-total" id="chartSolverTotal">
               <small>Total geral</small>
               R$ 0,00 • 0 registros
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="chartSolver"></canvas></div>
+          <div class="team-production-panel" id="teamProductionPanel"></div>
         </article>
 
         <article class="chart-card">
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Prevenção de perdas ao longo do tempo</h3>
-              <div class="chart-hint">Valor dos casos resolvidos por período e por quem resolveu.</div>
+              <div class="chart-hint">Prevenção de perdas por período e por pessoa. Cada barra mostra um valor compacto quando houver espaço; o total do período permanece acima do grupo.</div>
             </div>
             <div class="chart-head-actions">
               <div class="chart-general-total" id="chartResolutionDateTotal">
@@ -2262,7 +2388,7 @@
   }
 
   function chartSelectionValues(id, labels) {
-    if (id === 'chartStatus') return { dimension:'status', values:labels };
+    if (id === 'chartStatus') return null;
     if (id === 'chartReason') return { dimension:'reason', values:labels };
     if (id === 'chartSolver') return { dimension:'solver', values:labels };
     if (id === 'chartResponsible') return { dimension:'responsible', values:labels };
@@ -2298,17 +2424,6 @@
     const statusSelected = state.chartFilters.status;
 
     (config.data.datasets || []).forEach(ds => {
-      if (id === 'chartResolutionDate' && config.type === 'line') {
-        const rgb = chartRgb(id, ds.label);
-        ds.borderColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
-        ds.backgroundColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},.12)`;
-        ds.pointBackgroundColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
-        ds.pointBorderColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
-        ds.borderWidth = 2.2;
-        ds.pointRadius = 3;
-        ds.pointHoverRadius = 5;
-        return;
-      }
       const normal = [], hover = [], borders = [], widths = [];
       labels.forEach((label, index) => {
         const rgb = chartRgb(id, ds.label, ['chartStatus','chartStatusCount','chartSolver'].includes(id) ? label : '');
@@ -2373,6 +2488,76 @@
     backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.92)',
     borderRadius:4,padding:{top:2,right:4,bottom:2,left:4}
   };
+  function shortMoneyLabel(value){
+    const n=Number(value||0);
+    const abs=Math.abs(n);
+    if(!abs) return '';
+    if(abs>=1000000){
+      return `${(n/1000000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1})}M`;
+    }
+    if(abs>=1000){
+      return `${(n/1000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}k`;
+    }
+    return n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+
+  function barLabelFits(ctx,text,minHeight=14,padX=7){
+    if(!text) return false;
+    const el=ctx.chart.getDatasetMeta(ctx.datasetIndex)?.data?.[ctx.dataIndex];
+    if(!el) return false;
+
+    // Usa as dimensões FINAIS da barra, mesmo durante a animação inicial.
+    // Assim o rótulo já nasce visível quando houver espaço, sem depender do hover.
+    const finalProps = typeof el.getProps === 'function'
+      ? el.getProps(['width','height'], true)
+      : el;
+
+    const width=Math.abs(Number(finalProps.width||0));
+    const height=Math.abs(Number(finalProps.height||0));
+    const textWidth=ctx.chart.ctx.measureText(text).width;
+    return width >= (textWidth + padX*2) && height >= minHeight;
+  }
+
+  const smartMoneyDataLabels={
+    anchor:'center',
+    align:'center',
+    clamp:true,
+    clip:true,
+    display:ctx=>{
+      const value=Number(ctx.dataset?.data?.[ctx.dataIndex]||0);
+      if(!value) return false;
+      const text=shortMoneyLabel(value);
+      return barLabelFits(ctx,text,14,5);
+    },
+    formatter:v=>shortMoneyLabel(v),
+    color:'#ffffff',
+    font:{size:8,weight:'900'},
+    textAlign:'center',
+    textStrokeColor:'rgba(0,0,0,.28)',
+    textStrokeWidth:2,
+    padding:0
+  };
+
+  const smartPercentDataLabels={
+    anchor:'center',
+    align:'center',
+    clamp:true,
+    clip:true,
+    display:ctx=>{
+      const value=Number(ctx.dataset?.data?.[ctx.dataIndex]||0);
+      if(!value) return false;
+      const text=`${pctFmt.format(value)}%`;
+      return barLabelFits(ctx,text,16,5);
+    },
+    formatter:v=>`${pctFmt.format(Number(v))}%`,
+    color:'#ffffff',
+    font:{size:8,weight:'900'},
+    textAlign:'center',
+    textStrokeColor:'rgba(0,0,0,.28)',
+    textStrokeWidth:2,
+    padding:0
+  };
+
   function temporalTickLines(pair, granularity){ if(!pair)return['']; if(pair.key==='NONE')return['Sem data']; if(granularity==='week'){const m=String(pair.label).match(/^(.*?)\s+a\s+(.*)$/); if(m)return[m[1],`a ${m[2]}`];} return[pair.label]; }
   function sizeTemporalChart(innerId,bucketCount,granularity){const inner=$(innerId); if(!inner)return; const per=granularity==='day'?82:granularity==='week'?112:104; inner.style.width=`${Math.max(640,Math.max(1,bucketCount)*per)}px`;}
   function sizeHorizontalBars(canvasId,labelCount){
@@ -2392,6 +2577,85 @@
   }
   function temporalPairs(rows,dateGetter,granularity){const map=new Map(); for(const r of rows){const info=bucketInfo(dateGetter(r),granularity); if(!map.has(info.key))map.set(info.key,{...info,value:0,count:0}); map.get(info.key).value+=Number(r.__valor||0); map.get(info.key).count+=1;} return [...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort);}
 
+  const stackTopTotalsPlugin = {
+    id:'stackTopTotals',
+    afterDatasetsDraw(chart, args, opts){
+      const allowed = opts?.canvasIds || [];
+      if (allowed.length && !allowed.includes(chart.canvas?.id)) return;
+      const datasets = chart.data.datasets || [];
+      if (!datasets.length) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = '800 9px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
+
+      const labelCount = chart.data.labels?.length || 0;
+      for (let i=0;i<labelCount;i++){
+        let total=0, count=0, x=null, top=Infinity;
+        datasets.forEach((ds,dsIndex)=>{
+          total += Number(ds.data?.[i] || 0);
+          count += Number(ds._counts?.[i] || 0);
+          const el=chart.getDatasetMeta(dsIndex)?.data?.[i];
+          if(el){
+            if(Number.isFinite(el.x)) x=el.x;
+            if(Number.isFinite(el.y)) top=Math.min(top,el.y);
+          }
+        });
+        if(!total || x==null || !Number.isFinite(top)) continue;
+        const text=compactMoneyFmt.format(total);
+        const padX=4, h=16, w=ctx.measureText(text).width+padX*2;
+        const bx=x-w/2, by=Math.max(chart.chartArea.top+1,top-20);
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.94)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx,by,w,h,4); else ctx.rect(bx,by,w,h);
+        ctx.fill();
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'#e5e7eb':'#334155';
+        ctx.fillText(text,x,by+h-3);
+      }
+      ctx.restore();
+    }
+  };
+
+  const groupedPeriodTotalsPlugin = {
+    id:'groupedPeriodTotals',
+    afterDatasetsDraw(chart){
+      if(chart.canvas?.id!=='chartResolutionDate') return;
+      const datasets=chart.data.datasets||[];
+      const ctx=chart.ctx;
+      ctx.save();
+      ctx.font='800 9px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+
+      const count=chart.data.labels?.length||0;
+      for(let i=0;i<count;i++){
+        let total=0, centerX=0, visibleBars=0, top=Infinity;
+        datasets.forEach((ds,dsIndex)=>{
+          total+=Number(ds.data?.[i]||0);
+          const el=chart.getDatasetMeta(dsIndex)?.data?.[i];
+          if(el && Number(ds.data?.[i]||0)>0){
+            centerX+=el.x; visibleBars++;
+            top=Math.min(top,el.y);
+          }
+        });
+        if(!total || !visibleBars || !Number.isFinite(top)) continue;
+        centerX/=visibleBars;
+        const text=compactMoneyFmt.format(total);
+        const padX=4, h=16, w=ctx.measureText(text).width+padX*2;
+        const bx=centerX-w/2, by=Math.max(chart.chartArea.top+1,top-21);
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'rgba(15,23,42,.88)':'rgba(255,255,255,.94)';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx,by,w,h,4); else ctx.rect(bx,by,w,h);
+        ctx.fill();
+        ctx.fillStyle=document.body.dataset.theme==='dark'?'#e5e7eb':'#334155';
+        ctx.fillText(text,centerX,by+h-3);
+      }
+      ctx.restore();
+    }
+  };
+
   function renderOccurrenceStatusChart(master){
     const rows=applyDashboardFilters(master,'occurrencePeriod');
     const occurrenceTotalValue=rows.reduce((s,r)=>s+Number(r.__valor||0),0);
@@ -2408,7 +2672,34 @@
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartOccurrenceInner',pairs.length,state.occurrenceGranularity);
     const defs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
-    makeChart('chartOccurrence',{type:'bar',data:{labels,datasets:defs.map(([label,key])=>({label,data:pairs.map(x=>x[key]),_counts:pairs.map(x=>x[`${key}Count`]),stack:'total'}))},options:{maintainAspectRatio:false,layout:{padding:{top:20,right:10,bottom:2,left:2}},onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], status=defs[el.datasetIndex]?.[0]; if(key)toggleChartFilter('occurrencePeriod',key,status);},scales:{x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.occurrenceGranularity)},grid:{display:false}},y:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}}});
+    makeChart('chartOccurrence',{
+      type:'bar',
+      plugins:[stackTopTotalsPlugin],
+      data:{labels,datasets:defs.map(([label,key])=>({
+        label,
+        data:pairs.map(x=>x[key]),
+        _counts:pairs.map(x=>x[`${key}Count`]),
+        stack:'total',
+        borderRadius:4,
+        borderSkipped:false,
+        maxBarThickness:54
+      }))},
+      options:{
+        maintainAspectRatio:false,
+        layout:{padding:{top:28,right:10,bottom:2,left:2}},
+        onClick:(e,els)=>{if(!els.length)return; const el=els[0], key=keys[el.index], status=defs[el.datasetIndex]?.[0]; if(key)toggleChartFilter('occurrencePeriod',key,status);},
+        scales:{
+          x:{stacked:true,offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,font:{size:9,weight:'700'},callback:(value,index)=>temporalTickLines(pairs[index],state.occurrenceGranularity)},grid:{display:false}},
+          y:{stacked:true,beginAtZero:true,grace:'14%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.12)':'rgba(148,163,184,.16)'}}
+        },
+        plugins:{
+          legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
+          tooltip:chartMoneyTooltip,
+          datalabels:smartMoneyDataLabels,
+          stackTopTotals:{canvasIds:['chartOccurrence']}
+        }
+      }
+    });
   }
 
   function renderResolutionDateBySolver(master){
@@ -2430,13 +2721,16 @@
     sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
     makeChart('chartResolutionDate',{
       type:'bar',
+      plugins:[groupedPeriodTotalsPlugin],
       data:{labels,datasets:solverLabels.map(solver=>({
         label:solver,
         data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
         _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
-        maxBarThickness:42,
-        categoryPercentage:.72,
-        barPercentage:.84
+        maxBarThickness:40,
+        categoryPercentage:.66,
+        barPercentage:.78,
+        borderRadius:5,
+        borderSkipped:false
       }))},
       options:{
         maintainAspectRatio:false,
@@ -2457,23 +2751,7 @@
         plugins:{
           legend:{position:'bottom'},
           tooltip:chartMoneyTooltip,
-          datalabels:{
-            anchor:'end',
-            align:'top',
-            offset:2,
-            clamp:true,
-            clip:false,
-            formatter:(v,ctx)=>Number(v)>0?compactMoneyFmt.format(Number(v)):'',
-            font:{size:9,weight:'800'},
-            textAlign:'center',
-            color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155',
-            backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.82)':'rgba(255,255,255,.92)',
-            borderRadius:4,
-            padding:{top:2,right:4,bottom:2,left:4},
-            backgroundColor:()=>document.body.dataset.theme==='dark'?'rgba(15,23,42,.82)':'rgba(255,255,255,.92)',
-            borderRadius:4,
-            padding:{top:2,right:4,bottom:2,left:4}
-          }
+          datalabels:smartMoneyDataLabels
         }
       }
     });
@@ -2497,24 +2775,55 @@
     if($('chartStatusTotal')){
       $('chartStatusTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(statusTotalValue)} • ${statusTotalCount.toLocaleString('pt-BR')} ${statusTotalCount===1?'registro':'registros'}`;
     }
+    const statusPcts=vals.map(v=>statusTotalValue?Number(v)/statusTotalValue*100:0);
+    const statusColors={
+      'Em aberto':'rgba(239,68,68,.92)',
+      'Em tratativa':'rgba(14,165,233,.92)',
+      'Resolvido':'rgba(34,197,94,.92)',
+      'Sinistro':'rgba(168,85,247,.92)'
+    };
     makeChart('chartStatus',{
-      type:'doughnut',
-      data:{labels:statusLabels,datasets:[{data:vals,_counts:counts}]},
+      type:'bar',
+      data:{
+        labels:['Cenário atual'],
+        datasets:statusGroups.map((g,index)=>({
+          label:g.label,
+          data:[statusPcts[index]],
+          _actualValues:[g.value],
+          _counts:[g.count],
+          stack:'status',
+          backgroundColor:statusColors[g.label],
+          borderColor:statusColors[g.label].replace('.92','1'),
+          borderWidth:1,
+          borderRadius:6,
+          borderSkipped:false,
+          barThickness:44
+        }))
+      },
       options:{
+        indexAxis:'y',
         maintainAspectRatio:false,
-        cutout:'58%',
-        onClick:(e,els)=>{if(!els.length)return; toggleChartFilter('status',statusLabels[els[0].index]);},
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const status=statusGroups[els[0].datasetIndex]?.label;
+          if(status)toggleChartFilter('status',status);
+        },
+        scales:{
+          x:{
+            stacked:true,
+            min:0,max:100,
+            ticks:{callback:v=>`${v}%`,font:{size:9,weight:'700'}},
+            grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}
+          },
+          y:{stacked:true,display:false}
+        },
         plugins:{
-          legend:{position:'bottom'},
-          tooltip:chartMoneyTooltip,
-          datalabels:{
-            formatter:(v,ctx)=>{
-              const total=ctx.dataset.data.reduce((s,x)=>s+Number(x||0),0), pct=total?Number(v)/total*100:0;
-              return Number(v)>0?`${pctFmt.format(pct)}%\n${compactMoneyFmt.format(Number(v))}`:'';
-            },
-            font:{size:10,weight:'800'},
-            textAlign:'center'
-          }
+          legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},
+          tooltip:{callbacks:{label:ctx=>{
+            const ds=ctx.dataset, value=Number(ds._actualValues?.[ctx.dataIndex]||0), count=Number(ds._counts?.[ctx.dataIndex]||0), pct=Number(ctx.raw||0);
+            return `${ds.label}: ${moneyFmt.format(value)} (${pctFmt.format(pct)}%) • ${count.toLocaleString('pt-BR')} ${count===1?'registro':'registros'}`;
+          }}},
+          datalabels:smartPercentDataLabels
         }
       }
     });
@@ -2538,9 +2847,9 @@
     makeChart('chartReason',{
       type:'bar',
       data:{labels:reasonLabels,datasets:[
-        {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
-        {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
-        {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total'}
+        {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22}
       ]},
       options:{
         indexAxis:'y',
@@ -2551,10 +2860,10 @@
           toggleChartFilter('reason',label,status);
         },
         scales:{
-          x:{stacked:true,beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
-          y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
+          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
         },
-        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:smartMoneyDataLabels}
       }
     });
 
@@ -2574,9 +2883,9 @@
     makeChart('chartResponsible',{
       type:'bar',
       data:{labels:responsibleLabels,datasets:[
-        {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
-        {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
-        {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total'}
+        {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22},
+        {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total',borderRadius:4,borderSkipped:false,maxBarThickness:22}
       ]},
       options:{
         indexAxis:'y',
@@ -2587,10 +2896,10 @@
           toggleChartFilter('responsible',label,status);
         },
         scales:{
-          x:{stacked:true,beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
-          y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
+          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))},grid:{color:()=>document.body.dataset.theme==='dark'?'rgba(148,163,184,.10)':'rgba(148,163,184,.14)'}},
+          y:{stacked:true,ticks:{font:{size:9,weight:'700'}},grid:{display:false}}
         },
-        plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{display:false}}
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,boxHeight:8}},tooltip:chartMoneyTooltip,datalabels:smartMoneyDataLabels}
       }
     });
 
@@ -2607,30 +2916,32 @@
     if($('chartSolverTotal')){
       $('chartSolverTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(solverTotalValue)} • ${solverTotalCount.toLocaleString('pt-BR')} ${solverTotalCount===1?'registro':'registros'}`;
     }
-    makeChart('chartSolver',{
-      type:'bar',
-      data:{labels:solverPairs.map(x=>x[0]),datasets:[{label:'Prevenção de perdas',data:solverPairs.map(x=>x[1].value),_counts:solverPairs.map(x=>x[1].count),maxBarThickness:64,categoryPercentage:.72,barPercentage:.82}]},
-      options:{
-        maintainAspectRatio:false,
-        layout:{padding:{top:28,right:10,bottom:2,left:2}},
-        onClick:(e,els)=>{if(!els.length)return; const label=solverPairs[els[0].index]?.[0]; if(label)toggleChartFilter('solver',label,'Resolvido');},
-        scales:{y:{beginAtZero:true,grace:'15%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}}},
-        plugins:{
-          legend:{display:false},
-          tooltip:chartMoneyTooltip,
-          datalabels:{
-            anchor:'end',align:'top',
-            formatter:(v,ctx)=>{
-              const count=Number(ctx.dataset?._counts?.[ctx.dataIndex]||0);
-              return Number(v)>0?`${compactMoneyFmt.format(Number(v))}\n${count} ${count===1?'caso':'casos'}`:'';
-            },
-            font:{size:9,weight:'800'},
-            textAlign:'center',
-            color:()=>document.body.dataset.theme==='dark'?'#e5e7eb':'#334155'
-          }
-        }
-      }
-    });
+    const teamPanel=$('teamProductionPanel');
+    if(teamPanel){
+      const maxTeamValue=Math.max(1,...solverPairs.map(x=>x[1].value));
+      const selectedSolvers=state.chartFilters.solver || new Set();
+      const solverColor=name=>name==='Italo'?'#2563eb':name==='Bruna'?'#f97316':'#64748b';
+      teamPanel.innerHTML=solverPairs.length ? solverPairs.map(([name,data])=>{
+        const avg=data.count?data.value/data.count:0;
+        const pct=Math.max(4,Math.min(100,data.value/maxTeamValue*100));
+        const active=selectedSolvers.has(name)?' active':'';
+        const color=solverColor(name);
+        return `<button type="button" class="team-member-card${active}" data-solver="${esc(name)}" style="text-align:left;font:inherit;color:inherit">
+          <div class="team-member-name">
+            <span>${esc(name)}</span>
+            <span class="team-member-dot" style="background:${color}"></span>
+          </div>
+          <div class="team-member-value">${moneyFmt.format(data.value)}</div>
+          <div class="team-member-caption">prevenção de perdas</div>
+          <div class="team-member-stats">
+            <div class="team-member-stat"><small>Casos resolvidos</small><strong>${data.count.toLocaleString('pt-BR')}</strong></div>
+            <div class="team-member-stat"><small>Média por caso</small><strong>${moneyFmt.format(avg)}</strong></div>
+          </div>
+          <div class="team-member-bar"><span style="width:${pct}%;background:${color}"></span></div>
+        </button>`;
+      }).join('') : `<div class="team-production-empty">Nenhum caso resolvido no período selecionado.</div>`;
+      teamPanel.querySelectorAll('[data-solver]').forEach(btn=>btn.addEventListener('click',()=>toggleChartFilter('solver',btn.dataset.solver,'Resolvido')));
+    }
 
     // 6. Prevenção de perdas no tempo
     renderResolutionDateBySolver(master);
@@ -2840,6 +3151,37 @@
     openClaimModal({nota:t.nota,coleta:t.coleta,valorNota:t.valorNota,vocativo:t.vocativo},'report');
   }
 
+  function getCurrentOperationalStatus(key){
+    if(!key) return '';
+    if(state.claimMap.has(key)) return 'claim';
+    if(state.resolvedMap.has(key)) return 'resolved';
+
+    const treatment=state.treatmentMap.get(key);
+    if(treatment){
+      const treatmentStatus=cleanText(treatment.statusTratativa).toLowerCase();
+      if(!['concluída','concluida'].includes(treatmentStatus)) return 'treatment';
+    }
+
+    if(state.reportRows.some(r=>r.__key===key)) return 'open';
+    return '';
+  }
+
+  function blockManualDirectRegistration(kind, key, nota, coleta){
+    const status=getCurrentOperationalStatus(key);
+    if(status!=='open' && status!=='treatment') return false;
+
+    const actionText=kind==='claim' ? 'encaminhar para Sinistro' : 'resolver';
+    const sourceText=status==='open' ? 'Em aberto' : 'Em tratativa';
+    const buttonText=kind==='claim' ? 'Encaminhar sinistro' : 'Resolver selecionado';
+
+    setNotice(
+      'warn',
+      'Cadastro manual bloqueado',
+      `A Nota ${nota} / Coleta ${coleta} está ${sourceText}. Para ${actionText}, selecione/marque esse registro na respectiva aba e use o botão “${buttonText}”.`
+    );
+    return true;
+  }
+
   function getSelectedActionRow(){
     if(!state.selectedKey)return null;
     if(state.selectedSource==='treatment'){
@@ -2895,9 +3237,16 @@
   $('resolutionForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
     const treatmentForKey=state.treatmentMap.get(keyOf($('fNota').value,$('fColeta').value));
-    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
+    const payload={action:'salvarResolvido',modo:state.resolutionModalMode==='edit'?'editar':'novo',origem:state.resolutionModalMode,nota:cleanText($('fNota').value),coleta:cleanText($('fColeta').value),valorNota:parseMoney($('fValor').value),vocativo:cleanText($('fVocativo').value),resolucao:$('fResolution').value,responsavel:cleanText(treatmentForKey?.responsavel || $('fResponsible').value),quemResolveu:$('fSolvedBy').value};
     if(!payload.quemResolveu){$('fSolvedBy').focus(); return setNotice('error','Selecione quem resolveu','Escolha Italo ou Bruna antes de salvar a resolução.');}
     const key=keyOf(payload.nota,payload.coleta);
+    const currentStatusForResolution=getCurrentOperationalStatus(key);
+    payload.constaEmAberto=currentStatusForResolution==='open';
+    payload.constaEmTratativa=currentStatusForResolution==='treatment';
+    if(state.resolutionModalMode==='manual' && blockManualDirectRegistration('resolved',key,payload.nota,payload.coleta)){
+      $('fNota').focus();
+      return;
+    }
     if(payload.resolucao==='Material localizado no cliente' && !state.treatmentMap.has(key)){
       $('fResolution').focus();
       return setNotice('warn','Tratativa obrigatória','Para usar “Material localizado no cliente”, a Nota + Coleta precisa primeiro existir na aba Em tratativa.');
@@ -2924,8 +3273,15 @@
 
   $('claimForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
-    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
+    const payload={action:'salvarSinistro',modo:state.claimModalMode==='edit'?'editar':'novo',origem:state.claimModalMode,nota:cleanText($('sNota').value),coleta:cleanText($('sColeta').value),valorNota:parseMoney($('sValor').value),vocativo:cleanText($('sVocativo').value)};
     const key=keyOf(payload.nota,payload.coleta);
+    const currentStatusForClaim=getCurrentOperationalStatus(key);
+    payload.constaEmAberto=currentStatusForClaim==='open';
+    payload.constaEmTratativa=currentStatusForClaim==='treatment';
+    if(state.claimModalMode==='manual' && blockManualDirectRegistration('claim',key,payload.nota,payload.coleta)){
+      $('sNota').focus();
+      return;
+    }
     const duplicateClaim=state.claimMap.has(key) && !(state.claimModalMode==='edit' && state.claimEditKey===key);
     if(duplicateClaim){
       $('sNota').focus();
