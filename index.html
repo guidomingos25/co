@@ -1104,7 +1104,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Causa raiz — impacto financeiro</h3>
-              <div class="chart-hint">Todos os motivos operacionais, ordenados por impacto financeiro e separados pelo status atual.</div>
+              <div class="chart-hint">Tratativas, resolvidos e sinistros sem duplicidade. A barra soma o valor total da causa e separa o status atual.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1116,7 +1116,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Resolvidos e tratativas por responsável. Casos sem responsável aparecem como NÃO IDENTIFICADO, com valor e quantidade total. Use o scroll quando necessário.</div>
+              <div class="chart-hint">Tratativas, resolvidos e sinistros sem duplicidade. Casos sem responsável aparecem como NÃO IDENTIFICADO; o rótulo mostra valor e quantidade totais.</div>
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -1689,7 +1689,7 @@
   }
 
   const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
-  const reasonLabel = r => cleanText(r.treatmentReason) || cleanText(r.resolucao) || (r.status === 'claim' ? 'Sinistro' : 'Sem motivo definido');
+  const reasonLabel = r => cleanText(r.treatmentReason) || cleanText(r.resolucao) || 'NÃO IDENTIFICADO';
   const chartFilterDefs = {
     status: { label:'Status', getter:r => statusLabel(r.status) },
     resolution: { label:'Resolução', getter:r => cleanText(r.resolucao) || 'Sem resolução' },
@@ -1759,9 +1759,9 @@
     const collator = (a,b)=>String(a).localeCompare(String(b),'pt-BR');
     const clients = master.map(r=>cleanText(r['Cliente'])).filter(Boolean).sort(collator);
     const vocativos = master.map(r=>cleanText(r.__vocativo)).filter(Boolean).sort(collator);
-    const reasons = master.map(reasonLabel).filter(v=>v && v!=='Sem motivo definido' && v!=='Sinistro').sort(collator);
-    const responsibles = master
-      .filter(r=>r.status==='resolved' || r.status==='treatment')
+    const causalRows = master.filter(r=>r.inTreatment || r.inResolved || r.inClaim);
+    const reasons = causalRows.map(reasonLabel).filter(Boolean).sort(collator);
+    const responsibles = causalRows
       .map(r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO')
       .filter(Boolean)
       .sort(collator);
@@ -2313,10 +2313,10 @@
     });
   }
 
-  const responsibleTotalsPlugin = {
-    id:'responsibleTotals',
+  const causalTotalsPlugin = {
+    id:'causalTotals',
     afterDatasetsDraw(chart){
-      if(chart.canvas?.id !== 'chartResponsible') return;
+      if(!['chartResponsible','chartReason'].includes(chart.canvas?.id)) return;
       const {ctx, scales:{x}} = chart;
       const labels = chart.data.labels || [];
       ctx.save();
@@ -2396,16 +2396,17 @@
     renderOccurrenceStatusChart(master);
 
     // 3. Causa raiz / motivo operacional
-    const reasonSource=applyDashboardFilters(master,'reason').filter(r=>{
-      const label=reasonLabel(r);
-      return label && label!=='Sem motivo definido' && label!=='Sinistro';
-    });
+    // Universo: todos os registros que existem em Tratativas, Resolvidos ou Sinistros.
+    // Cada Nota + Coleta já vem canônica do master, portanto nunca duplica:
+    // Sinistro > Resolvido > Em tratativa.
+    const causalBase = master.filter(r=>r.inTreatment || r.inResolved || r.inClaim);
+    const reasonSource=applyDashboardFilters(causalBase,'reason');
     const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
     sizeHorizontalBars('chartReason', reasonLabels.length);
     makeChart('chartReason',{
       type:'bar',
+      plugins:[causalTotalsPlugin],
       data:{labels:reasonLabels,datasets:[
-        {label:'Em aberto',data:reasonPairs.map(x=>x[1].open),_counts:reasonPairs.map(x=>x[1].openCount),stack:'total'},
         {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
         {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
         {label:'Sinistro',data:reasonPairs.map(x=>x[1].claim),_counts:reasonPairs.map(x=>x[1].claimCount),stack:'total'}
@@ -2413,13 +2414,14 @@
       options:{
         indexAxis:'y',
         maintainAspectRatio:false,
+        layout:{padding:{right:130}},
         onClick:(e,els)=>{
           if(!els.length)return;
-          const el=els[0], label=reasonLabels[el.index], status=statusLabels[el.datasetIndex];
+          const el=els[0], label=reasonLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
           toggleChartFilter('reason',label,status);
         },
         scales:{
-          x:{stacked:true,beginAtZero:true,grace:'8%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
+          x:{stacked:true,beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
           y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
         },
         plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:stackedBarDataLabels}
@@ -2427,10 +2429,8 @@
     });
 
     // 4. Responsáveis pela falha
-    const responsibleBase=applyDashboardFilters(
-      master.filter(r=>r.status==='resolved' || r.status==='treatment'),
-      'responsible'
-    );
+    // Mesmo universo causal: Tratativas + Resolvidos + Sinistros, sempre 1 Nota + Coleta.
+    const responsibleBase=applyDashboardFilters(causalBase,'responsible');
     const responsiblePairs=stackedPairs(
       responsibleBase,
       r=>cleanText(r.treatmentResponsible || r.responsavel) || 'NÃO IDENTIFICADO'
@@ -2438,9 +2438,8 @@
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
       type:'bar',
-      plugins:[responsibleTotalsPlugin],
+      plugins:[causalTotalsPlugin],
       data:{labels:responsibleLabels,datasets:[
-        {label:'Em aberto',data:responsiblePairs.map(x=>x[1].open),_counts:responsiblePairs.map(x=>x[1].openCount),stack:'total'},
         {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
         {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
         {label:'Sinistro',data:responsiblePairs.map(x=>x[1].claim),_counts:responsiblePairs.map(x=>x[1].claimCount),stack:'total'}
@@ -2448,14 +2447,14 @@
       options:{
         indexAxis:'y',
         maintainAspectRatio:false,
-        layout:{padding:{right:120}},
+        layout:{padding:{right:130}},
         onClick:(e,els)=>{
           if(!els.length)return;
-          const el=els[0], label=responsibleLabels[el.index], status=statusLabels[el.datasetIndex];
+          const el=els[0], label=responsibleLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
           toggleChartFilter('responsible',label,status);
         },
         scales:{
-          x:{stacked:true,beginAtZero:true,grace:'10%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
+          x:{stacked:true,beginAtZero:true,grace:'12%',ticks:{callback:v=>compactMoneyFmt.format(Number(v))}},
           y:{stacked:true,ticks:{font:{size:9,weight:'700'}}}
         },
         plugins:{legend:{position:'bottom'},tooltip:chartMoneyTooltip,datalabels:{display:false}}
