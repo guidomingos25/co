@@ -2656,6 +2656,32 @@
     }
   };
 
+  function adaptiveColumnSizing(categoryCount, grouped=false){
+    const count=Math.max(1,Number(categoryCount)||1);
+
+    // Quanto menos períodos existirem no gráfico, mais espaço cada coluna pode ocupar.
+    // Os limites abaixo são deliberadamente mais largos para aproveitar o espaço livre.
+    if(grouped){
+      if(count===1) return {maxBarThickness:92,categoryPercentage:.92,barPercentage:.94};
+      if(count===2) return {maxBarThickness:82,categoryPercentage:.90,barPercentage:.92};
+      if(count===3) return {maxBarThickness:72,categoryPercentage:.88,barPercentage:.90};
+      if(count===4) return {maxBarThickness:64,categoryPercentage:.86,barPercentage:.90};
+      if(count<=6) return {maxBarThickness:56,categoryPercentage:.82,barPercentage:.88};
+      if(count<=8) return {maxBarThickness:50,categoryPercentage:.78,barPercentage:.86};
+      if(count<=10) return {maxBarThickness:44,categoryPercentage:.74,barPercentage:.84};
+      return {maxBarThickness:38,categoryPercentage:.68,barPercentage:.80};
+    }
+
+    if(count===1) return {maxBarThickness:180,categoryPercentage:.94,barPercentage:.96};
+    if(count===2) return {maxBarThickness:150,categoryPercentage:.92,barPercentage:.95};
+    if(count===3) return {maxBarThickness:125,categoryPercentage:.90,barPercentage:.94};
+    if(count===4) return {maxBarThickness:108,categoryPercentage:.88,barPercentage:.93};
+    if(count<=6) return {maxBarThickness:90,categoryPercentage:.84,barPercentage:.92};
+    if(count<=8) return {maxBarThickness:72,categoryPercentage:.80,barPercentage:.90};
+    if(count<=10) return {maxBarThickness:60,categoryPercentage:.76,barPercentage:.88};
+    return {maxBarThickness:48,categoryPercentage:.70,barPercentage:.84};
+  }
+
   function renderOccurrenceStatusChart(master){
     const rows=applyDashboardFilters(master,'occurrencePeriod');
     const occurrenceTotalValue=rows.reduce((s,r)=>s+Number(r.__valor||0),0);
@@ -2671,6 +2697,7 @@
     }
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartOccurrenceInner',pairs.length,state.occurrenceGranularity);
+    const occurrenceBarSize=adaptiveColumnSizing(pairs.length,false);
     const defs=[['Em aberto','open'],['Em tratativa','treatment'],['Resolvido','resolved'],['Sinistro','claim']];
     makeChart('chartOccurrence',{
       type:'bar',
@@ -2682,7 +2709,9 @@
         stack:'total',
         borderRadius:4,
         borderSkipped:false,
-        maxBarThickness:54
+        maxBarThickness:occurrenceBarSize.maxBarThickness,
+        categoryPercentage:occurrenceBarSize.categoryPercentage,
+        barPercentage:occurrenceBarSize.barPercentage
       }))},
       options:{
         maintainAspectRatio:false,
@@ -2719,6 +2748,7 @@
     }
     const pairs=[...map.values()].sort((a,b)=>a.key==='NONE'?1:b.key==='NONE'?-1:a.sort-b.sort), labels=pairs.map(x=>x.label), keys=pairs.map(x=>x.key);
     sizeTemporalChart('chartResolutionDateInner',pairs.length,state.resolutionGranularity);
+    const resolutionBarSize=adaptiveColumnSizing(pairs.length,true);
     makeChart('chartResolutionDate',{
       type:'bar',
       plugins:[groupedPeriodTotalsPlugin],
@@ -2726,9 +2756,9 @@
         label:solver,
         data:pairs.map(x=>x.bySolver.get(solver)?.value||0),
         _counts:pairs.map(x=>x.bySolver.get(solver)?.count||0),
-        maxBarThickness:40,
-        categoryPercentage:.66,
-        barPercentage:.78,
+        maxBarThickness:resolutionBarSize.maxBarThickness,
+        categoryPercentage:resolutionBarSize.categoryPercentage,
+        barPercentage:resolutionBarSize.barPercentage,
         borderRadius:5,
         borderSkipped:false
       }))},
