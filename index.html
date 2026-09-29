@@ -1094,7 +1094,7 @@
           <div class="chart-card-head">
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
-              <div class="chart-hint">Valor associado às falhas de pessoas e situação atual dos casos.</div>
+              <div class="chart-hint">Inclui responsáveis registrados em Tratativas e também diretamente em Resolvidos, separados pelo status atual.</div>
             </div>
           </div>
           <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
@@ -2275,8 +2275,15 @@
     });
 
     // 4. Responsáveis pela falha
-    const responsibleBase=applyDashboardFilters(master.filter(r=>r.inTreatment),'responsible');
-    const responsiblePairs=stackedPairs(responsibleBase,r=>r.treatmentResponsible || r.responsavel,10), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    const responsibleBase=applyDashboardFilters(
+      master.filter(r=>cleanText(r.treatmentResponsible || r.responsavel)),
+      'responsible'
+    );
+    const responsiblePairs=stackedPairs(
+      responsibleBase,
+      r=>r.treatmentResponsible || r.responsavel,
+      10
+    ), responsibleLabels=responsiblePairs.map(x=>x[0]);
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
       type:'bar',
