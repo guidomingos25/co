@@ -666,6 +666,31 @@
     .chart-scroll-y::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
     .chart-scroll-y::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
 
+    .chart-general-total {
+      flex:0 0 auto;
+      align-self:flex-start;
+      margin-left:auto;
+      padding:6px 9px;
+      border:1px solid var(--border);
+      border-radius:9px;
+      background:var(--surface-2);
+      color:var(--text-strong);
+      font-size:9px;
+      line-height:1.25;
+      font-weight:900;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .chart-general-total small {
+      display:block;
+      margin-bottom:2px;
+      color:var(--text-soft);
+      font-size:7.5px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
     @media (max-width:1200px) {
       .dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .dashboard-charts { grid-template-columns:1fr; }
@@ -1106,6 +1131,10 @@
               <h3>Causa raiz — impacto financeiro</h3>
               <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro tem prioridade visual; a causa vem primeiro de Resolução e depois de Motivo da tratativa.</div>
             </div>
+            <div class="chart-general-total" id="chartReasonTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
+            </div>
           </div>
           <div class="chart-scroll-y">
             <div class="chart-scroll-y-inner"><canvas id="chartReason"></canvas></div>
@@ -1117,6 +1146,10 @@
             <div class="chart-card-title">
               <h3>Impacto por responsável pela falha</h3>
               <div class="chart-hint">Base exclusiva de Sinistros, Resolvidos e Tratativas Cliente, sem duplicidade. Sinistro = roxo, Resolvido = verde e Tratativa = azul. Responsável vazio fica como NÃO IDENTIFICADO.</div>
+            </div>
+            <div class="chart-general-total" id="chartResponsibleTotal">
+              <small>Total geral</small>
+              R$ 0,00 • 0 registros
             </div>
           </div>
           <div class="chart-scroll-y">
@@ -2408,50 +2441,6 @@
     });
   }
 
-  const causalTotalsPlugin = {
-    id:'causalTotals',
-    afterDatasetsDraw(chart){
-      if(!['chartResponsible','chartReason'].includes(chart.canvas?.id)) return;
-      const {ctx, scales:{x}} = chart;
-      const labels = chart.data.labels || [];
-      ctx.save();
-      ctx.font = '800 9px Inter, ui-sans-serif, system-ui, sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
-
-      labels.forEach((_, index)=>{
-        let totalValue = 0;
-        let totalCount = 0;
-        let y = null;
-        for(let dsIndex=0; dsIndex<chart.data.datasets.length; dsIndex++){
-          const ds = chart.data.datasets[dsIndex];
-          totalValue += Number(ds.data?.[index] || 0);
-          totalCount += Number(ds._counts?.[index] || 0);
-          const el = chart.getDatasetMeta(dsIndex)?.data?.[index];
-          if(el && Number.isFinite(el.y)) y = el.y;
-        }
-        if(!totalValue || y == null) return;
-
-        const label = `${compactMoneyFmt.format(totalValue)} • ${totalCount.toLocaleString('pt-BR')} ${totalCount===1?'registro':'registros'}`;
-        const px = Math.min(x.getPixelForValue(totalValue) + 7, chart.chartArea.right - ctx.measureText(label).width - 2);
-
-        const padX = 4, padY = 3, w = ctx.measureText(label).width + padX*2, h = 15;
-        const bx = Math.max(chart.chartArea.left + 2, px - padX);
-        const by = y - h/2;
-
-        ctx.fillStyle = document.body.dataset.theme==='dark' ? 'rgba(15,23,42,.88)' : 'rgba(255,255,255,.92)';
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(bx, by, w, h, 4);
-        else ctx.rect(bx, by, w, h);
-        ctx.fill();
-
-        ctx.fillStyle = document.body.dataset.theme==='dark' ? '#e5e7eb' : '#334155';
-        ctx.fillText(label, bx + padX, y);
-      });
-      ctx.restore();
-    }
-  };
-
   function renderCharts(){
     if (!$('chartStatus')) return;
     const master=uniqueRowsByKey(getMasterRows());
@@ -2497,10 +2486,14 @@
     const causalBase = getCausalAnalysisRows();
     const reasonSource=applyDashboardFilters(causalBase,'reason');
     const reasonPairs=stackedPairs(reasonSource,reasonLabel), reasonLabels=reasonPairs.map(x=>x[0]);
+    const reasonTotalValue=reasonSource.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const reasonTotalCount=reasonSource.length;
+    if($('chartReasonTotal')){
+      $('chartReasonTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(reasonTotalValue)} • ${reasonTotalCount.toLocaleString('pt-BR')} ${reasonTotalCount===1?'registro':'registros'}`;
+    }
     sizeHorizontalBars('chartReason', reasonLabels.length);
     makeChart('chartReason',{
       type:'bar',
-      plugins:[causalTotalsPlugin],
       data:{labels:reasonLabels,datasets:[
         {label:'Em tratativa',data:reasonPairs.map(x=>x[1].treatment),_counts:reasonPairs.map(x=>x[1].treatmentCount),stack:'total'},
         {label:'Resolvido',data:reasonPairs.map(x=>x[1].resolved),_counts:reasonPairs.map(x=>x[1].resolvedCount),stack:'total'},
@@ -2509,7 +2502,6 @@
       options:{
         indexAxis:'y',
         maintainAspectRatio:false,
-        layout:{padding:{right:130}},
         onClick:(e,els)=>{
           if(!els.length)return;
           const el=els[0], label=reasonLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
@@ -2530,10 +2522,14 @@
       responsibleBase,
       r=>cleanText(r.causalResponsible) || 'NÃO IDENTIFICADO'
     ), responsibleLabels=responsiblePairs.map(x=>x[0]);
+    const responsibleTotalValue=responsibleBase.reduce((s,r)=>s+Number(r.__valor||0),0);
+    const responsibleTotalCount=responsibleBase.length;
+    if($('chartResponsibleTotal')){
+      $('chartResponsibleTotal').innerHTML=`<small>Total geral</small>${moneyFmt.format(responsibleTotalValue)} • ${responsibleTotalCount.toLocaleString('pt-BR')} ${responsibleTotalCount===1?'registro':'registros'}`;
+    }
     sizeHorizontalBars('chartResponsible', responsibleLabels.length);
     makeChart('chartResponsible',{
       type:'bar',
-      plugins:[causalTotalsPlugin],
       data:{labels:responsibleLabels,datasets:[
         {label:'Em tratativa',data:responsiblePairs.map(x=>x[1].treatment),_counts:responsiblePairs.map(x=>x[1].treatmentCount),stack:'total'},
         {label:'Resolvido',data:responsiblePairs.map(x=>x[1].resolved),_counts:responsiblePairs.map(x=>x[1].resolvedCount),stack:'total'},
@@ -2542,7 +2538,6 @@
       options:{
         indexAxis:'y',
         maintainAspectRatio:false,
-        layout:{padding:{right:130}},
         onClick:(e,els)=>{
           if(!els.length)return;
           const el=els[0], label=responsibleLabels[el.index], status=['Em tratativa','Resolvido','Sinistro'][el.datasetIndex];
