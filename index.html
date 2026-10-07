@@ -249,6 +249,33 @@
       flex-wrap: wrap;
     }
     .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .operation-filter-bar {
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      margin:8px 10px 0; padding:8px 10px; border:1px solid var(--border, var(--line)); border-radius:11px;
+      background:var(--surface, #fff); position:relative; z-index:8;
+    }
+    .operation-filter-bar .filters { flex:1 1 auto; min-width:0; }
+    .operation-filter-label { color:var(--text-soft, var(--muted)); font-size:8px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+    .operation-filter-summary { color:var(--text-soft, var(--muted)); font-size:9px; white-space:nowrap; }
+    .multi-filter { position:relative; min-width:180px; }
+    .multi-filter > summary { list-style:none; cursor:pointer; user-select:none; padding-right:26px; position:relative; min-width:180px; }
+    .multi-filter > summary::-webkit-details-marker { display:none; }
+    .multi-filter > summary::after { content:'▾'; position:absolute; right:9px; top:50%; transform:translateY(-50%); color:var(--text-soft, var(--muted)); font-size:10px; }
+    .multi-filter[open] > summary::after { content:'▴'; }
+    .multi-filter-panel {
+      position:absolute; top:calc(100% + 5px); left:0; z-index:90; width:max(240px,100%); max-height:300px; overflow:auto;
+      padding:8px; border:1px solid var(--border, var(--line)); border-radius:10px; background:var(--surface, #fff);
+      box-shadow:0 14px 34px rgba(15,23,42,.16);
+    }
+    .multi-filter-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 3px 7px; border-bottom:1px solid var(--border, var(--line)); margin-bottom:5px; }
+    .multi-filter-head strong { font-size:9px; color:var(--text-strong, var(--text)); text-transform:uppercase; letter-spacing:.05em; }
+    .multi-filter-all { border:0; background:transparent; color:var(--primary); padding:3px 4px; font-size:9px; font-weight:800; }
+    .multi-filter-option { display:flex; align-items:center; gap:7px; padding:6px 5px; border-radius:7px; color:var(--text-strong, var(--text)); font-size:10px; cursor:pointer; }
+    .multi-filter-option:hover { background:var(--surface-2, #f8fafc); }
+    .multi-filter-option input { margin:0; }
+    .multi-filter-empty { padding:10px 6px; color:var(--text-soft, var(--muted)); font-size:9px; }
+
     .field {
       border: 1px solid var(--line);
       border-radius: 9px;
@@ -1035,6 +1062,24 @@
           </div>
           <span class="workspace-help">Selecione uma linha em Em aberto ou Em tratativa para habilitar as ações acima.</span>
         </div>
+        <div class="operation-filter-bar">
+          <div class="filters">
+            <span class="operation-filter-label">Filtros gerais</span>
+            <input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente, Vocativo..."/>
+            <select class="field" id="openClient"><option value="">Todos os clientes</option></select>
+            <select class="field" id="openRange"><option value="">Todos os ranges</option></select>
+            <select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
+            <details class="multi-filter" id="operationVocativoFilter">
+              <summary class="field" id="operationVocativoSummary">Todos os vocativos</summary>
+              <div class="multi-filter-panel">
+                <div class="multi-filter-head"><strong>Vocativos</strong><button type="button" class="multi-filter-all" id="btnAllVocativos">Todos</button></div>
+                <div id="operationVocativoOptions"><div class="multi-filter-empty">Nenhum vocativo disponível.</div></div>
+              </div>
+            </details>
+            <button class="btn" type="button" id="btnClearOperationFilters">Limpar filtros</button>
+          </div>
+          <small class="operation-filter-summary" id="operationFilterSummary">Todos os registros</small>
+        </div>
         <nav class="tabs">
 <button class="tab active" data-tab="open">Em aberto <span id="openCount">0</span></button>
 <button class="tab" data-tab="treatment">Em tratativa <span id="treatmentCount">0</span></button>
@@ -1043,12 +1088,7 @@
 </nav>
         <section class="panel" id="panelOpen">
 <div class="panel-head">
-<div class="filters">
-<input class="field" id="openSearch" placeholder="Pesquisar Nota, Coleta, Cliente..."/>
-<select class="field" id="openClient"><option value="">Todos os clientes</option></select>
-<select class="field" id="openRange"><option value="">Todos os ranges</option></select>
-<select class="field" id="openPriority"><option value="">Todas as prioridades</option></select>
-</div>
+<div class="operation-filter-label">Em aberto</div>
 <small id="openSummary">0 registros</small>
 </div>
 <div class="table-scroll">
@@ -1469,6 +1509,7 @@
     claimModalMode: 'manual',
     claimEditKey: null,
     treatmentModalMode: 'manual',
+    operationVocativos: new Set(),
     dashboardFilters: {
       period: '',
       client: '',
@@ -1501,6 +1542,9 @@
   const keyOf = (nota, coleta) => `${cleanText(nota)}||${cleanText(coleta)}`;
   const dateFmt = new Intl.DateTimeFormat('pt-BR');
   const monthFmt = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+  const EXTRA_TREATMENT_REASONS = ['INCLUSÃO MANUAL'];
+  const normalizeCompareText = value => cleanText(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleUpperCase('pt-BR');
+  const isMaterialLocatedResolution = value => normalizeCompareText(value) === 'MATERIAL LOCALIZADO NO CLIENTE';
 
   function parseDateValue(value) {
     if (!value) return null;
@@ -1737,7 +1781,7 @@
     state.remoteSignature = getRemoteSignature(payload);
     state.resolutions = payload.resolutions || [];
     state.responsibleResolutions = payload.responsibleResolutions || [];
-    state.treatmentReasons = payload.treatmentReasons || [];
+    state.treatmentReasons = [...new Set([...(payload.treatmentReasons || []), ...EXTRA_TREATMENT_REASONS].map(cleanText).filter(Boolean))];
     state.solvers = payload.solvers || [];
     state.resolvedRows = normalizeResolvedRows(payload.resolvidos || []);
     state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
@@ -1748,6 +1792,7 @@
     state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
     state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
     fillResolutionSelectors();
+    rebuildFilters();
     rebuildDashboardFilters();
     if (render) rebuildView();
   }
@@ -1814,14 +1859,22 @@
   }
 
   function fillResolutionSelectors() {
+    const prevResolvedFilter = $('resolvedFilter')?.value || '';
+    const prevResolvedSolver = $('resolvedSolver')?.value || '';
+    const prevTreatmentFilter = $('treatmentReason')?.value || '';
     $('fResolution').innerHTML = '<option value="">Selecione...</option>' + state.resolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     const historicalResolutions = [...new Set([...state.resolutions, ...state.resolvedRows.map(r=>cleanText(r.resolucao)).filter(Boolean)])];
     $('resolvedFilter').innerHTML = '<option value="">Todas as resoluções</option>' + historicalResolutions.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('fSolvedBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('resolvedSolver').innerHTML = '<option value="">Quem resolveu: todos</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-    $('tReason').innerHTML = '<option value="">Selecione...</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    const selectableTreatmentReasons = [...new Set([...state.treatmentReasons, ...EXTRA_TREATMENT_REASONS].map(cleanText).filter(Boolean))];
+    const historicalTreatmentReasons = [...new Set([...selectableTreatmentReasons, ...state.treatmentRows.map(r=>cleanText(r.motivo)).filter(Boolean)])];
+    $('tReason').innerHTML = '<option value="">Selecione...</option>' + selectableTreatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     $('tSentBy').innerHTML = '<option value="">Selecione Italo ou Bruna...</option>' + state.solvers.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-    $('treatmentReason').innerHTML = '<option value="">Todos os motivos</option>' + state.treatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('treatmentReason').innerHTML = '<option value="">Todos os motivos</option>' + historicalTreatmentReasons.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    if ([...$('resolvedFilter').options].some(o=>o.value===prevResolvedFilter)) $('resolvedFilter').value = prevResolvedFilter;
+    if ([...$('resolvedSolver').options].some(o=>o.value===prevResolvedSolver)) $('resolvedSolver').value = prevResolvedSolver;
+    if ([...$('treatmentReason').options].some(o=>o.value===prevTreatmentFilter)) $('treatmentReason').value = prevTreatmentFilter;
   }
 
   $('fileInput').addEventListener('change', async event => {
@@ -1867,20 +1920,80 @@
   });
 
   function rebuildFilters() {
+    const previous = { client:$('openClient')?.value || '', range:$('openRange')?.value || '', priority:$('openPriority')?.value || '' };
     const clients = [...new Set(state.reportRows.map(r => cleanText(r['Cliente'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
     const ranges = [...new Set(state.reportRows.map(r => cleanText(r['Range de Dias'])).filter(Boolean))];
     const priorities = [...new Set(state.reportRows.map(r => cleanText(r['Prioridade'])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v=>`<option>${esc(v)}</option>`).join('');
-    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v=>`<option>${esc(v)}</option>`).join('');
-    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v=>`<option>${esc(v)}</option>`).join('');
+    $('openClient').innerHTML = '<option value="">Todos os clientes</option>' + clients.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    $('openRange').innerHTML = '<option value="">Todos os ranges</option>' + ranges.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    $('openPriority').innerHTML = '<option value="">Todas as prioridades</option>' + priorities.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if ([...$('openClient').options].some(o=>o.value===previous.client)) $('openClient').value=previous.client;
+    if ([...$('openRange').options].some(o=>o.value===previous.range)) $('openRange').value=previous.range;
+    if ([...$('openPriority').options].some(o=>o.value===previous.priority)) $('openPriority').value=previous.priority;
+    renderOperationVocativoFilter();
+  }
+
+  function renderOperationVocativoFilter() {
+    const holder = $('operationVocativoOptions');
+    const summary = $('operationVocativoSummary');
+    if (!holder || !summary) return;
+    const vocativos = [...new Set(uniqueRowsByKey(getMasterRows()).map(r=>cleanText(r.__vocativo || r.vocativo)).filter(Boolean))]
+      .sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}));
+    const valid = new Set(vocativos);
+    for (const value of [...state.operationVocativos]) if (!valid.has(value)) state.operationVocativos.delete(value);
+    holder.innerHTML = vocativos.length
+      ? vocativos.map(v=>`<label class="multi-filter-option"><input type="checkbox" value="${esc(v)}" ${state.operationVocativos.has(v)?'checked':''}/> <span>${esc(v)}</span></label>`).join('')
+      : '<div class="multi-filter-empty">Nenhum vocativo disponível.</div>';
+    summary.textContent = state.operationVocativos.size
+      ? `Vocativos (${state.operationVocativos.size})`
+      : 'Todos os vocativos';
+    summary.title = state.operationVocativos.size ? [...state.operationVocativos].join(', ') : 'Sem restrição de vocativo';
+  }
+
+  function applyOperationGlobalFilters(rows) {
+    const q = cleanText($('openSearch')?.value).toLowerCase();
+    const client = $('openClient')?.value || '';
+    const range = $('openRange')?.value || '';
+    const priority = $('openPriority')?.value || '';
+    const selectedVocativos = state.operationVocativos;
+    return (rows || []).filter(r => {
+      const vocativo = cleanText(r.__vocativo ?? r.vocativo);
+      if (selectedVocativos.size && !selectedVocativos.has(vocativo)) return false;
+      if (client && cleanText(r['Cliente']) !== client) return false;
+      if (range && cleanText(r['Range de Dias']) !== range) return false;
+      if (priority && cleanText(r['Prioridade']) !== priority) return false;
+      if (q) {
+        const hay = [
+          r.__nota ?? r.nota, r.__coleta ?? r.coleta, vocativo, r['Cliente'], r['Destino'], r['UF Destino'],
+          r['Range de Dias'], r['Prioridade'], r.resolucao, r.treatmentReason, r.treatmentResponsible, r.quemResolveu
+        ].map(cleanText).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function refreshOperationView() {
+    state.openPage = state.resolvedPage = state.treatmentPage = state.claimPage = 1;
+    renderKpis();
+    renderOpenTable();
+    renderTreatmentTable();
+    renderResolvedTable();
+    renderClaimTable();
+    updateSelectedActions();
   }
 
   const statusLabel = status => status === 'resolved' ? 'Resolvido' : status === 'treatment' ? 'Em tratativa' : status === 'claim' ? 'Sinistro' : 'Em aberto';
+  const effectiveResolvedReason = (resolution, treatmentReason='') => {
+    const resolvedText = cleanText(resolution);
+    if (isMaterialLocatedResolution(resolvedText)) return cleanText(treatmentReason) || resolvedText;
+    return resolvedText;
+  };
   const reasonLabel = r => cleanText(r.causalReason) || (
     r.status === 'claim'
-      ? (cleanText(r.resolucao) || cleanText(r.treatmentReason))
+      ? (effectiveResolvedReason(r.resolucao, r.treatmentReason) || cleanText(r.treatmentReason))
       : r.status === 'resolved'
-        ? cleanText(r.resolucao)
+        ? effectiveResolvedReason(r.resolucao, r.treatmentReason)
         : r.status === 'treatment'
           ? cleanText(r.treatmentReason)
           : ''
@@ -2009,14 +2122,15 @@
       if (!status) continue;
 
       // Motivo / causa raiz:
-      // Sinistro: procura primeiro a Resolução e depois o Motivo da tratativa.
-      // Resolvido: Resolução.
-      // Tratativa: Motivo da tratativa.
+      // Quando a resolução for "Material localizado no cliente", a causa real é o
+      // Motivo da tratativa da mesma Nota + Coleta em Tratativas Cliente.
+      // A regra também vale se o mesmo caso posteriormente estiver em Sinistro.
+      const resolvedReason = effectiveResolvedReason(resolved?.resolucao, treatment?.motivo);
       const causalReason =
         status === 'claim'
-          ? (cleanText(resolved?.resolucao) || cleanText(treatment?.motivo))
+          ? (resolvedReason || cleanText(treatment?.motivo))
           : status === 'resolved'
-            ? cleanText(resolved?.resolucao)
+            ? resolvedReason
             : cleanText(treatment?.motivo);
 
       // Estes dois gráficos só trabalham com casos onde a causa foi identificada.
@@ -2232,17 +2346,7 @@
   function getOpenRows(applyFilters=true) {
     let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='open'));
     if (!applyFilters) return rows;
-    const q = cleanText($('openSearch').value).toLowerCase(), client=$('openClient').value, range=$('openRange').value, priority=$('openPriority').value;
-    return rows.filter(r => {
-      if (client && cleanText(r['Cliente']) !== client) return false;
-      if (range && cleanText(r['Range de Dias']) !== range) return false;
-      if (priority && cleanText(r['Prioridade']) !== priority) return false;
-      if (q) {
-        const hay = [r.__nota,r.__coleta,r.__vocativo,r['Cliente'],r['Destino'],r['UF Destino'],r['Range de Dias'],r['Prioridade']].map(cleanText).join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
+    return applyOperationGlobalFilters(rows);
   }
 
   function getTreatmentRows(applyFilters=true) {
@@ -2251,6 +2355,7 @@
     );
 
     if (!applyFilters) return rows;
+    rows = applyOperationGlobalFilters(rows);
 
     const q=cleanText($('treatmentSearch').value).toLowerCase();
     const reason=$('treatmentReason').value;
@@ -2275,6 +2380,7 @@
   function getResolvedRows(applyFilters=true) {
     let rows = applyChartFilters(uniqueRowsByKey(getMasterRows()).filter(r=>r.status==='resolved'));
     if (!applyFilters) return rows;
+    rows = applyOperationGlobalFilters(rows);
     const q=cleanText($('resolvedSearch').value).toLowerCase(), resolution=$('resolvedFilter').value, presence=$('resolvedPresence').value, solver=$('resolvedSolver').value;
     return rows.filter(r => {
       if (resolution && r.resolucao !== resolution) return false;
@@ -2292,6 +2398,7 @@
     );
 
     if (!applyFilters) return rows;
+    rows = applyOperationGlobalFilters(rows);
 
     const q=cleanText($('claimSearch').value).toLowerCase();
     const presence=$('claimPresence').value;
@@ -2317,7 +2424,8 @@
   }
 
   function renderKpis() {
-    const master=applyChartFilters(uniqueRowsByKey(getMasterRows()));
+    const unfilteredMaster=applyChartFilters(uniqueRowsByKey(getMasterRows()));
+    const master=applyOperationGlobalFilters(unfilteredMaster);
     const open=master.filter(r=>r.status==='open'), treatment=master.filter(r=>r.status==='treatment'), resolved=master.filter(r=>r.status==='resolved'), claims=master.filter(r=>r.status==='claim');
     const total=master.reduce((s,r)=>s+r.__valor,0), openValue=open.reduce((s,r)=>s+r.__valor,0), treatmentValue=treatment.reduce((s,r)=>s+r.__valor,0), resolvedValue=resolved.reduce((s,r)=>s+r.__valor,0), claimValue=claims.reduce((s,r)=>s+r.__valor,0);
     const resolvedStill=resolved.filter(r=>r.stillPending).length, claimStill=claims.filter(r=>r.stillPending).length;
@@ -2334,6 +2442,12 @@
     $('treatmentCount').textContent=treatment.length.toLocaleString('pt-BR');
     $('resolvedCount').textContent=resolved.length.toLocaleString('pt-BR');
     $('claimCount').textContent=claims.length.toLocaleString('pt-BR');
+    if ($('operationFilterSummary')) {
+      const active = master.length !== unfilteredMaster.length || state.operationVocativos.size || cleanText($('openSearch')?.value) || $('openClient')?.value || $('openRange')?.value || $('openPriority')?.value;
+      $('operationFilterSummary').textContent = active
+        ? `${master.length.toLocaleString('pt-BR')} de ${unfilteredMaster.length.toLocaleString('pt-BR')} registros após filtros gerais`
+        : `${master.length.toLocaleString('pt-BR')} registros`;
+    }
   }
 
   function renderDashboardKpis() {
@@ -3043,7 +3157,7 @@
   function applyTableSort(rows, table) {
     const cfg = state.tableSort[table];
     if (!cfg || !cfg.key) {
-      if (table === 'open') return rows.sort((a,b)=>Number(b.crcPriority)-Number(a.crcPriority)||b.__valor-a.__valor);
+      if (table === 'open') return rows.sort((a,b)=>Number(Boolean(b.crcPriority||b.notLocated))-Number(Boolean(a.crcPriority||a.notLocated))||b.__valor-a.__valor);
       return rows.sort((a,b)=>Number(b.stillPending)-Number(a.stillPending)||Number(b.valorNota||0)-Number(a.valorNota||0));
     }
     return rows.sort((a,b) => {
@@ -3358,7 +3472,7 @@
     state.selectedKey=null;
     state.selectedSource=null;
     $('panelOpen').classList.toggle('hidden',target!=='open'); $('panelTreatment').classList.toggle('hidden',target!=='treatment'); $('panelResolved').classList.toggle('hidden',target!=='resolved'); $('panelClaims').classList.toggle('hidden',target!=='claims');
-    renderOpenTable(); renderTreatmentTable(); updateSelectedActions();
+    renderKpis(); renderOpenTable(); renderTreatmentTable(); renderResolvedTable(); renderClaimTable(); updateSelectedActions();
   }));
   $('btnClearChartFilters').addEventListener('click',clearChartFilters);
   const dashboardFilterBindings = {
@@ -3382,7 +3496,30 @@
   $('occurrenceGranularity').addEventListener('change',()=>{state.occurrenceGranularity=$('occurrenceGranularity').value; state.chartFilters.occurrencePeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
   $('resolutionGranularity').addEventListener('change',()=>{state.resolutionGranularity=$('resolutionGranularity').value; state.chartFilters.resolutionPeriod.clear(); state.openPage=state.resolvedPage=state.treatmentPage=state.claimPage=1; rebuildView();});
   $('chartFilterChips').addEventListener('click',e=>{const chip=e.target.closest('.filter-chip'); if(!chip)return; const dim=chip.dataset.dim,value=chip.dataset.value; if(state.chartFilters[dim]){state.chartFilters[dim].delete(value); rebuildView();}});
-  ['openSearch','openClient','openRange','openPriority'].forEach(id=>$(id).addEventListener(id==='openSearch'?'input':'change',()=>{state.openPage=1;renderOpenTable();}));
+  ['openSearch','openClient','openRange','openPriority'].forEach(id=>$(id).addEventListener(id==='openSearch'?'input':'change',refreshOperationView));
+  $('operationVocativoOptions')?.addEventListener('change',e=>{
+    const checkbox=e.target.closest('input[type="checkbox"]');
+    if(!checkbox)return;
+    if(checkbox.checked) state.operationVocativos.add(checkbox.value);
+    else state.operationVocativos.delete(checkbox.value);
+    renderOperationVocativoFilter();
+    refreshOperationView();
+  });
+  $('btnAllVocativos')?.addEventListener('click',e=>{
+    e.preventDefault();
+    state.operationVocativos.clear();
+    renderOperationVocativoFilter();
+    refreshOperationView();
+  });
+  $('btnClearOperationFilters')?.addEventListener('click',()=>{
+    $('openSearch').value='';
+    $('openClient').value='';
+    $('openRange').value='';
+    $('openPriority').value='';
+    state.operationVocativos.clear();
+    renderOperationVocativoFilter();
+    refreshOperationView();
+  });
   ['treatmentSearch','treatmentReason'].forEach(id=>$(id).addEventListener(id==='treatmentSearch'?'input':'change',()=>{state.treatmentPage=1;renderTreatmentTable();}));
   ['resolvedSearch','resolvedFilter','resolvedPresence','resolvedSolver'].forEach(id=>$(id).addEventListener(id==='resolvedSearch'?'input':'change',()=>{state.resolvedPage=1;renderResolvedTable();}));
   ['claimSearch','claimPresence'].forEach(id=>$(id).addEventListener(id==='claimSearch'?'input':'change',()=>{state.claimPage=1;renderClaimTable();}));
