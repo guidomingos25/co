@@ -1006,7 +1006,8 @@
           <div class="toolbar-group signal-group">
             <span class="toolbar-label">Sinalizações</span>
             <button class="btn btn-crc" id="btnToggleCrc" disabled>Marcar Prioridade CRC</button>
-            <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado</button>
+            <button class="btn btn-lost" id="btnToggleLost" disabled>Marcar Não localizado no cliente</button>
+            <button class="btn btn-lost" id="btnToggleLostWarehouse" disabled>Marcar Não localizado no Armazém</button>
           </div>
         </div>
       </section>
@@ -1482,6 +1483,9 @@
     treatmentMap: new Map(),
     crcMap: new Map(),
     notLocatedMap: new Map(),
+    notLocatedWarehouseMap: new Map(),
+    warehouseMarkerAvailable: false,
+    backendTreatmentReasons: [],
     resolutions: [],
     responsibleResolutions: [],
     treatmentReasons: [],
@@ -1770,6 +1774,7 @@
       tratativas: payload?.tratativas || [],
       prioridadeCrc: payload?.prioridadeCrc || [],
       naoLocalizado: payload?.naoLocalizado || [],
+      naoLocalizadoArmazem: payload?.naoLocalizadoArmazem || [],
       resolutions: payload?.resolutions || [],
       responsibleResolutions: payload?.responsibleResolutions || [],
       treatmentReasons: payload?.treatmentReasons || [],
@@ -1781,7 +1786,8 @@
     state.remoteSignature = getRemoteSignature(payload);
     state.resolutions = payload.resolutions || [];
     state.responsibleResolutions = payload.responsibleResolutions || [];
-    state.treatmentReasons = [...new Set([...(payload.treatmentReasons || []), ...EXTRA_TREATMENT_REASONS].map(cleanText).filter(Boolean))];
+    state.backendTreatmentReasons = (payload.treatmentReasons || []).map(cleanText);
+    state.treatmentReasons = [...new Set([...state.backendTreatmentReasons, ...EXTRA_TREATMENT_REASONS].map(cleanText).filter(Boolean))];
     state.solvers = payload.solvers || [];
     state.resolvedRows = normalizeResolvedRows(payload.resolvidos || []);
     state.resolvedMap = new Map(state.resolvedRows.map(r => [r.key, r]));
@@ -1791,6 +1797,9 @@
     state.treatmentMap = new Map(state.treatmentRows.map(r => [r.key, r]));
     state.crcMap = normalizeKeyMap(payload.prioridadeCrc || []);
     state.notLocatedMap = normalizeKeyMap(payload.naoLocalizado || []);
+    // Mantém os marcadores separados: cada tipo tem sua própria aba no Google.
+    state.warehouseMarkerAvailable = Array.isArray(payload.naoLocalizadoArmazem);
+    state.notLocatedWarehouseMap = normalizeKeyMap(payload.naoLocalizadoArmazem || []);
     fillResolutionSelectors();
     rebuildFilters();
     rebuildDashboardFilters();
@@ -1835,7 +1844,7 @@
       rebuildView();
       startRealtimeSync();
       setApiIndicator('ok', 'Google Planilhas conectado • sincronização automática ativa');
-      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Tratativas, Sinistros, Prioridade CRC e Não localizado foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
+      setNotice('ok', 'Google Planilhas conectado', `Resolvidos, Tratativas, Sinistros e sinalizações foram carregados. Sincronização automática ativa a cada ${CONFIG.REALTIME_INTERVAL_MS / 1000} segundos.`);
     } catch (err) {
       state.apiReady = false;
       setApiIndicator('error', 'Não foi possível conectar ao Google Planilhas');
@@ -2294,7 +2303,8 @@
         inTreatment:!!treatment,
 
         crcPriority:state.crcMap.has(key),
-        notLocated:state.notLocatedMap.has(key)
+        notLocated:state.notLocatedMap.has(key),
+        notLocatedWarehouse:state.notLocatedWarehouseMap.has(key)
       });
     }
 
@@ -3096,6 +3106,7 @@
     const key = row.__key || row.key;
     if (state.crcMap.has(key)) labels.push('Prioridade CRC');
     if (state.notLocatedMap.has(key)) labels.push('Não localizado no cliente');
+    if (state.notLocatedWarehouseMap.has(key)) labels.push('Não localizado no Armazém');
     return labels.join(' | ');
   }
 
@@ -3157,7 +3168,7 @@
   function applyTableSort(rows, table) {
     const cfg = state.tableSort[table];
     if (!cfg || !cfg.key) {
-      if (table === 'open') return rows.sort((a,b)=>Number(Boolean(b.crcPriority||b.notLocated))-Number(Boolean(a.crcPriority||a.notLocated))||b.__valor-a.__valor);
+      if (table === 'open') return rows.sort((a,b)=>Number(Boolean(b.crcPriority||b.notLocated||b.notLocatedWarehouse))-Number(Boolean(a.crcPriority||a.notLocated||a.notLocatedWarehouse))||b.__valor-a.__valor);
       return rows.sort((a,b)=>Number(b.stillPending)-Number(a.stillPending)||Number(b.valorNota||0)-Number(a.valorNota||0));
     }
     return rows.sort((a,b) => {
@@ -3190,6 +3201,7 @@
     const badges=[];
     if(state.crcMap.has(key))badges.push('<span class="badge crc">Prioridade CRC</span>');
     if(state.notLocatedMap.has(key))badges.push('<span class="badge lost">Não localizado no cliente</span>');
+    if(state.notLocatedWarehouseMap.has(key))badges.push('<span class="badge lost">Não localizado no Armazém</span>');
     return badges.length?`<div class="signal-stack">${badges.join('')}</div>`:'—';
   }
 
@@ -3345,9 +3357,13 @@
     $('btnTreatmentSelected').disabled=!enabled || row?.source==='treatment';
     $('btnToggleCrc').disabled=!enabled;
     $('btnToggleLost').disabled=!enabled;
+    $('btnToggleLostWarehouse').disabled=!enabled || !state.warehouseMarkerAvailable;
+    $('btnToggleLostWarehouse').title = state.warehouseMarkerAvailable ? '' : 'É necessário atualizar o Apps Script para habilitar esta sinalização.';
     const isCrc=!!row&&state.crcMap.has(row.key), isLost=!!row&&state.notLocatedMap.has(row.key);
+    const isWarehouseLost=!!row&&state.notLocatedWarehouseMap.has(row.key);
     $('btnToggleCrc').textContent=isCrc?'Remover Prioridade CRC':'Marcar Prioridade CRC'; $('btnToggleCrc').classList.toggle('btn-active',isCrc);
-    $('btnToggleLost').textContent=isLost?'Remover Não localizado':'Marcar Não localizado'; $('btnToggleLost').classList.toggle('btn-active',isLost);
+    $('btnToggleLost').textContent=isLost?'Remover Não localizado no cliente':'Marcar Não localizado no cliente'; $('btnToggleLost').classList.toggle('btn-active',isLost);
+    $('btnToggleLostWarehouse').textContent=isWarehouseLost?'Remover Não localizado no Armazém':'Marcar Não localizado no Armazém'; $('btnToggleLostWarehouse').classList.toggle('btn-active',isWarehouseLost);
   }
 
   $('openBody').addEventListener('click',e=>{
@@ -3408,6 +3424,10 @@
     e.preventDefault(); if(!state.apiReady)return setNotice('error','Apps Script indisponível','Não é possível gravar enquanto o Google Planilhas não estiver conectado.');
     const payload={action:'salvarTratativa',nota:cleanText($('tNota').value),coleta:cleanText($('tColeta').value),valorNota:parseMoney($('tValor').value),vocativo:cleanText($('tVocativo').value),motivo:$('tReason').value,responsavel:cleanText($('tResponsible').value),quemEnviou:$('tSentBy').value};
     if(!payload.quemEnviou){$('tSentBy').focus(); return setNotice('error','Selecione quem está enviando','Escolha Italo ou Bruna antes de encaminhar para tratativa.');}
+    // Evita o falso erro genérico quando o frontend já oferece um motivo ainda não aceito pelo backend.
+    if(!state.backendTreatmentReasons.includes(payload.motivo)){
+      return setNotice('error','Motivo não habilitado no Google',`O motivo “${payload.motivo}” exige a atualização do Apps Script e a execução de configurar() para atualizar a validação da planilha.`);
+    }
     const key=keyOf(payload.nota,payload.coleta);
     if(state.treatmentMap.has(key)) return setNotice('warn','Tratativa já cadastrada',`A Nota ${payload.nota} / Coleta ${payload.coleta} já existe na base de Tratativas.`);
     if(state.resolvedMap.has(key)) return setNotice('warn','Registro já resolvido',`A Nota ${payload.nota} / Coleta ${payload.coleta} já está em Resolvidos.`);
@@ -3438,8 +3458,20 @@
   async function toggleMarker(type){
     if(!state.apiReady)return;
     const r=getSelectedActionRow(); if(!r)return;
-    const isCrc=type==='crc', map=isCrc?state.crcMap:state.notLocatedMap, action=isCrc?'setPrioridadeCrc':'setNaoLocalizado', ativo=!map.has(r.key), label=isCrc?'Prioridade CRC':'Não localizado no cliente';
-    try{await postAndConfirm({action,nota:r.nota,coleta:r.coleta,ativo},()=>((isCrc?state.crcMap:state.notLocatedMap).has(r.key)===ativo),`Não foi possível confirmar ${label}.`); setNotice('ok',ativo?`${label} marcado`:`${label} removido`,`Nota ${r.nota} / Coleta ${r.coleta}.`);}catch(err){setNotice('error','Falha ao atualizar',err.message);}
+    const config = {
+      crc: {getMap:()=>state.crcMap, action:'setPrioridadeCrc', label:'Prioridade CRC'},
+      lost: {getMap:()=>state.notLocatedMap, action:'setNaoLocalizado', label:'Não localizado no cliente'},
+      warehouse: {getMap:()=>state.notLocatedWarehouseMap, action:'setNaoLocalizadoArmazem', label:'Não localizado no Armazém'}
+    }[type];
+    if(!config)return;
+    if(type==='warehouse' && !state.warehouseMarkerAvailable){
+      return setNotice('warn','Atualize o Apps Script','A sinalização Não localizado no Armazém precisa ser habilitada no Google Planilhas.');
+    }
+    const ativo=!config.getMap().has(r.key);
+    try{
+      await postAndConfirm({action:config.action,nota:r.nota,coleta:r.coleta,ativo},()=>config.getMap().has(r.key)===ativo,`Não foi possível confirmar ${config.label}.`);
+      setNotice('ok',ativo?`${config.label} marcado`:`${config.label} removido`,`Nota ${r.nota} / Coleta ${r.coleta}.`);
+    }catch(err){setNotice('error','Falha ao atualizar',err.message);}
   }
 
   $('btnApiTest').addEventListener('click',()=>{try{window.open(`${getAppsScriptBase()}?action=health&_=${Date.now()}`,'_blank','noopener');}catch(err){setNotice('error','URL do Apps Script inválida',err.message);}});
@@ -3462,6 +3494,7 @@
   });
   $('btnToggleCrc').addEventListener('click',()=>toggleMarker('crc'));
   $('btnToggleLost').addEventListener('click',()=>toggleMarker('lost'));
+  $('btnToggleLostWarehouse').addEventListener('click',()=>toggleMarker('warehouse'));
   $('modalClose').addEventListener('click',closeModal); $('modalCancel').addEventListener('click',closeModal); $('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();}); $('fResolution').addEventListener('change',updateResponsibleVisibility);
   $('treatmentModalClose').addEventListener('click',closeTreatmentModal); $('treatmentModalCancel').addEventListener('click',closeTreatmentModal); $('treatmentModalBackdrop').addEventListener('click',e=>{if(e.target===$('treatmentModalBackdrop'))closeTreatmentModal();});
   $('claimModalClose').addEventListener('click',closeClaimModal); $('claimModalCancel').addEventListener('click',closeClaimModal); $('claimModalBackdrop').addEventListener('click',e=>{if(e.target===$('claimModalBackdrop'))closeClaimModal();});
