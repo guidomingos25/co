@@ -3200,8 +3200,8 @@
   function signalBadges(key){
     const badges=[];
     if(state.crcMap.has(key))badges.push('<span class="badge crc">Prioridade CRC</span>');
-    if(state.notLocatedMap.has(key))badges.push('<span class="badge lost">Não localizado no cliente</span>');
-    if(state.notLocatedWarehouseMap.has(key))badges.push('<span class="badge lost">Não localizado no Armazém</span>');
+    if(state.notLocatedMap.has(key))badges.push('<span class="badge lost">N. L. no cliente</span>');
+    if(state.notLocatedWarehouseMap.has(key))badges.push('<span class="badge lost">N. L. no armazém</span>');
     return badges.length?`<div class="signal-stack">${badges.join('')}</div>`:'—';
   }
 
